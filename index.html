@@ -19,12 +19,91 @@
       overflow: hidden;
     }
 
+    button, input {
+      font: inherit;
+    }
+
     .app {
       display: flex;
       height: 100vh;
-      max-width: 1500px;
-      margin: auto;
       background: white;
+    }
+
+    /* LOGIN */
+    .login-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #eef1ff, #f8f9ff);
+    }
+
+    .login-box {
+      width: 390px;
+      max-width: calc(100% - 30px);
+      padding: 35px;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.12);
+    }
+
+    .login-logo {
+      text-align: center;
+      font-size: 30px;
+      font-weight: bold;
+      color: #5865f2;
+      margin-bottom: 10px;
+    }
+
+    .login-title {
+      text-align: center;
+      color: #555;
+      margin-bottom: 25px;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 12px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      outline: none;
+    }
+
+    .login-box input:focus {
+      border-color: #5865f2;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: #5865f2;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .login-btn:hover {
+      background: #4752c4;
+    }
+
+    .switch {
+      text-align: center;
+      margin-top: 18px;
+      color: #5865f2;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #loginError {
+      color: #e53935;
+      font-size: 13px;
+      margin-bottom: 10px;
+      text-align: center;
     }
 
     /* SIDEBAR */
@@ -33,7 +112,7 @@
       border-right: 1px solid #e5e7eb;
       display: flex;
       flex-direction: column;
-      background: #ffffff;
+      background: white;
     }
 
     .logo {
@@ -43,18 +122,35 @@
       color: #5865f2;
     }
 
+    .my-account {
+      margin: 0 18px 15px;
+      padding: 13px;
+      background: #f5f6ff;
+      border-radius: 14px;
+    }
+
+    .my-email {
+      font-size: 13px;
+      color: #555;
+      word-break: break-all;
+    }
+
+    .logout {
+      margin-top: 8px;
+      border: none;
+      background: transparent;
+      color: #5865f2;
+      cursor: pointer;
+      padding: 0;
+    }
+
     .search {
       margin: 0 18px 18px;
       padding: 13px 16px;
       border: 1px solid #e5e7eb;
       border-radius: 14px;
       outline: none;
-      font-size: 15px;
       background: #f8fafc;
-    }
-
-    .chat-list {
-      overflow-y: auto;
     }
 
     .chat {
@@ -62,14 +158,6 @@
       align-items: center;
       gap: 13px;
       padding: 14px 20px;
-      cursor: pointer;
-    }
-
-    .chat:hover {
-      background: #f5f6ff;
-    }
-
-    .chat.active {
       background: #eef0ff;
     }
 
@@ -87,25 +175,17 @@
       flex-shrink: 0;
     }
 
-    .chat-info {
-      min-width: 0;
-      flex: 1;
-    }
-
     .chat-name {
       font-weight: bold;
-      margin-bottom: 5px;
     }
 
     .last-message {
       color: #8b8f98;
       font-size: 13px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      margin-top: 5px;
     }
 
-    /* MAIN CHAT */
+    /* CHAT */
     .main {
       flex: 1;
       display: flex;
@@ -149,14 +229,23 @@
       justify-content: flex-end;
     }
 
-    .bubble {
+    .bubble-wrap {
       max-width: 65%;
+    }
+
+    .sender {
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 4px;
+    }
+
+    .bubble {
       padding: 12px 16px;
       border-radius: 18px;
-      font-size: 15px;
       line-height: 1.5;
       background: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+      word-break: break-word;
     }
 
     .message.me .bubble {
@@ -169,7 +258,6 @@
       border-bottom-left-radius: 5px;
     }
 
-    /* INPUT */
     .input-area {
       padding: 18px 22px;
       border-top: 1px solid #e5e7eb;
@@ -179,7 +267,7 @@
     .input-box {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       background: #f5f7fb;
       border-radius: 16px;
       padding: 8px 10px;
@@ -191,44 +279,32 @@
       outline: none;
       background: transparent;
       padding: 10px;
-      font-size: 15px;
     }
 
-    .icon-btn,
     .send-btn {
       border: none;
       cursor: pointer;
       border-radius: 12px;
-      padding: 10px 13px;
-      font-size: 18px;
-    }
-
-    .icon-btn {
-      background: transparent;
-    }
-
-    .send-btn {
+      padding: 11px 16px;
       background: #5865f2;
       color: white;
     }
 
-    .send-btn:hover {
-      background: #4752c4;
-    }
-
-    /* MOBILE */
     @media (max-width: 700px) {
       .sidebar {
         width: 90px;
       }
 
       .logo {
-        font-size: 20px;
-        padding: 20px 10px;
+        font-size: 18px;
+        padding: 20px 5px;
         text-align: center;
       }
 
-      .search {
+      .my-account,
+      .search,
+      .chat-name,
+      .last-message {
         display: none;
       }
 
@@ -237,19 +313,11 @@
         padding: 14px 8px;
       }
 
-      .chat-info {
-        display: none;
-      }
-
-      .header {
-        padding: 0 15px;
-      }
-
       .messages {
-        padding: 20px 12px;
+        padding: 18px 12px;
       }
 
-      .bubble {
+      .bubble-wrap {
         max-width: 80%;
       }
     }
@@ -258,156 +326,453 @@
 
 <body>
 
-<div class="app">
+  <!-- ĐĂNG NHẬP -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
 
-  <!-- DANH SÁCH CHAT -->
-  <aside class="sidebar">
+      <div class="login-logo">💬 HT Chat</div>
 
-    <div class="logo">
-      💬 HT Chat
-    </div>
-
-    <input
-      class="search"
-      type="text"
-      placeholder="🔍 Tìm kiếm..."
-    >
-
-    <div class="chat-list">
-
-      <div class="chat active">
-        <div class="avatar">A</div>
-
-        <div class="chat-info">
-          <div class="chat-name">Anh Tuấn</div>
-          <div class="last-message">Chào bạn 👋</div>
-        </div>
+      <div class="login-title" id="loginTitle">
+        Đăng nhập để bắt đầu trò chuyện
       </div>
 
-      <div class="chat">
-        <div class="avatar">M</div>
+      <input
+        id="email"
+        type="email"
+        placeholder="Email"
+      >
 
-        <div class="chat-info">
-          <div class="chat-name">Minh</div>
-          <div class="last-message">Tối nay chơi không?</div>
-        </div>
-      </div>
+      <input
+        id="password"
+        type="password"
+        placeholder="Mật khẩu"
+      >
 
-      <div class="chat">
-        <div class="avatar">H</div>
+      <div id="loginError"></div>
 
-        <div class="chat-info">
-          <div class="chat-name">Hoàng</div>
-          <div class="last-message">Ok 👍</div>
-        </div>
+      <button class="login-btn" id="loginBtn">
+        Đăng nhập
+      </button>
+
+      <div class="switch" id="switchMode">
+        Chưa có tài khoản? Đăng ký
       </div>
 
     </div>
-  </aside>
+  </div>
 
-  <!-- KHUNG CHAT -->
-  <main class="main">
+  <!-- APP -->
+  <div class="app">
 
-    <header class="header">
+    <aside class="sidebar">
 
-      <div class="avatar">A</div>
-
-      <div>
-        <div class="user-name">Anh Tuấn</div>
-        <div class="online">● Đang hoạt động</div>
+      <div class="logo">
+        💬 HT Chat
       </div>
 
-    </header>
-
-    <section class="messages" id="messages">
-
-      <div class="message">
-        <div class="bubble">
-          Chào bạn 👋
-        </div>
-      </div>
-
-      <div class="message me">
-        <div class="bubble">
-          Chào! Rất vui được nói chuyện với bạn 😄
-        </div>
-      </div>
-
-      <div class="message">
-        <div class="bubble">
-          Đây sẽ là ứng dụng HT Chat của chúng ta!
-        </div>
-      </div>
-
-    </section>
-
-    <div class="input-area">
-
-      <div class="input-box">
-
-        <button class="icon-btn">😊</button>
-
-        <input
-          id="messageInput"
-          type="text"
-          placeholder="Nhập tin nhắn..."
-          autocomplete="off"
-        >
-
-        <button class="icon-btn">📎</button>
-
-        <button
-          class="send-btn"
-          onclick="sendMessage()"
-        >
-          ➤
+      <div class="my-account">
+        <div>👤 Tài khoản</div>
+        <div class="my-email" id="myEmail"></div>
+        <button class="logout" id="logoutBtn">
+          Đăng xuất
         </button>
+      </div>
+
+      <input
+        class="search"
+        placeholder="🔍 Tìm kiếm..."
+      >
+
+      <div class="chat">
+        <div class="avatar">🌍</div>
+
+        <div>
+          <div class="chat-name">Phòng trò chuyện chung</div>
+          <div class="last-message">
+            Trò chuyện cùng mọi người
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <main class="main">
+
+      <header class="header">
+
+        <div class="avatar">🌍</div>
+
+        <div>
+          <div class="user-name">
+            Phòng trò chuyện chung
+          </div>
+
+          <div class="online">
+            ● Trực tuyến
+          </div>
+        </div>
+
+      </header>
+
+      <section
+        class="messages"
+        id="messages"
+      ></section>
+
+      <div class="input-area">
+
+        <div class="input-box">
+
+          <input
+            id="messageInput"
+            type="text"
+            placeholder="Nhập tin nhắn..."
+            autocomplete="off"
+          >
+
+          <button
+            class="send-btn"
+            id="sendBtn"
+          >
+            ➤
+          </button>
+
+        </div>
 
       </div>
 
-    </div>
+    </main>
 
-  </main>
+  </div>
 
-</div>
 
-<script>
-  function sendMessage() {
+  <!-- FIREBASE -->
+  <script type="module">
 
-    const input = document.getElementById("messageInput");
-    const messages = document.getElementById("messages");
+    import {
+      initializeApp
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 
-    const text = input.value.trim();
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 
-    if (!text) return;
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      query,
+      orderBy,
+      onSnapshot,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-    const message = document.createElement("div");
 
-    message.className = "message me";
+    const firebaseConfig = {
+      apiKey: "AIzaSyBxCxEMR93DYFKonNj0z4M0EcvWSN4YvE",
+      authDomain: "ht-chat-e001c.firebaseapp.com",
+      projectId: "ht-chat-e001c",
+      storageBucket: "ht-chat-e001c.firebasestorage.app",
+      messagingSenderId: "895784141081",
+      appId: "1:895784141081:web:ef5330c81b3ec0f8c48588",
+      measurementId: "G-BK83DWBJ7M"
+    };
 
-    message.innerHTML = `
-      <div class="bubble">
-        ${text}
-      </div>
-    `;
 
-    messages.appendChild(message);
+    const app = initializeApp(firebaseConfig);
 
-    input.value = "";
+    const auth = getAuth(app);
 
-    messages.scrollTop = messages.scrollHeight;
-  }
+    const db = getFirestore(app);
 
-  document
-    .getElementById("messageInput")
-    .addEventListener("keydown", function(event) {
 
-      if (event.key === "Enter") {
-        sendMessage();
+    let registerMode = false;
+
+
+    const loginScreen =
+      document.getElementById("loginScreen");
+
+    const loginBtn =
+      document.getElementById("loginBtn");
+
+    const switchMode =
+      document.getElementById("switchMode");
+
+    const loginTitle =
+      document.getElementById("loginTitle");
+
+    const loginError =
+      document.getElementById("loginError");
+
+    const emailInput =
+      document.getElementById("email");
+
+    const passwordInput =
+      document.getElementById("password");
+
+    const logoutBtn =
+      document.getElementById("logoutBtn");
+
+    const myEmail =
+      document.getElementById("myEmail");
+
+    const messageInput =
+      document.getElementById("messageInput");
+
+    const sendBtn =
+      document.getElementById("sendBtn");
+
+    const messages =
+      document.getElementById("messages");
+
+
+    /* ĐĂNG NHẬP / ĐĂNG KÝ */
+
+    switchMode.onclick = () => {
+
+      registerMode = !registerMode;
+
+      loginError.textContent = "";
+
+      if (registerMode) {
+
+        loginTitle.textContent =
+          "Tạo tài khoản HT Chat";
+
+        loginBtn.textContent =
+          "Đăng ký";
+
+        switchMode.textContent =
+          "Đã có tài khoản? Đăng nhập";
+
+      } else {
+
+        loginTitle.textContent =
+          "Đăng nhập để bắt đầu trò chuyện";
+
+        loginBtn.textContent =
+          "Đăng nhập";
+
+        switchMode.textContent =
+          "Chưa có tài khoản? Đăng ký";
+      }
+
+    };
+
+
+    loginBtn.onclick = async () => {
+
+      const email =
+        emailInput.value.trim();
+
+      const password =
+        passwordInput.value;
+
+      loginError.textContent = "";
+
+      if (!email || !password) {
+
+        loginError.textContent =
+          "Vui lòng nhập email và mật khẩu.";
+
+        return;
+      }
+
+      try {
+
+        if (registerMode) {
+
+          await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+
+        } else {
+
+          await signInWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+
+        }
+
+      } catch (error) {
+
+        console.error(error);
+
+        loginError.textContent =
+          "Email hoặc mật khẩu không hợp lệ.";
+
+      }
+
+    };
+
+
+    /* ĐĂNG XUẤT */
+
+    logoutBtn.onclick = async () => {
+
+      await signOut(auth);
+
+    };
+
+
+    /* THEO DÕI ĐĂNG NHẬP */
+
+    onAuthStateChanged(auth, user => {
+
+      if (user) {
+
+        loginScreen.style.display = "none";
+
+        myEmail.textContent =
+          user.email;
+
+        loadMessages();
+
+      } else {
+
+        loginScreen.style.display = "flex";
+
+        messages.innerHTML = "";
+
       }
 
     });
-</script>
+
+
+    /* GỬI TIN NHẮN */
+
+    async function sendMessage() {
+
+      const text =
+        messageInput.value.trim();
+
+      if (!text || !auth.currentUser) {
+        return;
+      }
+
+      try {
+
+        await addDoc(
+          collection(db, "messages"),
+          {
+            text: text,
+            email: auth.currentUser.email,
+            uid: auth.currentUser.uid,
+            createdAt: serverTimestamp()
+          }
+        );
+
+        messageInput.value = "";
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert("Không gửi được tin nhắn.");
+
+      }
+
+    }
+
+
+    sendBtn.onclick = sendMessage;
+
+
+    messageInput.addEventListener(
+      "keydown",
+      event => {
+
+        if (event.key === "Enter") {
+
+          sendMessage();
+
+        }
+
+      }
+    );
+
+
+    /* NHẬN TIN NHẮN REALTIME */
+
+    function loadMessages() {
+
+      const q = query(
+        collection(db, "messages"),
+        orderBy("createdAt", "asc")
+      );
+
+      onSnapshot(q, snapshot => {
+
+        messages.innerHTML = "";
+
+        snapshot.forEach(doc => {
+
+          const data = doc.data();
+
+          const isMe =
+            auth.currentUser &&
+            data.uid === auth.currentUser.uid;
+
+          const message =
+            document.createElement("div");
+
+          message.className =
+            "message " + (isMe ? "me" : "");
+
+          const wrap =
+            document.createElement("div");
+
+          wrap.className =
+            "bubble-wrap";
+
+          if (!isMe) {
+
+            const sender =
+              document.createElement("div");
+
+            sender.className =
+              "sender";
+
+            sender.textContent =
+              data.email || "Người dùng";
+
+            wrap.appendChild(sender);
+
+          }
+
+          const bubble =
+            document.createElement("div");
+
+          bubble.className =
+            "bubble";
+
+          bubble.textContent =
+            data.text || "";
+
+          wrap.appendChild(bubble);
+
+          message.appendChild(wrap);
+
+          messages.appendChild(message);
+
+        });
+
+        messages.scrollTop =
+          messages.scrollHeight;
+
+      });
+
+    }
+
+  </script>
 
 </body>
 </html>
