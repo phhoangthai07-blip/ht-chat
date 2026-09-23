@@ -55,6 +55,15 @@
     @media(max-width:800px){
       .sidebar{position:fixed;left:-350px;top:0;bottom:0;transition:.25s;box-shadow:20px 0 50px rgba(0,0,0,.12)}.sidebar.open{left:0}.mobile-menu{display:grid;place-items:center;border:0;background:#f2f3f7;width:40px;height:40px;border-radius:11px;font-size:18px}.topbar{padding:0 14px}.messages{padding:20px 14px}.composer{padding:10px 14px}.message-bubble{max-width:82%}
     }
+
+    .avatar-img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}.avatar{overflow:hidden}
+    .presence-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#b9c0cc;margin-right:5px;vertical-align:middle}.presence-dot.online{background:#2acb78;box-shadow:0 0 0 3px #e7faef}
+    .chat-avatar{overflow:hidden}.chat-avatar img{width:100%;height:100%;object-fit:cover;border-radius:14px}
+    .composer-wrap{position:relative}.composer{align-items:center}.composer-tools{display:flex;gap:7px}.tool-btn{width:40px;height:40px;border:0;border-radius:12px;background:#f0f2f7;font-size:19px;display:grid;place-items:center}.tool-btn:hover{background:#e7e9f2}.send{flex:0 0 48px}
+    .emoji-panel{position:absolute;bottom:74px;left:6%;width:min(330px,88vw);background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px;box-shadow:0 18px 50px rgba(0,0,0,.15);z-index:20}.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}.emoji-grid button{border:0;background:transparent;border-radius:9px;padding:7px;font-size:21px}.emoji-grid button:hover{background:#f0f1f7}
+    .image-message{display:block;max-width:280px;max-height:320px;border-radius:14px;margin-bottom:5px;object-fit:cover;cursor:pointer}.message-bubble.image-only{padding:5px}.message-bubble.image-only .message-time{padding:0 7px 3px}.toast{position:fixed;right:20px;bottom:20px;background:#202536;color:#fff;padding:11px 15px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);z-index:200;font-size:13px}
+    .profile-upload{display:flex;justify-content:center;margin:8px 0 18px}.profile-upload button{border:0;background:var(--soft);color:var(--primary);font-weight:800;padding:9px 13px;border-radius:11px}.notification-toggle{display:flex;align-items:center;justify-content:space-between;margin-top:18px;padding:12px;background:#f7f8fb;border-radius:13px;font-size:13px}.notification-toggle button{border:0;background:var(--primary);color:#fff;border-radius:9px;padding:7px 10px;font-size:12px}
+    @media(max-width:800px){.composer{gap:6px}.composer-tools{gap:4px}.tool-btn{width:38px;height:38px}.composer input{min-width:0}.emoji-panel{left:8px;bottom:64px}.image-message{max-width:230px}.topbar{height:64px}.chat-avatar{width:40px;height:40px}.send{width:44px;flex-basis:44px}}
   </style>
 </head>
 
@@ -149,9 +158,13 @@
 
         <div id="chatContent" class="hidden" style="flex:1;min-height:0;display:flex;flex-direction:column">
           <div id="messages" class="messages"></div>
-          <div class="composer">
-            <input id="messageInput" placeholder="Nhập tin nhắn..." autocomplete="off">
-            <button id="sendButton" class="send">➤</button>
+          <div class="composer-wrap">
+            <div id="emojiPanel" class="emoji-panel hidden"><div class="emoji-grid" id="emojiGrid"></div></div>
+            <div class="composer">
+              <div class="composer-tools"><button type="button" class="tool-btn" id="emojiButton">😊</button><button type="button" class="tool-btn" id="imageButton">🖼️</button><input id="imageInput" type="file" accept="image/*" class="hidden"></div>
+              <input id="messageInput" placeholder="Nhập tin nhắn..." autocomplete="off">
+              <button id="sendButton" class="send">➤</button>
+            </div>
           </div>
         </div>
       </section>
@@ -165,6 +178,8 @@
         <div class="avatar" id="profileAvatar">?</div>
         <h2 id="profileName">...</h2>
         <p id="profileEmail">...</p>
+        <div class="profile-upload"><button id="avatarButton">📷 Đổi ảnh đại diện</button><input id="avatarInput" type="file" accept="image/*" class="hidden"></div>
+        <div class="notification-toggle"><span>🔔 Thông báo tin nhắn</span><button id="notificationButton">Bật</button></div>
       </div>
     </div>
   </div>
@@ -185,8 +200,11 @@
     };
     const initials = (name = "?") =>
       name.trim().split(/\s+/).slice(0, 2).map(x => x[0]).join("").toUpperCase() || "?";
-    const avatar = (name, cls = "") =>
-      `<div class="avatar ${cls}">${escapeHtml(initials(name))}</div>`;
+    const avatar = (name, cls = "", avatarUrl = "") =>
+      `<div class="avatar ${cls}">${avatarUrl ? `<img class="avatar-img" src="${escapeHtml(avatarUrl)}" alt="">` : escapeHtml(initials(name))}</div>`;
+    const AVATAR_BUCKET = "chat-images";
+    const imagePublicUrl = (path) => supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path).data.publicUrl;
+    const avatarUrlFor = (userId) => imagePublicUrl(`avatars/${userId}.jpg`);
 
     let currentUser = null;
     let currentProfile = null;
@@ -194,6 +212,10 @@
     let selectedConversationFriend = null;
     let messageChannel = null;
     let friendChannel = null;
+    let presenceChannel = null;
+    let typingTimer = null;
+    let notificationsEnabled = false;
+    const onlineUsers = new Set();
 
     function showAuth(mode = "login") {
       $("loginPanel").classList.toggle("hidden", mode !== "login");
@@ -267,11 +289,12 @@
       }
 
       currentProfile = data;
+      const myAvatarUrl = avatarUrlFor(currentUser.id) + `?v=${Date.now()}`;
       $("myName").textContent = data.username;
-      $("myAvatar").textContent = initials(data.username);
+      $("myAvatar").innerHTML = `<img class="avatar-img" src="${myAvatarUrl}" onerror="this.remove()" alt="">${escapeHtml(initials(data.username))}`;
       $("profileName").textContent = data.username;
       $("profileEmail").textContent = currentUser.email || "";
-      $("profileAvatar").textContent = initials(data.username);
+      $("profileAvatar").innerHTML = `<img class="avatar-img" src="${myAvatarUrl}" onerror="this.remove()" alt="">${escapeHtml(initials(data.username))}`;
     }
 
     async function loadAll() {
@@ -316,7 +339,7 @@
       $("friendCount").textContent = data.length;
       $("friendList").innerHTML = data.map(user => `
         <button class="person-row" data-id="${user.id}">
-          ${avatar(user.username)}
+          ${avatar(user.username, "", avatarUrlFor(user.id))}
           <span class="person-main">
             <b>${escapeHtml(user.username)}</b>
             <small>Đang là bạn bè</small>
@@ -359,7 +382,7 @@
             const p = profiles.find(x => x.id === req.requester_id);
             return `
               <div class="request-row">
-                ${avatar(p?.username || "?", "small")}
+                ${avatar(p?.username || "?", "small", p?.id ? avatarUrlFor(p.id) : "")}
                 <div class="person-main"><b>${escapeHtml(p?.username || "Người dùng")}</b><small>Muốn kết bạn với bạn</small></div>
                 <div class="request-actions">
                   <button class="accept-btn" data-id="${req.id}" data-user="${req.requester_id}">Chấp nhận</button>
@@ -450,7 +473,7 @@
 
             return `
               <div class="search-row">
-                ${avatar(user.username)}
+                ${avatar(user.username, "", avatarUrlFor(user.id))}
                 <div class="person-main"><b>${escapeHtml(user.username)}</b><small>Người dùng HT Chat</small></div>
                 ${action}
               </div>`;
@@ -512,8 +535,10 @@
       $("chatEmpty").classList.add("hidden");
       $("chatContent").classList.remove("hidden");
       $("chatName").textContent = user.username;
-      $("chatAvatar").textContent = initials(user.username);
-      $("chatStatus").textContent = "Bạn bè";
+      const chatUrl = avatarUrlFor(user.id) + `?v=${Date.now()}`;
+      $("chatAvatar").innerHTML = `<img src="${chatUrl}" onerror="this.remove()" alt="">${escapeHtml(initials(user.username))}`;
+      updateChatPresence();
+      subscribeTyping();
       $("mobileSidebar").classList.remove("open");
       switchView("friends");
       loadMessages();
@@ -554,6 +579,7 @@
           if (belongs) {
             renderMessage(m);
             scrollMessages();
+            if (m.sender_id === selectedUser.id && notificationsEnabled && document.hidden) { try { new Notification(selectedUser.username, { body: m.content.startsWith("[image]") ? "📷 Đã gửi một ảnh" : m.content }); } catch (_) {} }
           }
         })
         .subscribe();
@@ -566,7 +592,12 @@
 
       const bubble = document.createElement("div");
       bubble.className = "message-bubble";
-      bubble.textContent = message.content;
+      if (message.content.startsWith("[image]")) {
+        bubble.classList.add("image-only");
+        const img = document.createElement("img");
+        img.className = "image-message"; img.src = message.content.slice(7); img.alt = "Ảnh";
+        img.onclick = () => window.open(img.src, "_blank"); bubble.appendChild(img);
+      } else bubble.textContent = message.content;
 
       const time = document.createElement("span");
       time.className = "message-time";
@@ -601,6 +632,31 @@
       } catch (_) {}
     }
 
+    const EMOJIS = ["😀","😂","😍","🥰","😎","😭","😡","🤔","👍","👎","❤️","💖","🔥","🎉","👏","🙏","😊","😄","😆","😉","🤣","😘","🥹","😇","🤩","😴","🤗","😱","😢","😮","🤝","💯","✨","🎈","🎁","🚀","💬","🙌","👌","💪","👀","🌟","☀️","🌙","🍀","🐶","🐱","🍕","☕"];
+    $("emojiGrid").innerHTML = EMOJIS.map(e => `<button type="button">${e}</button>`).join("");
+    $("emojiGrid").querySelectorAll("button").forEach(btn => btn.onclick = () => { $("messageInput").value += btn.textContent; $("messageInput").focus(); });
+    $("emojiButton").onclick = () => $("emojiPanel").classList.toggle("hidden");
+    document.addEventListener("click", e => { if (!$('emojiPanel').contains(e.target) && e.target !== $('emojiButton')) $('emojiPanel').classList.add('hidden'); });
+    function toast(text){const t=document.createElement('div');t.className='toast';t.textContent=text;document.body.appendChild(t);setTimeout(()=>t.remove(),2400);}
+    async function uploadImage(file, folder){
+      if(!file || !file.type.startsWith('image/')) return null;
+      if(file.size>8*1024*1024){toast('Ảnh tối đa 8MB');return null;}
+      const ext=(file.name.split('.').pop()||'jpg').toLowerCase(); const path=`${folder}/${currentUser.id}-${Date.now()}.${ext}`;
+      const {error}=await supabase.storage.from(AVATAR_BUCKET).upload(path,file,{upsert:false,contentType:file.type});
+      if(error){console.error(error);toast('Không tải được ảnh');return null;} return imagePublicUrl(path);
+    }
+    $("imageButton").onclick=()=>$("imageInput").click();
+    $("imageInput").onchange=async e=>{const file=e.target.files?.[0];if(!file||!selectedUser)return;const url=await uploadImage(file,'messages');if(!url)return;const {error}=await supabase.from('messages').insert({sender_id:currentUser.id,receiver_id:selectedUser.id,content:'[image]'+url});if(error){console.error(error);toast('Không gửi được ảnh');return;}playSendSound();e.target.value='';};
+    $("avatarButton").onclick=()=>$("avatarInput").click();
+    $("avatarInput").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>8*1024*1024){toast('Ảnh tối đa 8MB');return;}const {error}=await supabase.storage.from(AVATAR_BUCKET).upload(`avatars/${currentUser.id}.jpg`,file,{upsert:true,contentType:file.type});if(error){console.error(error);toast('Không cập nhật được avatar');return;}await loadProfile();await loadAll();toast('Đã cập nhật ảnh đại diện');e.target.value='';};
+    async function enableNotifications(){if(!('Notification' in window))return toast('Trình duyệt không hỗ trợ thông báo');const p=await Notification.requestPermission();notificationsEnabled=p==='granted';$("notificationButton").textContent=notificationsEnabled?'Đã bật':'Bật';if(notificationsEnabled)toast('Đã bật thông báo');}
+    $("notificationButton").onclick=enableNotifications;
+    function subscribePresence(){if(!currentUser)return;if(presenceChannel)supabase.removeChannel(presenceChannel);presenceChannel=supabase.channel('presence-'+currentUser.id,{config:{presence:{key:currentUser.id}}});presenceChannel.on('presence',{event:'sync'},updateOnlineSet).on('presence',{event:'join'},updateOnlineSet).on('presence',{event:'leave'},updateOnlineSet);presenceChannel.subscribe(async status=>{if(status==='SUBSCRIBED')await presenceChannel.track({online:true});});}
+    function updateOnlineSet(){if(!presenceChannel)return;onlineUsers.clear();Object.keys(presenceChannel.presenceState()).forEach(id=>onlineUsers.add(id));updateChatPresence();loadFriends();}
+    function updateChatPresence(){if(!selectedUser)return;const on=onlineUsers.has(selectedUser.id);$("chatStatus").innerHTML=on?'<span class="presence-dot online"></span>Đang hoạt động':'<span class="presence-dot"></span>Đang ngoại tuyến';}
+    function subscribeTyping(){if(!selectedUser||!presenceChannel)return;presenceChannel.on('broadcast',{event:'typing'},payload=>{if(payload.payload?.userId!==selectedUser.id)return;$("chatStatus").textContent=payload.payload.typing?'đang nhập...':(onlineUsers.has(selectedUser.id)?'Đang hoạt động':'Đang ngoại tuyến');});}
+    function sendTyping(v){if(presenceChannel&&selectedUser)presenceChannel.send({type:'broadcast',event:'typing',payload:{userId:currentUser.id,typing:v}});}
+    $("messageInput").addEventListener('input',()=>{sendTyping(true);clearTimeout(typingTimer);typingTimer=setTimeout(()=>sendTyping(false),900);});
     async function sendMessage() {
       if (!selectedUser) return;
       const content = $("messageInput").value.trim();
@@ -622,6 +678,7 @@
 
       // Chỉ phát âm thanh sau khi tin nhắn đã gửi thành công.
       playSendSound();
+      sendTyping(false);
       $("messageInput").value = "";
       $("messageInput").focus();
     }
@@ -641,6 +698,7 @@
     $("logoutButton").onclick = async () => {
       if (messageChannel) await supabase.removeChannel(messageChannel);
       if (friendChannel) await supabase.removeChannel(friendChannel);
+      if (presenceChannel) await supabase.removeChannel(presenceChannel);
       await supabase.auth.signOut();
     };
 
@@ -668,6 +726,7 @@
         await loadProfile();
         await loadAll();
         subscribeFriendRequests();
+        subscribePresence();
         switchView("friends");
       } else {
         currentUser = null;
