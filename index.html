@@ -3,244 +3,1433 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NexusChat - Nhắn tin thời gian thực</title>
-  <!-- Supabase JS SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-javascript@2"></script>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <style>
-    .chat-bubble-me { background-color: #2563eb; color: white; border-radius: 16px 16px 4px 16px; }
-    .chat-bubble-other { background-color: #374151; color: white; border-radius: 16px 16px 16px 4px; }
-  </style>
-</head>
-<body class="bg-gray-900 text-gray-100 font-sans h-screen flex overflow-hidden">
+  <title>HT Chat</title>
 
-  <!-- MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ -->
-  <div id="auth-screen" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50 p-4">
-    <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
-      <div class="text-center mb-6">
-        <h1 class="text-3xl font-bold text-blue-500 flex items-center justify-center gap-2">
-          <i class="fa-solid fa-paper-plane"></i> NexusChat
-        </h1>
-        <p class="text-gray-400 text-sm mt-1" id="auth-subtitle">Đăng nhập để kết nối thời gian thực</p>
-      </div>
+  <script type="module">
+    import { createClient } from
+      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-      <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
-        <div id="display-name-group" class="hidden">
-          <label class="block text-sm text-gray-400 mb-1">Tên hiển thị</label>
-          <input type="text" id="display-name" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
-        </div>
-        <div>
-          <label class="block text-sm text-gray-400 mb-1">Email</label>
-          <input type="email" id="email" required placeholder="name@example.com" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
-        </div>
-        <div>
-          <label class="block text-sm text-gray-400 mb-1">Mật khẩu</label>
-          <input type="password" id="password" required placeholder="••••••••" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
-        </div>
+    // ==============================
+    // SUPABASE
+    // ==============================
 
-        <button type="submit" id="auth-submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-all shadow-lg shadow-blue-500/20">
-          Đăng nhập
-        </button>
-      </form>
-
-      <div class="mt-4 text-center">
-        <button onclick="toggleAuthMode()" id="toggle-auth-btn" class="text-blue-400 hover:underline text-sm">
-          Chưa có tài khoản? Đăng ký ngay
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- GIAO DIỆN CHAT CHÍNH -->
-  <div id="app-screen" class="hidden w-full h-full flex">
-    <!-- SIDEBAR -->
-    <div class="w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
-      <div class="p-4 border-b border-gray-700 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-lg" id="my-avatar">U</div>
-          <div>
-            <h3 class="font-bold text-sm" id="my-name">User</h3>
-            <span class="text-xs text-green-400 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span> Online</span>
-          </div>
-        </div>
-        <button onclick="logout()" class="text-gray-400 hover:text-red-400 transition-colors p-2" title="Đăng xuất">
-          <i class="fa-solid fa-right-from-bracket"></i>
-        </button>
-      </div>
-
-      <div class="p-3">
-        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Phòng chat chung (Global)</p>
-        <div onclick="selectRoom('global')" class="p-3 bg-blue-600/20 border border-blue-500/30 rounded-xl cursor-pointer flex items-center gap-3 hover:bg-blue-600/30 transition-all">
-          <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white"><i class="fa-solid fa-users"></i></div>
-          <div>
-            <h4 class="font-bold text-sm">Sảnh Chung</h4>
-            <p class="text-xs text-gray-400">Trò chuyện với mọi người</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- KHUNG CHAT -->
-    <div class="flex-1 flex flex-col bg-gray-900">
-      <div class="p-4 border-b border-gray-800 bg-gray-800/50 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white"><i class="fa-solid fa-users"></i></div>
-          <div>
-            <h3 class="font-bold text-sm">Sảnh Chung</h3>
-            <span class="text-xs text-green-400">Realtime Chat</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- TIN NHẮN -->
-      <div class="flex-1 overflow-y-auto p-4 space-y-4" id="messages-container">
-        <div class="text-center text-gray-500 my-auto">Đang tải tin nhắn...</div>
-      </div>
-
-      <!-- NHẬP TIN NHẮN -->
-      <form id="message-form" onsubmit="handleSendMessage(event)" class="p-4 bg-gray-800 border-t border-gray-700 flex items-center gap-2">
-        <input type="text" id="message-input" placeholder="Nhập tin nhắn..." required class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500">
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg transition-all">
-          <i class="fa-solid fa-paper-plane"></i>
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    // CẤU HÌNH DỰ ÁN SUPABASE CỦA BẠN
     const SUPABASE_URL = "https://bclybeujhhiwevgppgt.supabase.co";
-    // MÃ KEY DƯỚI ĐÂY ĐÃ ĐƯỢC ĐIỀN CHÍNH XÁC THEO HÌNH CỦA BẠN:
-    const SUPABASE_ANON_KEY = "sb_publishable_yFagLzYinzPyztZkhJb-BQ_6xx_L_M0"; 
 
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // DÁN PUBLISHABLE KEY CỦA BẠN VÀO ĐÂY
+    const SUPABASE_KEY = "sb_publishable_yFagLzYinzPyztZkhJb-BQ_6xx_LRcF";
 
-    let isSignUp = false;
+    const supabase = createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+    // ==============================
+    // ELEMENTS
+    // ==============================
+
+    const authScreen = document.getElementById("authScreen");
+    const chatScreen = document.getElementById("chatScreen");
+
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+
+    const loginEmail = document.getElementById("loginEmail");
+    const loginPassword = document.getElementById("loginPassword");
+
+    const registerUsername = document.getElementById("registerUsername");
+    const registerEmail = document.getElementById("registerEmail");
+    const registerPassword = document.getElementById("registerPassword");
+
+    const authTitle = document.getElementById("authTitle");
+    const authSubtitle = document.getElementById("authSubtitle");
+
+    const loginError = document.getElementById("loginError");
+    const registerError = document.getElementById("registerError");
+
+    const userList = document.getElementById("userList");
+    const messages = document.getElementById("messages");
+
+    const chatName = document.getElementById("chatName");
+    const chatStatus = document.getElementById("chatStatus");
+
+    const messageInput = document.getElementById("messageInput");
+    const sendButton = document.getElementById("sendButton");
+
+    const currentUserName = document.getElementById("currentUserName");
+    const currentUserAvatar = document.getElementById("currentUserAvatar");
+
+    const logoutButton = document.getElementById("logoutButton");
+
     let currentUser = null;
+    let currentProfile = null;
+    let selectedUser = null;
+    let realtimeChannel = null;
 
-    function toggleAuthMode() {
-      isSignUp = !isSignUp;
-      document.getElementById('display-name-group').classList.toggle('hidden', !isSignUp);
-      document.getElementById('auth-subtitle').innerText = isSignUp ? "Tạo tài khoản mới" : "Đăng nhập để kết nối thời gian thực";
-      document.getElementById('auth-submit-btn').innerText = isSignUp ? "Đăng ký" : "Đăng nhập";
-      document.getElementById('toggle-auth-btn').innerText = isSignUp ? "Đã có tài khoản? Đăng nhập" : "Chưa có tài khoản? Đăng ký ngay";
+    // ==============================
+    // AUTH SCREEN
+    // ==============================
+
+    function showLogin() {
+      loginForm.classList.remove("hidden");
+      registerForm.classList.add("hidden");
+
+      authTitle.textContent = "Chào mừng trở lại";
+      authSubtitle.textContent = "Đăng nhập vào HT Chat";
+
+      loginError.textContent = "";
+      registerError.textContent = "";
     }
 
-    async function handleAuth(e) {
+    function showRegister() {
+      loginForm.classList.add("hidden");
+      registerForm.classList.remove("hidden");
+
+      authTitle.textContent = "Tạo tài khoản";
+      authSubtitle.textContent = "Tham gia HT Chat";
+
+      loginError.textContent = "";
+      registerError.textContent = "";
+    }
+
+    document.getElementById("showRegister").onclick = () => {
+      showRegister();
+    };
+
+    document.getElementById("showLogin").onclick = () => {
+      showLogin();
+    };
+
+    // ==============================
+    // LOGIN
+    // ==============================
+
+    loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
 
-      if (isSignUp) {
-        const displayName = document.getElementById('display-name').value || email.split('@')[0];
-        const { data, error } = await supabaseClient.auth.signUp({
-          email, password,
-          options: { data: { display_name: displayName } }
-        });
-        if (error) alert("Lỗi đăng ký: " + error.message);
-        else {
-          alert("Đăng ký thành công! Hãy chuyển sang Đăng nhập.");
-          toggleAuthMode();
-        }
-      } else {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) alert("Lỗi đăng nhập: " + error.message);
-        else {
-          currentUser = data.user;
-          initApp();
-        }
-      }
-    }
+      loginError.textContent = "";
 
-    function initApp() {
-      document.getElementById('auth-screen').classList.add('hidden');
-      document.getElementById('app-screen').classList.remove('hidden');
-      const name = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
-      document.getElementById('my-name').innerText = name;
-      document.getElementById('my-avatar').innerText = name[0].toUpperCase();
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value;
 
-      loadMessages();
-      subscribeRealtime();
-    }
-
-    async function loadMessages() {
-      const container = document.getElementById('messages-container');
-      const { data, error } = await supabaseClient
-        .from('messages')
-        .select('*')
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        container.innerHTML = `<div class="text-center text-red-400">Lỗi tải tin nhắn: ${error.message}</div>`;
+      if (!email || !password) {
+        loginError.textContent = "Vui lòng nhập đầy đủ thông tin.";
         return;
       }
 
-      container.innerHTML = '';
-      if (data.length === 0) {
-        container.innerHTML = `<div class="text-center text-gray-500 my-auto">Chưa có tin nhắn nào. Hãy mở lời trước nhé!</div>`;
-      } else {
-        data.forEach(msg => renderMessage(msg));
-        scrollToBottom();
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        loginError.textContent = "Email hoặc mật khẩu không đúng.";
+        console.error(error);
       }
-    }
+    });
 
-    function renderMessage(msg) {
-      const container = document.getElementById('messages-container');
-      const isMe = currentUser && msg.sender_id === currentUser.id;
+    // ==============================
+    // REGISTER
+    // ==============================
 
-      const div = document.createElement('div');
-      div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
-      
-      div.innerHTML = `
-        <div class="text-xs text-gray-400 mb-1 px-1">${isMe ? 'Bạn' : (msg.sender_name || 'Thành viên')}</div>
-        <div class="${isMe ? 'chat-bubble-me' : 'chat-bubble-other'} px-4 py-2.5 max-w-xs md:max-w-md break-words shadow-md">
-          ${msg.text}
-        </div>
-      `;
-      container.appendChild(div);
-      scrollToBottom();
-    }
-
-    async function handleSendMessage(e) {
+    registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const input = document.getElementById('message-input');
-      const text = input.value.trim();
-      if (!text || !currentUser) return;
 
-      input.value = '';
+      registerError.textContent = "";
 
-      const { error } = await supabaseClient.from('messages').insert([
-        { 
-          conversation_id: 'global', 
-          sender_id: currentUser.id, 
-          sender_name: currentUser.user_metadata?.display_name || currentUser.email.split('@')[0],
-          text: text 
+      const username = registerUsername.value.trim();
+      const email = registerEmail.value.trim();
+      const password = registerPassword.value;
+
+      if (!username || !email || !password) {
+        registerError.textContent = "Vui lòng nhập đầy đủ thông tin.";
+        return;
+      }
+
+      if (username.length < 3) {
+        registerError.textContent = "Tên người dùng phải có ít nhất 3 ký tự.";
+        return;
+      }
+
+      if (password.length < 6) {
+        registerError.textContent = "Mật khẩu phải có ít nhất 6 ký tự.";
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username: username
+          }
         }
-      ]);
+      });
 
-      if (error) alert("Lỗi gửi tin nhắn: " + error.message);
+      if (error) {
+        registerError.textContent = error.message;
+        console.error(error);
+        return;
+      }
+
+      if (data.session) {
+        registerError.textContent = "";
+      } else {
+        registerError.style.color = "#16a34a";
+        registerError.textContent =
+          "Tạo tài khoản thành công! Hãy kiểm tra email nếu được yêu cầu xác nhận.";
+      }
+    });
+
+    // ==============================
+    // AUTH STATE
+    // ==============================
+
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        currentUser = session.user;
+
+        await loadCurrentProfile();
+
+        authScreen.classList.add("hidden");
+        chatScreen.classList.remove("hidden");
+
+        await loadUsers();
+      } else {
+        currentUser = null;
+        currentProfile = null;
+
+        chatScreen.classList.add("hidden");
+        authScreen.classList.remove("hidden");
+
+        showLogin();
+      }
+    });
+
+    // ==============================
+    // CURRENT PROFILE
+    // ==============================
+
+    async function loadCurrentProfile() {
+      if (!currentUser) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", currentUser.id)
+        .single();
+
+      if (error) {
+        console.error("Profile error:", error);
+        return;
+      }
+
+      currentProfile = data;
+
+      currentUserName.textContent =
+        data.username || currentUser.email.split("@")[0];
+
+      currentUserAvatar.textContent =
+        getInitials(data.username || currentUser.email);
     }
 
-    function subscribeRealtime() {
-      supabaseClient
-        .channel('public:messages')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-          renderMessage(payload.new);
-        })
+    // ==============================
+    // LOAD USERS
+    // ==============================
+
+    async function loadUsers() {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .neq("id", currentUser.id)
+        .order("username");
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      userList.innerHTML = "";
+
+      if (!data || data.length === 0) {
+        userList.innerHTML = `
+          <div class="empty-users">
+            Chưa có người dùng khác.
+          </div>
+        `;
+        return;
+      }
+
+      data.forEach(user => {
+        const item = document.createElement("button");
+
+        item.className = "user-item";
+
+        item.innerHTML = `
+          <div class="avatar">
+            ${escapeHtml(getInitials(user.username))}
+          </div>
+
+          <div class="user-info">
+            <div class="user-name">
+              ${escapeHtml(user.username)}
+            </div>
+
+            <div class="user-status">
+              Nhấn để nhắn tin
+            </div>
+          </div>
+        `;
+
+        item.onclick = () => {
+          selectUser(user);
+        };
+
+        userList.appendChild(item);
+      });
+    }
+
+    // ==============================
+    // SELECT USER
+    // ==============================
+
+    async function selectUser(user) {
+      selectedUser = user;
+
+      document.querySelectorAll(".user-item").forEach(item => {
+        item.classList.remove("active");
+      });
+
+      event?.currentTarget?.classList?.add("active");
+
+      chatName.textContent = user.username;
+      chatStatus.textContent = "Đang trò chuyện";
+
+      document.getElementById("chatEmpty").classList.add("hidden");
+      document.getElementById("chatContent").classList.remove("hidden");
+
+      await loadMessages();
+
+      subscribeMessages();
+    }
+
+    // ==============================
+    // LOAD MESSAGES
+    // ==============================
+
+    async function loadMessages() {
+      if (!currentUser || !selectedUser) return;
+
+      messages.innerHTML = "";
+
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .or(
+          `and(sender_id.eq.${currentUser.id},receiver_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},receiver_id.eq.${currentUser.id})`
+        )
+        .order("created_at", {
+          ascending: true
+        });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      data.forEach(message => {
+        renderMessage(message);
+      });
+
+      scrollMessages();
+    }
+
+    // ==============================
+    // REALTIME
+    // ==============================
+
+    function subscribeMessages() {
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel);
+      }
+
+      realtimeChannel = supabase
+        .channel("chat-" + currentUser.id)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages"
+          },
+          payload => {
+            const message = payload.new;
+
+            const belongsToConversation =
+              (
+                message.sender_id === currentUser.id &&
+                message.receiver_id === selectedUser.id
+              ) ||
+              (
+                message.sender_id === selectedUser.id &&
+                message.receiver_id === currentUser.id
+              );
+
+            if (belongsToConversation) {
+              renderMessage(message);
+              scrollMessages();
+            }
+          }
+        )
         .subscribe();
     }
 
-    function scrollToBottom() {
-      const container = document.getElementById('messages-container');
-      container.scrollTop = container.scrollHeight;
+    // ==============================
+    // SEND MESSAGE
+    // ==============================
+
+    async function sendMessage() {
+      if (!currentUser || !selectedUser) return;
+
+      const content = messageInput.value.trim();
+
+      if (!content) return;
+
+      sendButton.disabled = true;
+
+      const { error } = await supabase
+        .from("messages")
+        .insert({
+          sender_id: currentUser.id,
+          receiver_id: selectedUser.id,
+          content: content
+        });
+
+      sendButton.disabled = false;
+
+      if (error) {
+        console.error(error);
+        alert("Không gửi được tin nhắn.");
+        return;
+      }
+
+      messageInput.value = "";
+      messageInput.focus();
     }
 
-    function logout() {
-      supabaseClient.auth.signOut();
-      location.reload();
+    sendButton.onclick = sendMessage;
+
+    messageInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // ==============================
+    // RENDER MESSAGE
+    // ==============================
+
+    function renderMessage(message) {
+      const isMine =
+        message.sender_id === currentUser.id;
+
+      const wrapper = document.createElement("div");
+
+      wrapper.className =
+        "message-row " + (isMine ? "mine" : "theirs");
+
+      const bubble = document.createElement("div");
+
+      bubble.className = "message-bubble";
+
+      bubble.textContent = message.content;
+
+      wrapper.appendChild(bubble);
+
+      messages.appendChild(wrapper);
     }
+
+    // ==============================
+    // LOGOUT
+    // ==============================
+
+    logoutButton.onclick = async () => {
+      await supabase.auth.signOut();
+
+      if (realtimeChannel) {
+        await supabase.removeChannel(realtimeChannel);
+        realtimeChannel = null;
+      }
+    };
+
+    // ==============================
+    // HELPERS
+    // ==============================
+
+    function getInitials(name) {
+      if (!name) return "?";
+
+      return name
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map(word => word[0])
+        .join("")
+        .toUpperCase();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function scrollMessages() {
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    // ==============================
+    // MOBILE SIDEBAR
+    // ==============================
+
+    document.getElementById("mobileMenu").onclick = () => {
+      document
+        .getElementById("sidebar")
+        .classList.toggle("mobile-open");
+    };
+
+    document.getElementById("closeSidebar").onclick = () => {
+      document
+        .getElementById("sidebar")
+        .classList.remove("mobile-open");
+    };
+
+    showLogin();
+
   </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      background: #f4f6fb;
+      color: #111827;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* =========================
+       AUTH
+    ========================= */
+
+    #authScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 25px;
+      background:
+        radial-gradient(
+          circle at top left,
+          #dfe6ff,
+          transparent 35%
+        ),
+        radial-gradient(
+          circle at bottom right,
+          #e9ddff,
+          transparent 35%
+        ),
+        #f5f7ff;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 430px;
+      padding: 42px;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow:
+        0 30px 80px rgba(40, 50, 100, 0.15);
+      backdrop-filter: blur(20px);
+    }
+
+    .logo {
+      width: 62px;
+      height: 62px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 30px;
+      background: linear-gradient(
+        135deg,
+        #5967f2,
+        #8a5cf6
+      );
+      color: white;
+      box-shadow:
+        0 12px 30px rgba(89, 103, 242, 0.3);
+    }
+
+    .auth-card h1 {
+      text-align: center;
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .auth-subtitle {
+      text-align: center;
+      color: #6b7280;
+      margin: 10px 0 30px;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 7px;
+      color: #374151;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px 15px;
+      border: 1px solid #e1e5ef;
+      border-radius: 14px;
+      outline: none;
+      background: #fafbff;
+      transition: 0.2s;
+    }
+
+    .input-group input:focus {
+      border-color: #6875f5;
+      box-shadow:
+        0 0 0 4px rgba(104, 117, 245, 0.1);
+    }
+
+    .primary-button {
+      width: 100%;
+      border: 0;
+      padding: 14px;
+      border-radius: 14px;
+      color: white;
+      font-weight: 700;
+      background: linear-gradient(
+        135deg,
+        #5865f2,
+        #7657f5
+      );
+      transition: 0.2s;
+    }
+
+    .primary-button:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 10px 25px rgba(88, 101, 242, 0.25);
+    }
+
+    .auth-error {
+      min-height: 22px;
+      margin: 10px 0;
+      color: #dc2626;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .switch-auth {
+      margin-top: 20px;
+      text-align: center;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .switch-auth button {
+      border: 0;
+      background: none;
+      color: #5865f2;
+      font-weight: 700;
+    }
+
+    /* =========================
+       CHAT APP
+    ========================= */
+
+    #chatScreen {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+      background: #f5f7fb;
+    }
+
+    .sidebar {
+      width: 330px;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.92);
+      border-right: 1px solid #e7e9f0;
+      display: flex;
+      flex-direction: column;
+      z-index: 20;
+    }
+
+    .sidebar-header {
+      padding: 22px;
+      border-bottom: 1px solid #edf0f5;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 43px;
+      height: 43px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: linear-gradient(
+        135deg,
+        #5865f2,
+        #7a58f4
+      );
+      color: white;
+      font-size: 20px;
+    }
+
+    .brand-text {
+      font-weight: 800;
+      font-size: 20px;
+    }
+
+    .brand-subtitle {
+      font-size: 12px;
+      color: #8b93a7;
+      margin-top: 2px;
+    }
+
+    .search-box {
+      margin-top: 20px;
+    }
+
+    .search-box input {
+      width: 100%;
+      border: 0;
+      background: #f3f5f9;
+      padding: 12px 14px;
+      border-radius: 12px;
+      outline: none;
+    }
+
+    .user-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .user-item {
+      width: 100%;
+      border: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: transparent;
+      border-radius: 14px;
+      text-align: left;
+      transition: 0.15s;
+    }
+
+    .user-item:hover,
+    .user-item.active {
+      background: #f0f2ff;
+    }
+
+    .avatar {
+      width: 45px;
+      height: 45px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      background: linear-gradient(
+        135deg,
+        #5967f2,
+        #885cf6
+      );
+    }
+
+    .user-info {
+      min-width: 0;
+    }
+
+    .user-name {
+      font-weight: 700;
+      color: #1f2937;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-status {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 3px;
+    }
+
+    .empty-users {
+      padding: 30px 15px;
+      text-align: center;
+      color: #9ca3af;
+      font-size: 14px;
+    }
+
+    .sidebar-bottom {
+      padding: 15px;
+      border-top: 1px solid #edf0f5;
+    }
+
+    .my-account {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+    }
+
+    .my-account .avatar {
+      width: 38px;
+      height: 38px;
+      font-size: 13px;
+    }
+
+    .my-name {
+      flex: 1;
+      min-width: 0;
+      font-size: 14px;
+      font-weight: 700;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .logout {
+      width: 35px;
+      height: 35px;
+      border: 0;
+      border-radius: 10px;
+      background: #f4f5f8;
+      font-size: 16px;
+    }
+
+    /* =========================
+       CHAT AREA
+    ========================= */
+
+    .main-chat {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      height: 76px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 0 25px;
+      background: rgba(255, 255, 255, 0.92);
+      border-bottom: 1px solid #e7e9f0;
+    }
+
+    .chat-header-info {
+      min-width: 0;
+    }
+
+    .chat-header-name {
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .chat-header-status {
+      color: #22a06b;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .mobile-menu {
+      display: none;
+      border: 0;
+      background: #f3f4f8;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      font-size: 19px;
+    }
+
+    .chat-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #9ca3af;
+    }
+
+    .chat-empty-icon {
+      width: 75px;
+      height: 75px;
+      border-radius: 25px;
+      margin: auto auto 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      background: #eef0ff;
+    }
+
+    .chat-empty h2 {
+      color: #374151;
+      margin: 0 0 8px;
+    }
+
+    .chat-empty p {
+      margin: 0;
+    }
+
+    #chatContent {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 30px;
+    }
+
+    .message-row {
+      display: flex;
+      margin-bottom: 10px;
+    }
+
+    .message-row.mine {
+      justify-content: flex-end;
+    }
+
+    .message-bubble {
+      max-width: min(70%, 600px);
+      padding: 11px 15px;
+      border-radius: 18px;
+      line-height: 1.45;
+      font-size: 14px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .message-row.mine .message-bubble {
+      color: white;
+      background: linear-gradient(
+        135deg,
+        #5865f2,
+        #7657f5
+      );
+      border-bottom-right-radius: 5px;
+    }
+
+    .message-row.theirs .message-bubble {
+      color: #1f2937;
+      background: white;
+      border: 1px solid #edf0f4;
+      border-bottom-left-radius: 5px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .message-input-area {
+      padding: 15px 25px 20px;
+      background: rgba(255, 255, 255, 0.92);
+      border-top: 1px solid #e7e9f0;
+    }
+
+    .message-form {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .message-form input {
+      flex: 1;
+      border: 1px solid #e3e6ee;
+      background: #f7f8fb;
+      border-radius: 16px;
+      padding: 14px 17px;
+      outline: none;
+    }
+
+    .message-form input:focus {
+      border-color: #6875f5;
+      background: white;
+    }
+
+    .send-button {
+      width: 48px;
+      height: 48px;
+      border: 0;
+      border-radius: 15px;
+      color: white;
+      background: linear-gradient(
+        135deg,
+        #5865f2,
+        #7657f5
+      );
+      font-size: 19px;
+    }
+
+    /* =========================
+       MOBILE
+    ========================= */
+
+    @media (max-width: 700px) {
+      .sidebar {
+        position: fixed;
+        left: -340px;
+        top: 0;
+        bottom: 0;
+        transition: 0.25s;
+        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.12);
+      }
+
+      .sidebar.mobile-open {
+        left: 0;
+      }
+
+      .mobile-menu {
+        display: block;
+      }
+
+      .chat-header {
+        padding: 0 15px;
+      }
+
+      .messages {
+        padding: 18px 14px;
+      }
+
+      .message-bubble {
+        max-width: 82%;
+      }
+
+      .message-input-area {
+        padding: 10px;
+      }
+
+      .auth-card {
+        padding: 30px 22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- =========================
+       LOGIN / REGISTER
+  ========================== -->
+
+  <section id="authScreen">
+
+    <div class="auth-card">
+
+      <div class="logo">
+        💬
+      </div>
+
+      <h1 id="authTitle">
+        Chào mừng trở lại
+      </h1>
+
+      <p class="auth-subtitle" id="authSubtitle">
+        Đăng nhập vào HT Chat
+      </p>
+
+      <!-- LOGIN -->
+
+      <form id="loginForm">
+
+        <div class="input-group">
+          <label>Email</label>
+          <input
+            id="loginEmail"
+            type="email"
+            placeholder="email@example.com"
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="input-group">
+          <label>Mật khẩu</label>
+          <input
+            id="loginPassword"
+            type="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+          >
+        </div>
+
+        <div
+          id="loginError"
+          class="auth-error"
+        ></div>
+
+        <button
+          class="primary-button"
+          type="submit"
+        >
+          Đăng nhập
+        </button>
+
+        <div class="switch-auth">
+          Chưa có tài khoản?
+          <button
+            type="button"
+            id="showRegister"
+          >
+            Đăng ký
+          </button>
+        </div>
+
+      </form>
+
+      <!-- REGISTER -->
+
+      <form
+        id="registerForm"
+        class="hidden"
+      >
+
+        <div class="input-group">
+          <label>Tên người dùng</label>
+          <input
+            id="registerUsername"
+            type="text"
+            placeholder="Tên của bạn"
+            maxlength="30"
+          >
+        </div>
+
+        <div class="input-group">
+          <label>Email</label>
+          <input
+            id="registerEmail"
+            type="email"
+            placeholder="email@example.com"
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="input-group">
+          <label>Mật khẩu</label>
+          <input
+            id="registerPassword"
+            type="password"
+            placeholder="Ít nhất 6 ký tự"
+            autocomplete="new-password"
+          >
+        </div>
+
+        <div
+          id="registerError"
+          class="auth-error"
+        ></div>
+
+        <button
+          class="primary-button"
+          type="submit"
+        >
+          Tạo tài khoản
+        </button>
+
+        <div class="switch-auth">
+          Đã có tài khoản?
+          <button
+            type="button"
+            id="showLogin"
+          >
+            Đăng nhập
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+
+  </section>
+
+
+  <!-- =========================
+       CHAT
+  ========================== -->
+
+  <section
+    id="chatScreen"
+    class="hidden"
+  >
+
+    <!-- SIDEBAR -->
+
+    <aside
+      class="sidebar"
+      id="sidebar"
+    >
+
+      <div class="sidebar-header">
+
+        <div class="brand">
+
+          <div class="brand-icon">
+            💬
+          </div>
+
+          <div>
+            <div class="brand-text">
+              HT Chat
+            </div>
+
+            <div class="brand-subtitle">
+              Nhắn tin realtime
+            </div>
+          </div>
+
+          <button
+            id="closeSidebar"
+            class="mobile-menu"
+            style="margin-left:auto"
+          >
+            ×
+          </button>
+
+        </div>
+
+        <div class="search-box">
+          <input
+            type="text"
+            placeholder="🔍  Tìm người dùng..."
+            id="searchInput"
+          >
+        </div>
+
+      </div>
+
+      <div
+        class="user-list"
+        id="userList"
+      ></div>
+
+      <div class="sidebar-bottom">
+
+        <div class="my-account">
+
+          <div
+            class="avatar"
+            id="currentUserAvatar"
+          >
+            ?
+          </div>
+
+          <div
+            class="my-name"
+            id="currentUserName"
+          >
+            Người dùng
+          </div>
+
+          <button
+            class="logout"
+            id="logoutButton"
+            title="Đăng xuất"
+          >
+            ↪
+          </button>
+
+        </div>
+
+      </div>
+
+    </aside>
+
+
+    <!-- MAIN CHAT -->
+
+    <main class="main-chat">
+
+      <header class="chat-header">
+
+        <button
+          class="mobile-menu"
+          id="mobileMenu"
+        >
+          ☰
+        </button>
+
+        <div
+          class="avatar"
+          style="width:43px;height:43px"
+        >
+          👤
+        </div>
+
+        <div class="chat-header-info">
+
+          <div
+            class="chat-header-name"
+            id="chatName"
+          >
+            Chưa chọn cuộc trò chuyện
+          </div>
+
+          <div
+            class="chat-header-status"
+            id="chatStatus"
+          >
+            --
+          </div>
+
+        </div>
+
+      </header>
+
+
+      <!-- EMPTY -->
+
+      <div
+        class="chat-empty"
+        id="chatEmpty"
+      >
+
+        <div>
+
+          <div class="chat-empty-icon">
+            💬
+          </div>
+
+          <h2>
+            Chọn một người để trò chuyện
+          </h2>
+
+          <p>
+            Chọn người dùng ở bên trái để bắt đầu nhắn tin.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- CHAT -->
+
+      <div
+        id="chatContent"
+        class="hidden"
+      >
+
+        <div
+          class="messages"
+          id="messages"
+        ></div>
+
+        <div class="message-input-area">
+
+          <div class="message-form">
+
+            <input
+              id="messageInput"
+              type="text"
+              placeholder="Nhập tin nhắn..."
+              autocomplete="off"
+            >
+
+            <button
+              class="send-button"
+              id="sendButton"
+            >
+              ➤
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  </section>
+
+
+  <script>
+    // Tìm kiếm người dùng
+    document
+      .getElementById("searchInput")
+      .addEventListener("input", function () {
+
+        const keyword =
+          this.value.toLowerCase().trim();
+
+        document
+          .querySelectorAll(".user-item")
+          .forEach(item => {
+
+            const name =
+              item
+                .querySelector(".user-name")
+                ?.textContent
+                .toLowerCase() || "";
+
+            item.style.display =
+              name.includes(keyword)
+                ? "flex"
+                : "none";
+          });
+
+      });
+  </script>
+
 </body>
 </html>
