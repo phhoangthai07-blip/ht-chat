@@ -170,7 +170,8 @@
   </div>
 
   <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+    window.addEventListener("DOMContentLoaded", () => {
+    import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm").then(async ({ createClient }) => {
 
     const SUPABASE_URL = "https://bclybeujuhhiwevgppgt.supabase.co";
     const SUPABASE_KEY = "sb_publishable_yFagLzYinzPyztZkhJb-BQ_6xx_LRcF";
@@ -653,6 +654,8 @@
     });
 
     showAuth("login");
+    });
+    });
   </script>
 </body>
 </html>
