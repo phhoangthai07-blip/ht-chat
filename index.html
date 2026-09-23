@@ -1,1157 +1,246 @@
 <!DOCTYPE html>
-<html lang="vi" class="dark">
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusChat - Ứng dụng Nhắn tin Cá nhân Hiện đại</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                            900: '#312e81',
-                        },
-                        dark: {
-                            bg: '#0f172a',
-                            card: '#1e293b',
-                            hover: '#334155',
-                            border: '#334155',
-                            text: '#f8fafc',
-                            muted: '#94a3b8'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            overflow: hidden;
-        }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #94a3b8;
-            border-radius: 9999px;
-        }
-        .dark ::-webkit-scrollbar-thumb {
-            background: #334155;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-        }
-        
-        /* Glassmorphism effects */
-        .glass {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-        .dark .glass {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-
-        /* Message popup animation */
-        @keyframes msgIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px) scale(0.98);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-        .animate-msg {
-            animation: msgIn 0.25s ease-out forwards;
-        }
-
-        /* Pulse dot for typing indicator */
-        @keyframes typingDot {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-4px); }
-        }
-        .typing-dot-1 { animation: typingDot 1.2s infinite ease-in-out 0s; }
-        .typing-dot-2 { animation: typingDot 1.2s infinite ease-in-out 0.2s; }
-        .typing-dot-3 { animation: typingDot 1.2s infinite ease-in-out 0.4s; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusChat - Nhắn tin thời gian thực</title>
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-javascript@2"></script>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .chat-bubble-me { background-color: #2563eb; color: white; border-radius: 16px 16px 4px 16px; }
+    .chat-bubble-other { background-color: #374151; color: white; border-radius: 16px 16px 16px 4px; }
+  </style>
 </head>
-<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 h-screen flex flex-col transition-colors duration-300 select-none">
+<body class="bg-gray-900 text-gray-100 font-sans h-screen flex overflow-hidden">
 
-    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+  <!-- MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ -->
+  <div id="auth-screen" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50 p-4">
+    <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
+      <div class="text-center mb-6">
+        <h1 class="text-3xl font-bold text-blue-500 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-paper-plane"></i> NexusChat
+        </h1>
+        <p class="text-gray-400 text-sm mt-1" id="auth-subtitle">Đăng nhập để kết nối thời gian thực</p>
+      </div>
 
-    <div id="auth-screen" class="fixed inset-0 z-40 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-8 relative overflow-hidden transition-all duration-300">
-            <!-- Glow background blob -->
-            <div class="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
-
-            <!-- Brand Header -->
-            <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 mb-3">
-                    <i class="fa-solid fa-paper-plane text-2xl"></i>
-                </div>
-                <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">NexusChat</h1>
-                <p class="text-slate-500 dark:text-slate-400 text-sm mt-1" id="auth-subtitle">Trải nghiệm nhắn tin thời gian thực thế hệ mới</p>
-            </div>
-
-            <!-- TAB TOGGLE -->
-            <div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-6">
-                <button id="btn-tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 bg-white dark:bg-slate-700 shadow text-indigo-600 dark:text-indigo-400">Đăng Nhập</button>
-                <button id="btn-tab-register" onclick="switchAuthTab('register')" class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">Đăng Ký</button>
-            </div>
-
-            <!-- LOGIN FORM -->
-            <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Tên tài khoản (Username)</label>
-                    <div class="relative">
-                        <i class="fa-solid fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="login-username" required placeholder="Nhập username..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Mật khẩu</label>
-                    <div class="relative">
-                        <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition">
-                        <button type="button" onclick="togglePasswordVisibility('login-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                <div id="login-error" class="hidden text-red-500 text-xs font-medium bg-red-50 dark:bg-red-950/50 p-2.5 rounded-xl border border-red-200 dark:border-red-900"></div>
-                <button type="submit" id="btn-login-submit" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 active:scale-[0.98] transition duration-200 flex items-center justify-center gap-2">
-                    <span>Đăng Nhập</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </button>
-            </form>
-
-            <!-- REGISTER FORM -->
-            <form id="form-register" onsubmit="handleRegister(event)" class="space-y-3 hidden">
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Tên hiển thị (Display Name)</label>
-                    <input type="text" id="reg-displayname" required placeholder="Ví dụ: Nguyễn Văn A" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Tên tài khoản (Username)</label>
-                    <input type="text" id="reg-username" required placeholder="Ví dụ: anguyen99" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Mật khẩu (Tối thiểu 8 ký tự)</label>
-                    <div class="relative">
-                        <input type="password" id="reg-password" minlength="8" required placeholder="••••••••" class="w-full px-3 py-2 pr-10 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition text-sm">
-                        <button type="button" onclick="togglePasswordVisibility('reg-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Xác nhận mật khẩu</label>
-                    <input type="password" id="reg-confirm-password" minlength="8" required placeholder="••••••••" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Chọn Avatar</label>
-                    <div class="flex items-center gap-3">
-                        <img id="reg-avatar-preview" src="https://api.dicebear.com/7.x/bottts/svg?seed=NexusUser1" class="w-10 h-10 rounded-full border border-slate-300 dark:border-slate-700 bg-slate-200 dark:bg-slate-800">
-                        <button type="button" onclick="randomizeRegisterAvatar()" class="px-3 py-1.5 text-xs bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-lg transition">Đổi Avatar</button>
-                    </div>
-                </div>
-                <div id="reg-error" class="hidden text-red-500 text-xs font-medium bg-red-50 dark:bg-red-950/50 p-2.5 rounded-xl border border-red-200 dark:border-red-900"></div>
-                <button type="submit" id="btn-reg-submit" class="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 active:scale-[0.98] transition duration-200 flex items-center justify-center gap-2 mt-2">
-                    <span>Tạo Tài Khoản</span>
-                    <i class="fa-solid fa-user-plus"></i>
-                </button>
-            </form>
-
-            <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 text-center">
-                <p class="text-xs text-slate-400">Hoặc dùng tài khoản thử nghiệm có sẵn: <br><span class="text-indigo-500 font-mono">user1 / 12345678</span></p>
-            </div>
+      <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
+        <div id="display-name-group" class="hidden">
+          <label class="block text-sm text-gray-400 mb-1">Tên hiển thị</label>
+          <input type="text" id="display-name" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
         </div>
-    </div>
-
-    <div class="flex-1 flex overflow-hidden">
-
-        <!-- LEFT SIDEBAR -->
-        <aside id="sidebar" class="w-full md:w-80 lg:w-96 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-30 transition-all duration-300 absolute md:relative inset-y-0 left-0 -translate-x-full md:translate-x-0">
-            <!-- Sidebar Header -->
-            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md">
-                        <i class="fa-solid fa-paper-plane text-lg"></i>
-                    </div>
-                    <div>
-                        <h2 class="font-bold text-slate-900 dark:text-white leading-tight">NexusChat</h2>
-                        <span class="text-xs text-emerald-500 flex items-center gap-1 font-medium"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Online</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-1">
-                    <button onclick="toggleDarkMode()" class="p-2.5 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition" title="Đổi Chế Độ Dark/Light">
-                        <i id="theme-icon" class="fa-solid fa-moon"></i>
-                    </button>
-                    <button onclick="openSetupBackendModal()" class="p-2.5 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition" title="Hướng Dẫn GitHub & Backend">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                    </button>
-                    <button onclick="openSettingsModal()" class="p-2.5 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition" title="Cài Đặt">
-                        <i class="fa-solid fa-gear"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Logged User Profile Banner -->
-            <div class="p-3 mx-3 mt-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center justify-between">
-                <div class="flex items-center gap-3 overflow-hidden">
-                    <div class="relative">
-                        <img id="user-current-avatar" src="" class="w-10 h-10 rounded-full object-cover border border-slate-300 dark:border-slate-700">
-                        <span id="user-current-status-dot" class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
-                    </div>
-                    <div class="truncate">
-                        <h4 id="user-current-display" class="font-semibold text-sm truncate text-slate-900 dark:text-white">...</h4>
-                        <p id="user-current-username" class="text-xs text-slate-500 dark:text-slate-400 truncate">@...</p>
-                    </div>
-                </div>
-                <button onclick="handleLogout()" class="p-2 text-slate-400 hover:text-red-500 rounded-xl transition" title="Đăng xuất">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
-            </div>
-
-            <!-- Global Search & New Chat -->
-            <div class="p-3 space-y-2">
-                <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                    <input type="text" id="input-search-users" onkeyup="filterUserList()" placeholder="Tìm bạn bè theo username..." class="w-full pl-9 pr-4 py-2 text-sm bg-slate-100 dark:bg-slate-800 border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 transition">
-                </div>
-            </div>
-
-            <!-- Conversations Filter Tabs -->
-            <div class="px-4 py-1 flex items-center justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                <span>Cuộc Trò Chuyện</span>
-                <button onclick="openNewChatModal()" class="text-indigo-500 hover:text-indigo-600 font-bold lowercase text-sm" title="Tạo trò chuyện mới">
-                    <i class="fa-solid fa-plus-circle"></i> Mới
-                </button>
-            </div>
-
-            <!-- Conversations List -->
-            <div id="chat-list" class="flex-1 overflow-y-auto p-2 space-y-1">
-                <!-- Chat Items generated dynamically -->
-            </div>
-        </aside>
-
-        <main class="flex-1 flex flex-col bg-slate-50 dark:bg-slate-950 relative overflow-hidden">
-            
-            <!-- Mobile Header Controls -->
-            <div id="chat-header" class="h-16 px-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between z-20">
-                <div class="flex items-center gap-3">
-                    <button onclick="toggleMobileSidebar()" class="md:hidden p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
-                        <i class="fa-solid fa-bars text-lg"></i>
-                    </button>
-                    <div class="relative cursor-pointer" onclick="toggleRightPanel()">
-                        <img id="active-chat-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=nexus" class="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-800 object-cover">
-                        <span id="active-chat-status-dot" class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
-                    </div>
-                    <div>
-                        <h3 id="active-chat-name" class="font-bold text-slate-900 dark:text-white leading-tight cursor-pointer hover:underline" onclick="toggleRightPanel()">Chọn một cuộc trò chuyện</h3>
-                        <p id="active-chat-sub" class="text-xs text-slate-500 dark:text-slate-400">Trạng thái online</p>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-1">
-                    <div class="relative hidden sm:block">
-                        <input type="text" id="chat-search-input" onkeyup="searchMessagesInChat()" placeholder="Tìm trong chat..." class="pl-8 pr-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 border-0 rounded-xl focus:ring-1 focus:ring-indigo-500">
-                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    </div>
-                    <button onclick="toggleRightPanel()" class="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition" title="Thông tin người dùng">
-                        <i class="fa-solid fa-circle-info text-lg"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Messages Area -->
-            <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-3 relative">
-                <!-- Messages rendered dynamically -->
-            </div>
-
-            <!-- Typing indicator popup -->
-            <div id="typing-indicator" class="hidden px-6 py-2 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                <span id="typing-user-name" class="font-medium">Đối phương</span> đang nhập
-                <span class="inline-flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 bg-slate-400 rounded-full typing-dot-1"></span>
-                    <span class="w-1.5 h-1.5 bg-slate-400 rounded-full typing-dot-2"></span>
-                    <span class="w-1.5 h-1.5 bg-slate-400 rounded-full typing-dot-3"></span>
-                </span>
-            </div>
-
-            <!-- Attachment Preview Box -->
-            <div id="attachment-preview" class="hidden px-4 py-2 bg-slate-200 dark:bg-slate-800 border-t border-slate-300 dark:border-slate-700 flex items-center justify-between">
-                <div class="flex items-center gap-2 overflow-hidden">
-                    <i class="fa-solid fa-image text-indigo-500"></i>
-                    <span id="attachment-name" class="text-xs truncate font-medium">file_photo.jpg</span>
-                </div>
-                <button onclick="clearAttachment()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <!-- Reply Preview Bar -->
-            <div id="reply-bar" class="hidden px-4 py-2 bg-slate-100 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <div class="flex items-center gap-2 border-l-2 border-indigo-500 pl-2">
-                    <div class="text-xs">
-                        <span class="font-bold text-indigo-500" id="reply-author">Trả lời...</span>
-                        <p class="text-slate-500 dark:text-slate-400 truncate max-w-xs" id="reply-text">...</p>
-                    </div>
-                </div>
-                <button onclick="cancelReply()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <!-- Input Toolbar -->
-            <div class="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-end gap-2 z-20">
-                <div class="flex items-center gap-1">
-                    <label class="p-2.5 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer transition" title="Đính kèm tệp / ảnh">
-                        <i class="fa-solid fa-paperclip text-lg"></i>
-                        <input type="file" id="file-input" accept="image/*" onchange="handleFileUpload(event)" class="hidden">
-                    </label>
-                    <button type="button" onclick="toggleEmojiPicker()" class="p-2.5 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition relative" title="Chèn biểu tượng cảm xúc">
-                        <i class="fa-regular fa-face-smile text-lg"></i>
-                    </button>
-                </div>
-
-                <!-- Textarea -->
-                <div class="flex-1 relative">
-                    <textarea id="message-input" rows="1" onkeydown="handleInputKeyDown(event)" oninput="handleInputTyping()" placeholder="Nhập tin nhắn (Enter để gửi, Shift+Enter xuống dòng)..." class="w-full max-h-32 p-3 bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 resize-none text-sm transition"></textarea>
-                    
-                    <!-- Quick Emoji Popover -->
-                    <div id="emoji-picker" class="hidden absolute bottom-14 left-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-2xl shadow-xl grid grid-cols-6 gap-2 text-xl z-50">
-                        <span onclick="insertEmoji('👍')" class="cursor-pointer hover:scale-125 transition">👍</span>
-                        <span onclick="insertEmoji('❤️')" class="cursor-pointer hover:scale-125 transition">❤️</span>
-                        <span onclick="insertEmoji('😂')" class="cursor-pointer hover:scale-125 transition">😂</span>
-                        <span onclick="insertEmoji('😮')" class="cursor-pointer hover:scale-125 transition">😮</span>
-                        <span onclick="insertEmoji('🔥')" class="cursor-pointer hover:scale-125 transition">🔥</span>
-                        <span onclick="insertEmoji('🎉')" class="cursor-pointer hover:scale-125 transition">🎉</span>
-                        <span onclick="insertEmoji('😊')" class="cursor-pointer hover:scale-125 transition">😊</span>
-                        <span onclick="insertEmoji('🙏')" class="cursor-pointer hover:scale-125 transition">🙏</span>
-                        <span onclick="insertEmoji('✨')" class="cursor-pointer hover:scale-125 transition">✨</span>
-                        <span onclick="insertEmoji('😎')" class="cursor-pointer hover:scale-125 transition">😎</span>
-                        <span onclick="insertEmoji('💯')" class="cursor-pointer hover:scale-125 transition">💯</span>
-                        <span onclick="insertEmoji('🚀')" class="cursor-pointer hover:scale-125 transition">🚀</span>
-                    </div>
-                </div>
-
-                <button onclick="sendMessage()" class="p-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-2xl shadow-lg shadow-indigo-500/25 active:scale-95 transition flex items-center justify-center">
-                    <i class="fa-solid fa-paper-plane text-lg"></i>
-                </button>
-            </div>
-        </main>
-
-        <aside id="right-panel" class="w-72 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col z-20 transition-all duration-300 absolute lg:relative inset-y-0 right-0 translate-x-full lg:translate-x-0 hidden lg:flex">
-            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <h3 class="font-bold text-slate-800 dark:text-slate-100">Hồ sơ người dùng</h3>
-                <button onclick="toggleRightPanel()" class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <div class="p-6 flex flex-col items-center border-b border-slate-200 dark:border-slate-800 text-center">
-                <img id="info-avatar" src="" class="w-20 h-20 rounded-full border-2 border-indigo-500 shadow-md mb-3 object-cover">
-                <h4 id="info-displayname" class="font-bold text-lg text-slate-900 dark:text-white">...</h4>
-                <p id="info-username" class="text-xs text-slate-500 dark:text-slate-400 mb-2">@...</p>
-                <span id="info-status-badge" class="px-2.5 py-1 text-xs rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 font-medium">Đang Hoạt Động</span>
-            </div>
-
-            <div class="p-4 flex-1 overflow-y-auto space-y-4">
-                <div>
-                    <h5 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Ảnh / File đã chia sẻ</h5>
-                    <div id="info-shared-media" class="grid grid-cols-3 gap-2">
-                        <div class="aspect-square bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 text-xs">Chưa có</div>
-                    </div>
-                </div>
-
-                <div class="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
-                    <button onclick="clearChatHistory()" class="w-full py-2 px-3 text-xs font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition flex items-center gap-2">
-                        <i class="fa-solid fa-trash"></i> Xóa lịch sử trò chuyện
-                    </button>
-                </div>
-            </div>
-        </aside>
-    </div>
-
-    
-    <!-- SETTINGS MODAL -->
-    <div id="modal-settings" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-6 relative">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Cài đặt tài khoản</h3>
-                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            
-            <form onsubmit="saveProfileSettings(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Tên hiển thị</label>
-                    <input type="text" id="settings-displayname" required class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Avatar URL</label>
-                    <div class="flex gap-2">
-                        <input type="url" id="settings-avatar" required class="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-800 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm">
-                        <button type="button" onclick="randomizeSettingsAvatar()" class="px-3 py-2 bg-slate-200 dark:bg-slate-700 text-xs rounded-xl">Đổi ngẫu nhiên</button>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Trạng thái hoạt động</label>
-                    <select id="settings-status" class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm">
-                        <option value="online">🟢 Trực tuyến (Online)</option>
-                        <option value="away">🌙 Vắng mặt (Away)</option>
-                        <option value="offline">🔴 Ẩn danh (Offline)</option>
-                    </select>
-                </div>
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeSettingsModal()" class="px-4 py-2 text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">Hủy</button>
-                    <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium">Lưu thay đổi</button>
-                </div>
-            </form>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Email</label>
+          <input type="email" id="email" required placeholder="name@example.com" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
         </div>
-    </div>
-
-    <!-- NEW CHAT MODAL -->
-    <div id="modal-newchat" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Tạo cuộc trò chuyện mới</h3>
-                <button onclick="closeNewChatModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <p class="text-xs text-slate-500 mb-3">Chọn người dùng để bắt đầu nhắn tin:</p>
-            <div id="newchat-user-list" class="max-h-60 overflow-y-auto space-y-2">
-                <!-- Dynamically populated -->
-            </div>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Mật khẩu</label>
+          <input type="password" id="password" required placeholder="••••••••" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
         </div>
+
+        <button type="submit" id="auth-submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-all shadow-lg shadow-blue-500/20">
+          Đăng nhập
+        </button>
+      </form>
+
+      <div class="mt-4 text-center">
+        <button onclick="toggleAuthMode()" id="toggle-auth-btn" class="text-blue-400 hover:underline text-sm">
+          Chưa có tài khoản? Đăng ký ngay
+        </button>
+      </div>
     </div>
+  </div>
 
-    <!-- BACKEND & GITHUB DEPLOYMENT SETUP MODAL -->
-    <div id="modal-backend-setup" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl p-6 max-h-[85vh] overflow-y-auto">
-            <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200 dark:border-slate-800">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-server text-indigo-500 text-xl"></i>
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Hướng dẫn Đưa lên GitHub & Kết nối Backend Thực tế</h3>
-                </div>
-                <button onclick="closeSetupBackendModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <div class="space-y-6 text-sm text-slate-600 dark:text-slate-300">
-                
-                <!-- Section 1: Explanation -->
-                <div class="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-2xl border border-indigo-200 dark:border-indigo-900">
-                    <h4 class="font-bold text-indigo-600 dark:text-indigo-400 mb-1"><i class="fa-solid fa-circle-info"></i> Giải thích về GitHub Pages & Backend:</h4>
-                    <p class="text-xs leading-relaxed">
-                        <strong>GitHub Pages</strong> chỉ lưu trữ và chạy code <strong>Frontend (HTML/CSS/JS)</strong> hoàn toàn miễn phí. Để lưu dữ liệu tài khoản, mật khẩu bảo mật và tin nhắn Realtime thực sự giữa các thiết bị khác nhau, bạn cần kết nối ứng dụng với một Backend/Database Cloud như <strong>Supabase</strong> hoặc <strong>Firebase</strong>.
-                    </p>
-                </div>
-
-                <!-- Section 2: GitHub Steps -->
-                <div>
-                    <h4 class="font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2"><i class="fa-brands fa-github"></i> Bước 1: Đưa Code Lên GitHub & Deploy GitHub Pages</h4>
-                    <ol class="list-decimal list-inside space-y-1 text-xs pl-2">
-                        <li>Tạo một Repository mới trên GitHub (Ví dụ tên: <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded">nexus-chat</code>).</li>
-                        <li>Lưu toàn bộ mã nguồn này thành file <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded">index.html</code>.</li>
-                        <li>Push file <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded">index.html</code> lên nhánh <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded">main</code> của repository.</li>
-                        <li>Vào <strong>Settings</strong> > <strong>Pages</strong> > Tại mục <strong>Branch</strong> chọn <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded">main</code> / <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded">/root</code> rồi nhấn <strong>Save</strong>.</li>
-                        <li>Website của bạn sẽ hoạt động tại link: <code class="text-indigo-500">https://&lt;username&gt;.github.io/nexus-chat/</code>.</li>
-                    </ol>
-                </div>
-
-                <!-- Section 3: Supabase Integration -->
-                <div>
-                    <h4 class="font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-database text-emerald-500"></i> Bước 2: Khởi tạo Backend Supabase (Khuyên dùng - Miễn phí)</h4>
-                    <p class="text-xs mb-2">Tạo dự án mới tại <a href="https://supabase.com" target="_blank" class="text-indigo-500 underline">Supabase.com</a>, sau đó chạy đoạn mã SQL dưới đây trong phần <strong>SQL Editor</strong> của Supabase để tạo bảng dữ liệu:</p>
-                    
-                    <div class="relative">
-                        <pre class="bg-slate-900 text-slate-100 p-3 rounded-xl text-xs font-mono overflow-x-auto max-h-48"><code>-- 1. Bảng lưu Users
-create table public.profiles (
-  id uuid references auth.users not null primary key,
-  username text unique not null,
-  display_name text,
-  avatar_url text,
-  status text default 'offline',
-  updated_at timestamp with time zone
-);
-
--- 2. Bảng lưu Tin nhắn
-create table public.messages (
-  id uuid primary key default gen_random_uuid(),
-  sender_id uuid references public.profiles(id),
-  receiver_id uuid references public.profiles(id),
-  content text,
-  image_url text,
-  created_at timestamp with time zone default timezone('utc'::text, now())
-);
-
--- 3. Bật Realtime cho bảng messages
-alter publication supabase_realtime add table messages;</code></pre>
-                        <button onclick="copySqlCode()" class="absolute top-2 right-2 px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded-lg">Copy SQL</button>
-                    </div>
-                </div>
-
-                <div class="pt-2 text-right">
-                    <button onclick="closeSetupBackendModal()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl">Đã Hiểu</button>
-                </div>
-            </div>
+  <!-- GIAO DIỆN CHAT CHÍNH -->
+  <div id="app-screen" class="hidden w-full h-full flex">
+    <!-- SIDEBAR -->
+    <div class="w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
+      <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-lg" id="my-avatar">U</div>
+          <div>
+            <h3 class="font-bold text-sm" id="my-name">User</h3>
+            <span class="text-xs text-green-400 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span> Online</span>
+          </div>
         </div>
+        <button onclick="logout()" class="text-gray-400 hover:text-red-400 transition-colors p-2" title="Đăng xuất">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+
+      <div class="p-3">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Phòng chat chung (Global)</p>
+        <div onclick="selectRoom('global')" class="p-3 bg-blue-600/20 border border-blue-500/30 rounded-xl cursor-pointer flex items-center gap-3 hover:bg-blue-600/30 transition-all">
+          <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white"><i class="fa-solid fa-users"></i></div>
+          <div>
+            <h4 class="font-bold text-sm">Sảnh Chung</h4>
+            <p class="text-xs text-gray-400">Trò chuyện với mọi người</p>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <script>
-        /* ==========================================================================
-           CORE APPLICATION STATE & MOCK DATABASE
-           ========================================================================== */
-        
-        // Mock users database
-        const DEFAULT_USERS = [
-            { id: 'usr-1', username: 'user1', passwordHash: '12345678', displayName: 'Alex Rivera', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Alex', status: 'online', bio: 'Developer & Tech Enthusiast' },
-            { id: 'usr-2', username: 'sarah_m', passwordHash: '12345678', displayName: 'Sarah Miller', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Sarah', status: 'online', bio: 'UI/UX Designer' },
-            { id: 'usr-3', username: 'techbot', passwordHash: '12345678', displayName: 'Nexus AI Bot', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Nexus', status: 'online', bio: 'Trợ lý ảo thông minh' }
-        ];
+    <!-- KHUNG CHAT -->
+    <div class="flex-1 flex flex-col bg-gray-900">
+      <div class="p-4 border-b border-gray-800 bg-gray-800/50 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white"><i class="fa-solid fa-users"></i></div>
+          <div>
+            <h3 class="font-bold text-sm">Sảnh Chung</h3>
+            <span class="text-xs text-green-400">Realtime Chat</span>
+          </div>
+        </div>
+      </div>
 
-        // Mock message history database
-        const DEFAULT_MESSAGES = [
-            { id: 'm1', senderId: 'usr-2', receiverId: 'usr-1', content: 'Chào Alex! Bạn đã trải nghiệm ứng dụng NexusChat mới chưa?', timestamp: Date.now() - 3600000, read: true },
-            { id: 'm2', senderId: 'usr-1', receiverId: 'usr-2', content: 'Giao diện mượt mà và hiện đại quá Sarah ơi!', timestamp: Date.now() - 1800000, read: true },
-            { id: 'm3', senderId: 'usr-3', receiverId: 'usr-1', content: 'Xin chào! Tôi là Nexus AI Bot. Bạn có thể gửi tin nhắn cho tôi bất kỳ lúc nào!', timestamp: Date.now() - 600000, read: true }
-        ];
+      <!-- TIN NHẮN -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-4" id="messages-container">
+        <div class="text-center text-gray-500 my-auto">Đang tải tin nhắn...</div>
+      </div>
 
-        // Application persistent state
-        let state = {
-            currentUser: null,
-            users: JSON.parse(localStorage.getItem('nexus_users')) || DEFAULT_USERS,
-            messages: JSON.parse(localStorage.getItem('nexus_messages')) || DEFAULT_MESSAGES,
-            activeChatUserId: 'usr-2',
-            theme: localStorage.getItem('nexus_theme') || 'dark',
-            attachment: null,
-            replyingToMessage: null
-        };
+      <!-- NHẬP TIN NHẮN -->
+      <form id="message-form" onsubmit="handleSendMessage(event)" class="p-4 bg-gray-800 border-t border-gray-700 flex items-center gap-2">
+        <input type="text" id="message-input" placeholder="Nhập tin nhắn..." required class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500">
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg transition-all">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+  </div>
 
-        /* ==========================================================================
-           INITIALIZATION & AUTHENTICATION HANDLERS
-           ========================================================================== */
+  <script>
+    // CẤU HÌNH DỰ ÁN SUPABASE CỦA BẠN
+    const SUPABASE_URL = "https://bclybeujhhiwevgppgt.supabase.co";
+    // MÃ KEY DƯỚI ĐÂY ĐÃ ĐƯỢC ĐIỀN CHÍNH XÁC THEO HÌNH CỦA BẠN:
+    const SUPABASE_ANON_KEY = "sb_publishable_yFagLzYinzPyztZkhJb-BQ_6xx_L_M0"; 
 
-        window.onload = function() {
-            // Check stored theme
-            if (state.theme === 'dark') {
-                document.documentElement.classList.add('dark');
-                document.getElementById('theme-icon').className = 'fa-solid fa-sun';
-            } else {
-                document.documentElement.classList.remove('dark');
-                document.getElementById('theme-icon').className = 'fa-solid fa-moon';
-            }
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            // Check persistent auth session
-            const storedSession = localStorage.getItem('nexus_session');
-            if (storedSession) {
-                const foundUser = state.users.find(u => u.id === storedSession);
-                if (foundUser) {
-                    state.currentUser = foundUser;
-                    document.getElementById('auth-screen').classList.add('hidden');
-                    initMainApp();
-                    return;
-                }
-            }
-            // If no active session, show auth view
-            document.getElementById('auth-screen').classList.remove('hidden');
-        };
+    let isSignUp = false;
+    let currentUser = null;
 
-        function switchAuthTab(tab) {
-            const btnLogin = document.getElementById('btn-tab-login');
-            const btnReg = document.getElementById('btn-tab-register');
-            const formLogin = document.getElementById('form-login');
-            const formReg = document.getElementById('form-register');
+    function toggleAuthMode() {
+      isSignUp = !isSignUp;
+      document.getElementById('display-name-group').classList.toggle('hidden', !isSignUp);
+      document.getElementById('auth-subtitle').innerText = isSignUp ? "Tạo tài khoản mới" : "Đăng nhập để kết nối thời gian thực";
+      document.getElementById('auth-submit-btn').innerText = isSignUp ? "Đăng ký" : "Đăng nhập";
+      document.getElementById('toggle-auth-btn').innerText = isSignUp ? "Đã có tài khoản? Đăng nhập" : "Chưa có tài khoản? Đăng ký ngay";
+    }
 
-            if (tab === 'login') {
-                btnLogin.className = 'flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 bg-white dark:bg-slate-700 shadow text-indigo-600 dark:text-indigo-400';
-                btnReg.className = 'flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200';
-                formLogin.classList.remove('hidden');
-                formReg.classList.add('hidden');
-            } else {
-                btnReg.className = 'flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 bg-white dark:bg-slate-700 shadow text-indigo-600 dark:text-indigo-400';
-                btnLogin.className = 'flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200';
-                formReg.classList.remove('hidden');
-                formLogin.classList.add('hidden');
-            }
+    async function handleAuth(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      if (isSignUp) {
+        const displayName = document.getElementById('display-name').value || email.split('@')[0];
+        const { data, error } = await supabaseClient.auth.signUp({
+          email, password,
+          options: { data: { display_name: displayName } }
+        });
+        if (error) alert("Lỗi đăng ký: " + error.message);
+        else {
+          alert("Đăng ký thành công! Hãy chuyển sang Đăng nhập.");
+          toggleAuthMode();
         }
-
-        function togglePasswordVisibility(inputId, btn) {
-            const input = document.getElementById(inputId);
-            const icon = btn.querySelector('i');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.className = 'fa-solid fa-eye-slash';
-            } else {
-                input.type = 'password';
-                icon.className = 'fa-solid fa-eye';
-            }
+      } else {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) alert("Lỗi đăng nhập: " + error.message);
+        else {
+          currentUser = data.user;
+          initApp();
         }
+      }
+    }
 
-        function randomizeRegisterAvatar() {
-            const seed = 'Nexus' + Math.floor(Math.random() * 10000);
-            const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
-            document.getElementById('reg-avatar-preview').src = avatarUrl;
+    function initApp() {
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('app-screen').classList.remove('hidden');
+      const name = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
+      document.getElementById('my-name').innerText = name;
+      document.getElementById('my-avatar').innerText = name[0].toUpperCase();
+
+      loadMessages();
+      subscribeRealtime();
+    }
+
+    async function loadMessages() {
+      const container = document.getElementById('messages-container');
+      const { data, error } = await supabaseClient
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        container.innerHTML = `<div class="text-center text-red-400">Lỗi tải tin nhắn: ${error.message}</div>`;
+        return;
+      }
+
+      container.innerHTML = '';
+      if (data.length === 0) {
+        container.innerHTML = `<div class="text-center text-gray-500 my-auto">Chưa có tin nhắn nào. Hãy mở lời trước nhé!</div>`;
+      } else {
+        data.forEach(msg => renderMessage(msg));
+        scrollToBottom();
+      }
+    }
+
+    function renderMessage(msg) {
+      const container = document.getElementById('messages-container');
+      const isMe = currentUser && msg.sender_id === currentUser.id;
+
+      const div = document.createElement('div');
+      div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
+      
+      div.innerHTML = `
+        <div class="text-xs text-gray-400 mb-1 px-1">${isMe ? 'Bạn' : (msg.sender_name || 'Thành viên')}</div>
+        <div class="${isMe ? 'chat-bubble-me' : 'chat-bubble-other'} px-4 py-2.5 max-w-xs md:max-w-md break-words shadow-md">
+          ${msg.text}
+        </div>
+      `;
+      container.appendChild(div);
+      scrollToBottom();
+    }
+
+    async function handleSendMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('message-input');
+      const text = input.value.trim();
+      if (!text || !currentUser) return;
+
+      input.value = '';
+
+      const { error } = await supabaseClient.from('messages').insert([
+        { 
+          conversation_id: 'global', 
+          sender_id: currentUser.id, 
+          sender_name: currentUser.user_metadata?.display_name || currentUser.email.split('@')[0],
+          text: text 
         }
-
-        function handleLogin(e) {
-            e.preventDefault();
-            const username = document.getElementById('login-username').value.trim();
-            const password = document.getElementById('login-password').value.trim();
-            const errBox = document.getElementById('login-error');
-
-            const user = state.users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.passwordHash === password);
-            if (!user) {
-                errBox.innerText = 'Tên tài khoản hoặc mật khẩu không chính xác!';
-                errBox.classList.remove('hidden');
-                return;
-            }
-
-            errBox.classList.add('hidden');
-            state.currentUser = user;
-            localStorage.setItem('nexus_session', user.id);
-            showToast(`Chào mừng trở lại, ${user.displayName}!`, 'success');
-
-            // Hide auth screen with smooth transition
-            document.getElementById('auth-screen').classList.add('opacity-0');
-            setTimeout(() => {
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('auth-screen').classList.remove('opacity-0');
-                initMainApp();
-            }, 300);
-        }
-
-        function handleRegister(e) {
-            e.preventDefault();
-            const displayName = document.getElementById('reg-displayname').value.trim();
-            const username = document.getElementById('reg-username').value.trim();
-            const password = document.getElementById('reg-password').value;
-            const confirmPassword = document.getElementById('reg-confirm-password').value;
-            const avatar = document.getElementById('reg-avatar-preview').src;
-            const errBox = document.getElementById('reg-error');
-
-            if (password !== confirmPassword) {
-                errBox.innerText = 'Mật khẩu xác nhận không khớp!';
-                errBox.classList.remove('hidden');
-                return;
-            }
-
-            const existing = state.users.find(u => u.username.toLowerCase() === username.toLowerCase());
-            if (existing) {
-                errBox.innerText = 'Tên tài khoản đã tồn tại!';
-                errBox.classList.remove('hidden');
-                return;
-            }
-
-            const newUser = {
-                id: 'usr-' + Date.now(),
-                username: username,
-                passwordHash: password,
-                displayName: displayName,
-                avatar: avatar,
-                status: 'online',
-                bio: 'Thành viên mới của NexusChat'
-            };
-
-            state.users.push(newUser);
-            saveUsersState();
-
-            errBox.classList.add('hidden');
-            showToast('Đăng ký tài khoản thành công! Vui lòng đăng nhập.', 'success');
-            switchAuthTab('login');
-            document.getElementById('login-username').value = username;
-            document.getElementById('login-password').value = password;
-        }
-
-        function handleLogout() {
-            state.currentUser = null;
-            localStorage.removeItem('nexus_session');
-            document.getElementById('auth-screen').classList.remove('hidden');
-            showToast('Đã đăng xuất tài khoản', 'info');
-        }
-
-        /* ==========================================================================
-           APP CORE RENDERERS & DATA MANAGEMENT
-           ========================================================================== */
-
-        function initMainApp() {
-            // Set current logged user UI info
-            document.getElementById('user-current-avatar').src = state.currentUser.avatar;
-            document.getElementById('user-current-display').innerText = state.currentUser.displayName;
-            document.getElementById('user-current-username').innerText = '@' + state.currentUser.username;
-            
-            renderConversationsList();
-            setActiveChat(state.activeChatUserId || (state.users.find(u => u.id !== state.currentUser.id)?.id));
-        }
-
-        function renderConversationsList() {
-            const chatListContainer = document.getElementById('chat-list');
-            chatListContainer.innerHTML = '';
-
-            const otherUsers = state.users.filter(u => u.id !== state.currentUser.id);
-
-            otherUsers.forEach(user => {
-                // Find last message between current user and this user
-                const userMsgs = state.messages.filter(m => 
-                    (m.senderId === state.currentUser.id && m.receiverId === user.id) ||
-                    (m.senderId === user.id && m.receiverId === state.currentUser.id)
-                ).sort((a,b) => a.timestamp - b.timestamp);
-
-                const lastMsg = userMsgs[userMsgs.length - 1];
-                const isActive = user.id === state.activeChatUserId;
-
-                const item = document.createElement('div');
-                item.className = `p-3 rounded-2xl flex items-center gap-3 cursor-pointer transition ${isActive ? 'bg-indigo-50 dark:bg-slate-800 border-l-4 border-indigo-500' : 'hover:bg-slate-100 dark:hover:bg-slate-800/50'}`;
-                item.onclick = () => setActiveChat(user.id);
-
-                const timeStr = lastMsg ? formatTime(lastMsg.timestamp) : '';
-                const lastText = lastMsg ? (lastMsg.senderId === state.currentUser.id ? 'Bạn: ' : '') + lastMsg.content : 'Chưa có tin nhắn';
-
-                item.innerHTML = `
-                    <div class="relative flex-shrink-0">
-                        <img src="${user.avatar}" class="w-12 h-12 rounded-full border border-slate-200 dark:border-slate-700 object-cover">
-                        <span class="absolute bottom-0 right-0 w-3 h-3 ${user.status === 'online' ? 'bg-emerald-500' : 'bg-slate-400'} border-2 border-white dark:border-slate-900 rounded-full"></span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between mb-1">
-                            <h4 class="font-semibold text-sm truncate text-slate-900 dark:text-white">${user.displayName}</h4>
-                            <span class="text-[10px] text-slate-400">${timeStr}</span>
-                        </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate">${lastText}</p>
-                    </div>
-                `;
-                chatListContainer.appendChild(item);
-            });
-        }
-
-        function setActiveChat(userId) {
-            state.activeChatUserId = userId;
-            const targetUser = state.users.find(u => u.id === userId);
-            if (!targetUser) return;
-
-            // Update Header
-            document.getElementById('active-chat-avatar').src = targetUser.avatar;
-            document.getElementById('active-chat-name').innerText = targetUser.displayName;
-            document.getElementById('active-chat-sub').innerText = targetUser.status === 'online' ? 'Đang hoạt động' : 'Ngoại tuyến';
-            document.getElementById('active-chat-status-dot').className = `absolute bottom-0 right-0 w-3 h-3 ${targetUser.status === 'online' ? 'bg-emerald-500' : 'bg-slate-400'} border-2 border-white dark:border-slate-900 rounded-full`;
-
-            // Update Right Info Panel
-            document.getElementById('info-avatar').src = targetUser.avatar;
-            document.getElementById('info-displayname').innerText = targetUser.displayName;
-            document.getElementById('info-username').innerText = '@' + targetUser.username;
-
-            renderConversationsList();
-            renderMessages();
-
-            // Mobile view collapse
-            if (window.innerWidth < 768) {
-                document.getElementById('sidebar').classList.add('-translate-x-full');
-            }
-        }
-
-        function renderMessages() {
-            const container = document.getElementById('messages-container');
-            container.innerHTML = '';
-
-            const chatMsgs = state.messages.filter(m => 
-                (m.senderId === state.currentUser.id && m.receiverId === state.activeChatUserId) ||
-                (m.senderId === state.activeChatUserId && m.receiverId === state.currentUser.id)
-            ).sort((a,b) => a.timestamp - b.timestamp);
-
-            if (chatMsgs.length === 0) {
-                container.innerHTML = `
-                    <div class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
-                        <i class="fa-regular fa-comments text-4xl mb-2 opacity-50"></i>
-                        <p class="text-sm font-medium">Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</p>
-                    </div>
-                `;
-                return;
-            }
-
-            chatMsgs.forEach(msg => {
-                const isMe = msg.senderId === state.currentUser.id;
-                const msgWrapper = document.createElement('div');
-                msgWrapper.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-msg`;
-
-                let replyContentHtml = '';
-                if (msg.replyTo) {
-                    replyContentHtml = `<div class="text-[11px] opacity-75 border-l-2 border-slate-300 dark:border-slate-600 pl-2 mb-1 line-clamp-1">Trả lời: ${msg.replyTo}</div>`;
-                }
-
-                let imageHtml = '';
-                if (msg.imageUrl) {
-                    imageHtml = `<img src="${msg.imageUrl}" class="max-w-xs rounded-xl mb-2 shadow-sm border border-slate-200 dark:border-slate-700">`;
-                }
-
-                msgWrapper.innerHTML = `
-                    <div class="group relative flex items-center gap-2 max-w-[85%] sm:max-w-[70%]">
-                        <!-- Action hover bar -->
-                        <div class="hidden group-hover:flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded-xl shadow-md text-xs text-slate-500 ${isMe ? 'order-first' : 'order-last'}">
-                            <button onclick="replyToMessage('${msg.id}')" title="Trả lời" class="hover:text-indigo-500"><i class="fa-solid fa-reply"></i></button>
-                            <button onclick="copyMessageText('${msg.content}')" title="Sao chép" class="hover:text-indigo-500"><i class="fa-regular fa-copy"></i></button>
-                            ${isMe ? `<button onclick="deleteMessage('${msg.id}')" title="Xóa" class="hover:text-red-500"><i class="fa-regular fa-trash-can"></i></button>` : ''}
-                        </div>
-
-                        <!-- Bubble -->
-                        <div class="p-3 rounded-2xl text-sm shadow-sm ${
-                            isMe 
-                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-br-xs' 
-                            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-bl-xs'
-                        }">
-                            ${replyContentHtml}
-                            ${imageHtml}
-                            <p class="whitespace-pre-wrap break-words leading-relaxed">${escapeHtml(msg.content)}</p>
-                            <div class="flex items-center justify-end gap-1 mt-1 text-[10px] ${isMe ? 'text-indigo-200' : 'text-slate-400'}">
-                                <span>${formatTime(msg.timestamp)}</span>
-                                ${isMe ? '<i class="fa-solid fa-check-double text-[9px]"></i>' : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(msgWrapper);
-            });
-
-            // Auto scroll to bottom
-            container.scrollTop = container.scrollHeight;
-        }
-
-        /* ==========================================================================
-           MESSAGE SENDING & INTERACTION LOGIC
-           ========================================================================== */
-
-        function sendMessage() {
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-
-            if (!text && !state.attachment) return;
-
-            const newMsg = {
-                id: 'msg-' + Date.now(),
-                senderId: state.currentUser.id,
-                receiverId: state.activeChatUserId,
-                content: text,
-                imageUrl: state.attachment,
-                timestamp: Date.now(),
-                read: false,
-                replyTo: state.replyingToMessage ? state.replyingToMessage.content : null
-            };
-
-            state.messages.push(newMsg);
-            saveMessagesState();
-
-            // Clear input & states
-            input.value = '';
-            input.style.height = 'auto';
-            clearAttachment();
-            cancelReply();
-
-            renderMessages();
-            renderConversationsList();
-
-            // Trigger Bot Response simulation if talking to Nexus AI Bot
-            if (state.activeChatUserId === 'usr-3') {
-                triggerBotAutoReply(text);
-            }
-        }
-
-        function triggerBotAutoReply(userText) {
-            // Show typing indicator
-            const typingBox = document.getElementById('typing-indicator');
-            document.getElementById('typing-user-name').innerText = 'Nexus AI Bot';
-            typingBox.classList.remove('hidden');
-
-            setTimeout(() => {
-                typingBox.classList.add('hidden');
-                
-                let botReplyText = "Tôi nhận được tin nhắn của bạn rồi! Đây là phản hồi tự động lập trình sẵn từ AI Bot.";
-                if (userText.toLowerCase().includes('chào') || userText.toLowerCase().includes('hello')) {
-                    botReplyText = "Chào bạn! Chúc bạn một ngày làm việc hiệu quả và tràn đầy năng lượng!";
-                } else if (userText.toLowerCase().includes('github') || userText.toLowerCase().includes('deploy')) {
-                    botReplyText = "Bạn có thể nhấn vào biểu tượng Đám Mây (Cloud) ở góc trên bên trái để xem hướng dẫn đưa dự án lên GitHub Pages nhé!";
-                }
-
-                const botMsg = {
-                    id: 'msg-' + Date.now(),
-                    senderId: 'usr-3',
-                    receiverId: state.currentUser.id,
-                    content: botReplyText,
-                    timestamp: Date.now(),
-                    read: true
-                };
-
-                state.messages.push(botMsg);
-                saveMessagesState();
-                renderMessages();
-                renderConversationsList();
-            }, 1500);
-        }
-
-        function handleInputKeyDown(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        }
-
-        function handleInputTyping() {
-            const textarea = document.getElementById('message-input');
-            textarea.style.height = 'auto';
-            textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
-        }
-
-        function handleFileUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                state.attachment = event.target.result;
-                document.getElementById('attachment-name').innerText = file.name;
-                document.getElementById('attachment-preview').classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function clearAttachment() {
-            state.attachment = null;
-            document.getElementById('file-input').value = '';
-            document.getElementById('attachment-preview').classList.add('hidden');
-        }
-
-        function replyToMessage(msgId) {
-            const msg = state.messages.find(m => m.id === msgId);
-            if (!msg) return;
-            state.replyingToMessage = msg;
-            const author = msg.senderId === state.currentUser.id ? 'Chính bạn' : 'Đối phương';
-            document.getElementById('reply-author').innerText = `Trả lời ${author}:`;
-            document.getElementById('reply-text').innerText = msg.content;
-            document.getElementById('reply-bar').classList.remove('hidden');
-        }
-
-        function cancelReply() {
-            state.replyingToMessage = null;
-            document.getElementById('reply-bar').classList.add('hidden');
-        }
-
-        function copyMessageText(text) {
-            navigator.clipboard.writeText(text);
-            showToast('Đã sao chép tin nhắn!', 'info');
-        }
-
-        function deleteMessage(msgId) {
-            state.messages = state.messages.filter(m => m.id !== msgId);
-            saveMessagesState();
-            renderMessages();
-            renderConversationsList();
-            showToast('Đã xóa tin nhắn', 'info');
-        }
-
-        function clearChatHistory() {
-            state.messages = state.messages.filter(m => 
-                !(m.senderId === state.currentUser.id && m.receiverId === state.activeChatUserId) &&
-                !(m.senderId === state.activeChatUserId && m.receiverId === state.currentUser.id)
-            );
-            saveMessagesState();
-            renderMessages();
-            renderConversationsList();
-            showToast('Đã xóa lịch sử cuộc trò chuyện', 'info');
-        }
-
-        /* ==========================================================================
-           UI TOGGLES & MODAL CONTROLLERS
-           ========================================================================== */
-
-        function toggleDarkMode() {
-            const isDark = document.documentElement.classList.toggle('dark');
-            state.theme = isDark ? 'dark' : 'light';
-            localStorage.setItem('nexus_theme', state.theme);
-            document.getElementById('theme-icon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        }
-
-        function toggleMobileSidebar() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
-        }
-
-        function toggleRightPanel() {
-            const panel = document.getElementById('right-panel');
-            panel.classList.toggle('hidden');
-            panel.classList.toggle('translate-x-full');
-        }
-
-        function toggleEmojiPicker() {
-            document.getElementById('emoji-picker').classList.toggle('hidden');
-        }
-
-        function insertEmoji(emoji) {
-            const input = document.getElementById('message-input');
-            input.value += emoji;
-            toggleEmojiPicker();
-            input.focus();
-        }
-
-        function filterUserList() {
-            const query = document.getElementById('input-search-users').value.toLowerCase();
-            const items = document.querySelectorAll('#chat-list > div');
-            items.forEach(item => {
-                const name = item.querySelector('h4').innerText.toLowerCase();
-                item.style.display = name.includes(query) ? 'flex' : 'none';
-            });
-        }
-
-        function searchMessagesInChat() {
-            const query = document.getElementById('chat-search-input').value.toLowerCase();
-            const msgs = document.querySelectorAll('#messages-container > div');
-            msgs.forEach(msg => {
-                const text = msg.querySelector('p')?.innerText.toLowerCase() || '';
-                if (text.includes(query)) {
-                    msg.style.opacity = '1';
-                    msg.style.transform = 'scale(1)';
-                } else {
-                    msg.style.opacity = '0.3';
-                }
-            });
-        }
-
-        /* Modal Handlers */
-        function openSettingsModal() {
-            document.getElementById('settings-displayname').value = state.currentUser.displayName;
-            document.getElementById('settings-avatar').value = state.currentUser.avatar;
-            document.getElementById('settings-status').value = state.currentUser.status;
-            document.getElementById('modal-settings').classList.remove('hidden');
-        }
-
-        function closeSettingsModal() {
-            document.getElementById('modal-settings').classList.add('hidden');
-        }
-
-        function randomizeSettingsAvatar() {
-            const seed = 'Nexus' + Math.floor(Math.random() * 10000);
-            document.getElementById('settings-avatar').value = `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
-        }
-
-        function saveProfileSettings(e) {
-            e.preventDefault();
-            state.currentUser.displayName = document.getElementById('settings-displayname').value.trim();
-            state.currentUser.avatar = document.getElementById('settings-avatar').value.trim();
-            state.currentUser.status = document.getElementById('settings-status').value;
-
-            // Update user in users list
-            const idx = state.users.findIndex(u => u.id === state.currentUser.id);
-            if (idx !== -1) state.users[idx] = state.currentUser;
-
-            saveUsersState();
-            initMainApp();
-            closeSettingsModal();
-            showToast('Đã cập nhật cài đặt tài khoản!', 'success');
-        }
-
-        function openNewChatModal() {
-            const container = document.getElementById('newchat-user-list');
-            container.innerHTML = '';
-
-            const availableUsers = state.users.filter(u => u.id !== state.currentUser.id);
-            availableUsers.forEach(u => {
-                const div = document.createElement('div');
-                div.className = 'flex items-center justify-between p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer';
-                div.onclick = () => {
-                    setActiveChat(u.id);
-                    closeNewChatModal();
-                };
-                div.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <img src="${u.avatar}" class="w-8 h-8 rounded-full">
-                        <div>
-                            <h5 class="text-xs font-bold">${u.displayName}</h5>
-                            <p class="text-[10px] text-slate-400">@${u.username}</p>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
-                `;
-                container.appendChild(div);
-            });
-
-            document.getElementById('modal-newchat').classList.remove('hidden');
-        }
-
-        function closeNewChatModal() {
-            document.getElementById('modal-newchat').classList.add('hidden');
-        }
-
-        function openSetupBackendModal() {
-            document.getElementById('modal-backend-setup').classList.remove('hidden');
-        }
-
-        function closeSetupBackendModal() {
-            document.getElementById('modal-backend-setup').classList.add('hidden');
-        }
-
-        function copySqlCode() {
-            const code = `create table public.profiles (\n  id uuid references auth.users not null primary key,\n  username text unique not null,\n  display_name text,\n  avatar_url text,\n  status text default 'offline'\n);\n\ncreate table public.messages (\n  id uuid primary key default gen_random_uuid(),\n  sender_id uuid references public.profiles(id),\n  receiver_id uuid references public.profiles(id),\n  content text,\n  created_at timestamp with time zone default timezone('utc'::text, now())\n);`;
-            navigator.clipboard.writeText(code);
-            showToast('Đã sao chép SQL vào bộ nhớ tạm!', 'info');
-        }
-
-        /* Utility Functions */
-        function saveUsersState() {
-            localStorage.setItem('nexus_users', JSON.stringify(state.users));
-        }
-
-        function saveMessagesState() {
-            localStorage.setItem('nexus_messages', JSON.stringify(state.messages));
-        }
-
-        function formatTime(timestamp) {
-            const date = new Date(timestamp);
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function escapeHtml(text) {
-            return text.replace(/&/g, "&amp;")
-                       .replace(/</g, "&lt;")
-                       .replace(/>/g, "&gt;")
-                       .replace(/"/g, "&quot;")
-                       .replace(/'/g, "&#039;");
-        }
-
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            const bgClass = type === 'success' ? 'bg-emerald-600' : 'bg-indigo-600';
-            
-            toast.className = `${bgClass} text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2 pointer-events-auto animate-msg`;
-            toast.innerHTML = `
-                <i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-info'}"></i>
-                <span>${message}</span>
-            `;
-
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'all 0.3s ease';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-    </script>
+      ]);
+
+      if (error) alert("Lỗi gửi tin nhắn: " + error.message);
+    }
+
+    function subscribeRealtime() {
+      supabaseClient
+        .channel('public:messages')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+          renderMessage(payload.new);
+        })
+        .subscribe();
+    }
+
+    function scrollToBottom() {
+      const container = document.getElementById('messages-container');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function logout() {
+      supabaseClient.auth.signOut();
+      location.reload();
+    }
+  </script>
 </body>
 </html>
