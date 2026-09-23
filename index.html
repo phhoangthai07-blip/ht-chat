@@ -205,7 +205,7 @@
     $("showRegister").onclick = () => showAuth("register");
     $("showLogin").onclick = () => showAuth("login");
 
-    $("loginForm").addEventListener("submit", async (e) => {
+    $("loginPanel").addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = $("loginEmail").value.trim();
       const password = $("loginPassword").value;
@@ -219,7 +219,7 @@
       }
     });
 
-    $("registerForm").addEventListener("submit", async (e) => {
+    $("registerPanel").addEventListener("submit", async (e) => {
       e.preventDefault();
       const username = $("registerUsername").value.trim();
       const email = $("registerEmail").value.trim();
@@ -248,8 +248,9 @@
     });
 
     function setAuthMessage(text, error = false) {
-      $("authMessage").textContent = text;
-      $("authMessage").className = "auth-message " + (error ? "error" : "success");
+      const el = document.querySelector("#loginPanel:not(.hidden) #authMessage, #registerPanel:not(.hidden) #registerHint") || $("authMessage");
+      el.textContent = text;
+      el.className = "auth-message " + (error ? "error" : "success");
     }
 
     async function loadProfile() {
@@ -269,6 +270,7 @@
       $("myAvatar").textContent = initials(data.username);
       $("profileName").textContent = data.username;
       $("profileEmail").textContent = currentUser.email || "";
+      $("profileAvatar").textContent = initials(data.username);
     }
 
     async function loadAll() {
