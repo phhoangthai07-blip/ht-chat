@@ -4,10 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f8ff">
-<title>HT Chat v2.7 • Slide & Social FX</title>
+<title>HT Chat v2.8 • Instant Sound & Themes</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#182033;background:#f7f8fc}body{overflow:hidden}button,input,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}img{max-width:100%}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:#d8dbea;border-radius:99px}
 :root{--p:#625ff2;--p2:#8a54f6;--soft:#f0efff;--bg:#f7f8fc;--card:#fff;--line:#e9ebf2;--muted:#8992a5;--green:#25c27a;--red:#ef5870;--shadow:0 18px 55px rgba(35,40,75,.10)}
+html.dark{--bg:#0f1117;--card:#171a22;--line:#292e3a;--muted:#9ca5b8;--soft:#242133;--shadow:0 18px 55px rgba(0,0,0,.35);color-scheme:dark}
+html.dark body{background:var(--bg);color:#eef1f7}
+html.dark .glass,html.dark .card,html.dark .profile-section,html.dark .chat-panel,html.dark .side{background:rgba(23,26,34,.86)!important;border-color:var(--line)!important}
+html.dark input,html.dark textarea,html.dark .search input{background:#11141b!important;color:#eef1f7!important;border-color:var(--line)!important}
+html.dark .muted,html.dark small{color:var(--muted)!important}
+html.dark .bottom-nav{background:rgba(18,21,28,.78)!important;border-color:rgba(255,255,255,.09)!important}
+html.dark .post,html.dark .message-row .bubble{border-color:var(--line)!important}
+
 /* auth */
 #authScreen{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 10% 10%,#e0e4ff,transparent 32%),radial-gradient(circle at 90% 90%,#eadfff,transparent 30%),#f7f8fc}.auth-card{width:min(430px,100%);padding:40px;border:1px solid rgba(255,255,255,.8);border-radius:30px;background:rgba(255,255,255,.9);box-shadow:0 30px 90px rgba(43,48,92,.16);backdrop-filter:blur(24px)}.logo{width:64px;height:64px;margin:auto;border-radius:21px;display:grid;place-items:center;background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;box-shadow:0 15px 35px #635ff23d}.auth-card h1{text-align:center;margin:18px 0 7px}.auth-sub{text-align:center;color:var(--muted);margin:0 0 28px}.field{margin-bottom:14px}.field label{display:block;font-size:13px;font-weight:800;margin-bottom:7px}.field input{width:100%;padding:14px;border:1px solid var(--line);border-radius:14px;outline:0;background:#fafbfe}.field input:focus{border-color:#7b78f4;box-shadow:0 0 0 4px #625ff21a}.primary{width:100%;padding:14px;border:0;border-radius:14px;background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;font-weight:800;box-shadow:0 10px 24px #625ff233}.auth-message{min-height:22px;text-align:center;font-size:13px;margin:10px 0}.auth-message.error{color:#dc3545}.auth-message.success{color:#15965a}.switch{text-align:center;color:var(--muted);font-size:14px;margin-top:20px}.link-btn{border:0;background:none;color:var(--p);font-weight:800}
 /* app shell */
@@ -132,7 +140,7 @@ svg{width:20px;height:20px;display:block;overflow:visible}#sideSearchIcon{positi
         </div>
       </div>
     </section>
-    <section class="page hidden" id="profilePage"><header class="top"><button class="mobile-menu" id="profileMobileMenu"></button><div><h2>Trang cá nhân</h2><small>Hồ sơ của bạn</small></div></header><div class="page-scroll"><div class="profile-wrap"><div class="profile-hero glass"><div class="profile-cover"><div class="profile-hero-avatar" id="profileHeroAvatar"><button class="avatar-edit" id="avatarEditBtn" type="button" title="Đổi ảnh đại diện"></button></div></div><h2 id="profileName">...</h2><p id="profileEmail">...</p><div class="profile-buttons"><button class="profile-btn primary2" id="changeAvatarBtn" type="button"></button><input id="avatarInput" type="file" accept="image/*" class="hidden"></div></div><div class="profile-section glass"><h3>Cài đặt</h3><div class="setting-row"><span>🔔 Thông báo tin nhắn</span><button id="notificationButton">Bật</button></div><div class="setting-row"><span>✓✓ Đã xem tin nhắn</span><button id="readReceiptButton">Bật</button></div><div class="setting-row"><span>👤 Tài khoản</span><span id="profileUid" style="color:var(--muted);font-size:11px"></span></div><button class="info-btn" id="appInfoButton">ⓘ Thông tin ứng dụng</button></div></div></div></section>
+    <section class="page hidden" id="profilePage"><header class="top"><button class="mobile-menu" id="profileMobileMenu"></button><div><h2>Trang cá nhân</h2><small>Hồ sơ của bạn</small></div></header><div class="page-scroll"><div class="profile-wrap"><div class="profile-hero glass"><div class="profile-cover"><div class="profile-hero-avatar" id="profileHeroAvatar"><button class="avatar-edit" id="avatarEditBtn" type="button" title="Đổi ảnh đại diện"></button></div></div><h2 id="profileName">...</h2><p id="profileEmail">...</p><div class="profile-buttons"><button class="profile-btn primary2" id="changeAvatarBtn" type="button"></button><input id="avatarInput" type="file" accept="image/*" class="hidden"></div></div><div class="profile-section glass"><h3>Cài đặt</h3><div class="setting-row"><span>🔔 Thông báo tin nhắn</span><button id="notificationButton">Bật</button></div><div class="setting-row"><span>✓✓ Đã xem tin nhắn</span><button id="readReceiptButton">Bật</button></div><div class="setting-row"><span>🌗 Giao diện</span><button id="themeButton">Tối</button></div><div class="setting-row"><span>👤 Tài khoản</span><span id="profileUid" style="color:var(--muted);font-size:11px"></span></div><button class="info-btn" id="appInfoButton">ⓘ Thông tin ứng dụng</button></div></div></div></section>
   </main>
 
   <nav class="bottom-nav" id="bottomNav"><span class="nav-slider" aria-hidden="true"></span><button data-page="homePage" class="active" id="navHome"><span class="nav-icon" id="iconHome"></span><span>Trang chủ</span></button><button data-page="messagesPage" id="navMessages"><span class="nav-icon" id="iconMessages"></span><span>Tin nhắn</span><span class="nav-dot hidden" id="messageBadge">0</span></button><button data-page="friendsPage" id="navFriends"><span class="nav-icon" id="iconFriends"></span><span>Bạn bè</span><span class="nav-dot hidden" id="friendsBadge">0</span></button><button data-page="profilePage" id="navProfile"><span class="nav-icon" id="iconProfile"></span><span>Cá nhân</span></button></nav>
@@ -203,13 +211,28 @@ function scrollMessages(){$('messages').scrollTop=$('messages').scrollHeight}
 function sendTyping(v){if(presenceChannel&&selectedUser)presenceChannel.send({type:'broadcast',event:'typing',payload:{userId:currentUser.id,typing:v}})}
 function subscribeTyping(){if(!presenceChannel||!selectedUser)return;presenceChannel.on('broadcast',{event:'typing'},p=>{if(p.payload?.userId!==selectedUser.id)return;$('chatStatus').textContent=p.payload.typing?'đang nhập...':(onlineUsers.has(selectedUser.id)?'Đang hoạt động':'Ngoại tuyến')})}
 $('messageInput').oninput=()=>{sendTyping(true);clearTimeout(typingTimer);typingTimer=setTimeout(()=>sendTyping(false),900)};
+// Theme light/dark
+function applyTheme(mode){
+  document.documentElement.classList.toggle('dark', mode==='dark');
+  const b=$('themeButton'); if(b)b.textContent=mode==='dark'?'Sáng':'Tối';
+  const meta=document.querySelector('meta[name=theme-color]'); if(meta)meta.content=mode==='dark'?'#0f1117':'#f7f8ff';
+  localStorage.setItem('ht-theme',mode);
+}
+applyTheme(localStorage.getItem('ht-theme')||'light');
+if($('themeButton')) $('themeButton').onclick=()=>applyTheme(document.documentElement.classList.contains('dark')?'light':'dark');
+
 let sendAudio=$('sendSoundAudio');
+// Nạp sẵn âm thanh để giảm độ trễ khi người dùng bấm Gửi.
+try{sendAudio?.load();}catch(_){}
+
 function playSendSound(){
   try{
     if(!sendAudio)return;
-    sendAudio.currentTime=0;
-    const p=sendAudio.play();
+    const a=sendAudio.cloneNode(true);
+    a.currentTime=0; a.volume=sendAudio.volume||1;
+    const p=a.play();
     if(p?.catch)p.catch(()=>{});
+    setTimeout(()=>{try{a.remove();}catch(_){}},1800);
   }catch(_){}
 }
 function playPostInteractionSound(kind='like'){
@@ -229,7 +252,7 @@ function postTouch(card,cls='post-bump'){
   if(!card)return;card.classList.remove('post-touch');void card.offsetWidth;card.classList.add('post-touch');
 }
 
-async function sendMessage(){if(!selectedUser)return;const input=$('messageInput'),c=input.value.trim();if(!c)return;$('sendButton').disabled=true;const optimistic={id:'local-'+Date.now()+'-'+Math.random().toString(36).slice(2),sender_id:currentUser.id,receiver_id:selectedUser.id,content:c,created_at:new Date().toISOString(),read_at:null};removeReadReceipts();renderMessage(optimistic,true);scrollMessages();input.value='';sendTyping(false);playSendSound();const {data,error}=await supabase.from('messages').insert({sender_id:currentUser.id,receiver_id:selectedUser.id,content:c}).select().single();$('sendButton').disabled=false;if(error){document.querySelector(`#messages [data-message-id="${CSS.escape(String(optimistic.id))}"]`)?.remove();input.value=c;return toast('Không gửi được tin nhắn')}const localRow=document.querySelector(`#messages [data-message-id="${CSS.escape(String(optimistic.id))}"]`);if(localRow){localRow.dataset.messageId=String(data.id)}else renderMessage(data,true);input.focus()}
+async function sendMessage(){if(!selectedUser)return;const input=$('messageInput'),c=input.value.trim();if(!c)return;playSendSound();$('sendButton').disabled=true;const optimistic={id:'local-'+Date.now()+'-'+Math.random().toString(36).slice(2),sender_id:currentUser.id,receiver_id:selectedUser.id,content:c,created_at:new Date().toISOString(),read_at:null};removeReadReceipts();renderMessage(optimistic,true);scrollMessages();input.value='';sendTyping(false);const {data,error}=await supabase.from('messages').insert({sender_id:currentUser.id,receiver_id:selectedUser.id,content:c}).select().single();$('sendButton').disabled=false;if(error){document.querySelector(`#messages [data-message-id="${CSS.escape(String(optimistic.id))}"]`)?.remove();input.value=c;return toast('Không gửi được tin nhắn')}const localRow=document.querySelector(`#messages [data-message-id="${CSS.escape(String(optimistic.id))}"]`);if(localRow){localRow.dataset.messageId=String(data.id)}else renderMessage(data,true);input.focus()}
 $('sendButton').onclick=sendMessage;$('messageInput').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}};
 const EMOJIS=['😀','😂','😍','🥰','😎','😭','😡','🤔','👍','👎','❤️','💖','🔥','🎉','👏','🙏','😊','😄','😆','😉','🤣','😘','🥹','😇','🤩','😴','🤗','😱','😢','😮','🤝','💯','✨','🎈','🎁','🚀','💬','🙌','👌','💪','👀','🌟','☀️','🌙','🍀','🐶','🐱','🍕','☕'];$('emojiGrid').innerHTML=EMOJIS.map(x=>`<button type="button">${x}</button>`).join('');$('emojiGrid').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('messageInput').value+=b.textContent;$('messageInput').focus()});$('emojiButton').onclick=()=>$('emojiPanel').classList.toggle('hidden');
 async function uploadFile(file,folder){if(!file||!file.type.startsWith('image/'))return null;if(file.size>8*1024*1024){toast('Ảnh tối đa 8MB');return null}const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),path=`${folder}/${currentUser.id}-${Date.now()}.${ext}`;const {error}=await supabase.storage.from(AVATAR_BUCKET).upload(path,file,{upsert:false,contentType:file.type});if(error){console.error(error);toast('Không tải được ảnh');return null}return postImageUrl(path)}
