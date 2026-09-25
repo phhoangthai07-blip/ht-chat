@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f8ff">
-<title>HT Chat 3.6 • HT Logo • Voice</title>
+<title>HT Chat 3.8 • HT Logo • Voice • Notifications</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#182033;background:#f7f8fc}body{overflow:hidden}button,input,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}img{max-width:100%}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:#d8dbea;border-radius:99px}
 :root{--p:#625ff2;--p2:#8a54f6;--soft:#f0efff;--bg:#f7f8fc;--card:#fff;--line:#e9ebf2;--muted:#8992a5;--green:#25c27a;--red:#ef5870;--shadow:0 18px 55px rgba(35,40,75,.10)}
@@ -312,6 +312,63 @@ body.chat-focus #messagesPage.chat-chat-mode .composer-wrap{margin-bottom:0!impo
 /* HT Chat 3.7 - Home notification center */
 .home-actions{display:flex;align-items:center;gap:8px}.notification-btn{position:relative}.notification-btn.has-new{color:var(--p);background:#ecebff}.notification-dot{position:absolute;right:5px;top:5px;width:8px;height:8px;border-radius:50%;background:#ef4f69;border:2px solid #fff;display:none}.notification-btn.has-new .notification-dot{display:block}.notification-panel{position:fixed;top:76px;right:24px;width:min(390px,calc(100vw - 24px));max-height:min(72vh,560px);overflow:auto;background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 70px rgba(28,34,55,.18);backdrop-filter:blur(22px);z-index:80;padding:8px}.notification-head{display:flex;align-items:center;justify-content:space-between;padding:10px 10px 8px}.notification-head b{font-size:15px}.notification-head button{border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:800}.notification-item{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:14px;cursor:pointer}.notification-item:hover{background:#f3f4f8}.notification-item.unread{background:#f0efff}.notification-item .avatar{width:38px;height:38px;flex:0 0 38px}.notification-main{min-width:0;flex:1;font-size:13px;line-height:1.4}.notification-main b{font-weight:800}.notification-main small{display:block;color:var(--muted);font-size:10px;margin-top:3px}.notification-empty{padding:35px 14px;text-align:center;color:var(--muted);font-size:13px}.notification-post{display:block;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;font-size:11px}@media(max-width:700px){.notification-panel{top:62px;right:8px;width:calc(100vw - 16px);max-height:70vh}.home-actions{gap:4px}.top{padding:0 12px}.notification-btn{width:38px;height:38px}}
 </style>
+
+<style id="htchat-3-8-logo-fix">
+/* HT Chat 3.8 — cân đối logo + khung bo + viền mờ */
+.brand-logo{
+  width:44px!important;height:44px!important;
+  border-radius:15px!important;
+  display:grid!important;place-items:center!important;
+  padding:7px!important;
+  background:rgba(255,255,255,.72)!important;
+  border:1px solid rgba(100,130,170,.18)!important;
+  box-shadow:0 8px 22px rgba(55,95,145,.14), inset 0 0 0 1px rgba(255,255,255,.55)!important;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.brand-logo img{
+  width:100%!important;height:100%!important;
+  object-fit:contain!important;object-position:center!important;
+  display:block!important;margin:0!important;
+}
+.logo{
+  width:76px!important;height:76px!important;
+  border-radius:24px!important;
+  display:grid!important;place-items:center!important;
+  padding:12px!important;
+  background:rgba(255,255,255,.78)!important;
+  border:1px solid rgba(100,130,170,.18)!important;
+  box-shadow:0 12px 30px rgba(55,95,145,.15), inset 0 0 0 1px rgba(255,255,255,.58)!important;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.logo img{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;margin:0!important}
+.app-info-logo{
+  width:112px!important;height:112px!important;
+  border-radius:30px!important;
+  display:grid!important;place-items:center!important;
+  padding:18px!important;
+  overflow:hidden!important;
+  background:rgba(255,255,255,.82)!important;
+  border:1px solid rgba(100,130,170,.18)!important;
+  box-shadow:0 14px 34px rgba(55,95,145,.14), inset 0 0 0 1px rgba(255,255,255,.65)!important;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+}
+.app-info-logo img{
+  width:100%!important;height:100%!important;
+  max-width:none!important;
+  object-fit:contain!important;object-position:center!important;
+  display:block!important;margin:0!important;
+}
+@media(max-width:700px){
+  .brand-logo{width:42px!important;height:42px!important;border-radius:14px!important;padding:6px!important}
+  .app-info-logo{width:104px!important;height:104px!important;padding:16px!important}
+}
+html.dark .brand-logo,html.dark .logo,html.dark .app-info-logo{
+  background:rgba(255,255,255,.10)!important;
+  border-color:rgba(255,255,255,.16)!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.06)!important;
+}
+</style>
+
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -372,7 +429,7 @@ body.chat-focus #messagesPage.chat-chat-mode .composer-wrap{margin-bottom:0!impo
 
 <div id="postModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Tạo bài viết</h3><button class="close" id="closePostModal"></button></div><textarea id="postText" rows="5" style="width:100%;margin-top:15px;border:1px solid var(--line);border-radius:15px;padding:12px;outline:0;resize:vertical" placeholder="Bạn đang nghĩ gì?"></textarea><div style="margin-top:10px"><label class="file-label" id="postImageLabel"></label><input id="postImageInput" type="file" accept="image/*" class="hidden"></div><div style="display:flex;justify-content:flex-end;margin-top:15px"><button class="primary" id="publishPost" style="width:auto;padding:11px 18px">Đăng bài</button></div></div></div>
 <div id="profileMiniModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Thông tin</h3><button class="close" id="closeProfileMini"></button></div><div id="profileMiniBody" style="padding-top:15px"></div></div></div><div id="noteModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Ghi chú / suy nghĩ</h3><button class="close" id="closeNoteModal"></button></div><p style="color:var(--muted);font-size:13px;margin:10px 0 0">Viết một ghi chú ngắn cho hôm nay. Bạn bè của bạn có thể nhìn thấy ghi chú này trong phần Tin nhắn.</p><textarea id="noteText" class="note-modal-text" maxlength="60" placeholder="Bạn đang nghĩ gì?"></textarea><div class="note-modal-actions"><button id="deleteNote" class="note-delete">Xóa</button><button id="cancelNote" class="note-cancel">Hủy</button><button id="saveNote" class="note-save">Lưu ghi chú</button></div></div></div>
-<div id="profileViewModal" class="modal hidden"><div class="modal-card profile-view-card"><div class="modal-head"><h3>Trang cá nhân</h3><button class="close" id="closeProfileView"></button></div><div id="profileViewBody"></div></div></div><div id="groupModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Tạo nhóm</h3><button class="close" id="closeGroupModal"></button></div><input id="groupNameInput" class="group-name-input" maxlength="60" placeholder="Tên nhóm"><div id="groupMemberPicker" class="group-member-picker"></div><div style="display:flex;justify-content:flex-end;margin-top:12px"><button id="saveGroupButton" class="note-save">Tạo nhóm</button></div></div></div><div id="appInfoModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Thông tin ứng dụng</h3><button class="close" id="closeAppInfo"></button></div><div class="app-info-list" style="padding-top:10px"><div class="app-info-logo" id="appInfoLogo"></div><div class="app-info-row"><b>Ứng dụng</b><span>HT Chat</span></div><div class="app-info-row"><b>Phiên bản</b><span>3.7.0</span></div><div class="app-info-row"><b>Công ty</b><span>Công ty cổ phần PHT</span></div><div class="app-info-row"><b>Nền tảng</b><span>Web / GitHub Pages</span></div><div class="app-info-row"><b>Dịch vụ</b><span>Supabase</span></div></div></div></div><div id="notificationPanel" class="notification-panel hidden" role="dialog" aria-label="Thông báo"><div class="notification-head"><b>Thông báo</b><button id="clearNotificationBadge" type="button">Đánh dấu đã xem</button></div><div id="notificationList"></div></div>
+<div id="profileViewModal" class="modal hidden"><div class="modal-card profile-view-card"><div class="modal-head"><h3>Trang cá nhân</h3><button class="close" id="closeProfileView"></button></div><div id="profileViewBody"></div></div></div><div id="groupModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Tạo nhóm</h3><button class="close" id="closeGroupModal"></button></div><input id="groupNameInput" class="group-name-input" maxlength="60" placeholder="Tên nhóm"><div id="groupMemberPicker" class="group-member-picker"></div><div style="display:flex;justify-content:flex-end;margin-top:12px"><button id="saveGroupButton" class="note-save">Tạo nhóm</button></div></div></div><div id="appInfoModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Thông tin ứng dụng</h3><button class="close" id="closeAppInfo"></button></div><div class="app-info-list" style="padding-top:10px"><div class="app-info-logo" id="appInfoLogo"></div><div class="app-info-row"><b>Ứng dụng</b><span>HT Chat</span></div><div class="app-info-row"><b>Phiên bản</b><span>3.8.0</span></div><div class="app-info-row"><b>Công ty</b><span>Công ty cổ phần PHT</span></div><div class="app-info-row"><b>Nền tảng</b><span>Web / GitHub Pages</span></div><div class="app-info-row"><b>Dịch vụ</b><span>Supabase</span></div></div></div></div><div id="notificationPanel" class="notification-panel hidden" role="dialog" aria-label="Thông báo"><div class="notification-head"><b>Thông báo</b><button id="clearNotificationBadge" type="button">Đánh dấu đã xem</button></div><div id="notificationList"></div></div>
 
 <script type="module">
 window.addEventListener('DOMContentLoaded',()=>{import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm').then(async({createClient})=>{
