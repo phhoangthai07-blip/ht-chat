@@ -446,6 +446,21 @@ html.dark .reaction-pill{background:#181c24;color:#eef1f7;border-color:#343a48}
   }
 }
 </style>
+
+<style id="desktop-remove-left-sidebar-v2">
+/* Máy tính: bỏ hoàn toàn thanh bên trái dư thừa */
+@media (min-width: 901px){
+  #app > aside#side{
+    display:none !important;
+  }
+  #app > main.main{
+    width:100% !important;
+    max-width:none !important;
+    flex:1 1 100% !important;
+    min-width:0 !important;
+  }
+}
+</style>
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -1256,6 +1271,19 @@ $('closeGroupModal').onclick=()=>$('groupModal').classList.add('hidden');$('grou
 
   const obs=new MutationObserver(()=>setTimeout(hideExtraMessagePanel,50));
   obs.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<script id="desktop-remove-left-sidebar-guard">
+(function(){
+  function keepDesktopSidebarHidden(){
+    if(window.innerWidth >= 901){
+      const side=document.getElementById('side');
+      if(side) side.style.setProperty('display','none','important');
+    }
+  }
+  window.addEventListener('load',keepDesktopSidebarHidden);
+  window.addEventListener('resize',keepDesktopSidebarHidden);
 })();
 </script>
 </body></html>
