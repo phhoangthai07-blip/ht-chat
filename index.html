@@ -410,6 +410,10 @@ html.dark .reaction-picker button:hover{background:#292e38}
 html.dark .reaction-pill{background:#181c24;color:#eef1f7;border-color:#343a48}
 
 </style>
+<style id="v39-final-ui-fixes">
+.comment-body .verified-name{font-weight:800;display:inline-flex;align-items:center;gap:3px;margin-right:5px}
+.comment-body .verified-badge,.message-bubble .verified-badge{width:13px!important;height:13px!important;flex:0 0 13px!important;vertical-align:-2px!important}
+</style>
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -423,7 +427,7 @@ html.dark .reaction-pill{background:#181c24;color:#eef1f7;border-color:#343a48}
   <aside class="side" id="side">
     <div class="side-head"><div class="brand"><div class="brand-logo" id="brandIcon"></div><div><b>HT Chat</b><small>Kết nối mọi người</small></div></div><div class="search"><span id="sideSearchIcon"></span><input id="searchInput" placeholder="Tìm người dùng..."></div></div>
     <div class="side-scroll"><div id="sideFriends"><div class="section-title">Tin nhắn</div><div id="friendList"></div><div id="searchResults" class="hidden"></div></div></div>
-    <div class="side-bottom"><div class="avatar" id="myAvatar"></div><div class="me"><b id="myName">...</b><small id="myPresence">Đang hoạt động</small></div><button class="icon-btn" id="profileQuick" title="Trang cá nhân"></button><button class="icon-btn" id="logoutButton" title="Đăng xuất"></button></div>
+    <div class="side-bottom"><div class="avatar" id="myAvatar"></div><div class="me"><b id="myName">...</b><small id="myPresence">Đang hoạt động</small></div><button class="icon-btn" id="profileQuick" title="Trang cá nhân"></button><div class="setting-row"><span>🚪 Đăng xuất</span><button class="icon-btn" id="logoutButton" title="Đăng xuất"></button></div></div>
   </aside>
 
   <main class="main">
@@ -1016,7 +1020,7 @@ async function openXmdtModal(){
 function closeXmdtModal(){$('xmdtModal').classList.add('hidden')}
 async function verifyXmdt(){
   const password=$('xmdtPassword').value;
-  if(password!=='@Thai0308'){
+  if(password!=='@Pht0308'){
     $('xmdtError').textContent='Mật mã không đúng.';
     return;
   }
