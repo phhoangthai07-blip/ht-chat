@@ -461,6 +461,70 @@ html.dark .reaction-pill{background:#181c24;color:#eef1f7;border-color:#343a48}
   }
 }
 </style>
+
+<style id="restore-sidebar-and-polish-home">
+@media (min-width:901px){
+  #app > aside#side{
+    display:flex !important;
+  }
+  #app > main.main{
+    width:auto !important;
+    max-width:none !important;
+    flex:1 1 auto !important;
+  }
+
+  /* Chỉ ẩn panel danh sách hội thoại dư bên trong trang Tin nhắn */
+  #messagesPage .messages-sidebar,
+  #messagesPage .chat-sidebar,
+  #messagesPage .conversation-sidebar,
+  #messagesPage .inbox-sidebar,
+  #messagesPage .message-list-panel,
+  #messagesPage .extra-chat-list{
+    display:none !important;
+  }
+
+  /* Bài viết: ảnh nhỏ hơn, không ép ảnh lấp đầy khung */
+  #homePage .post img,
+  #homePage .post-image,
+  #homePage .post-media img,
+  #homePage .post-content img{
+    max-width:96% !important;
+    width:auto !important;
+    height:auto !important;
+    max-height:520px !important;
+    object-fit:contain !important;
+    display:block !important;
+    margin:8px auto !important;
+    border-radius:16px !important;
+  }
+
+  /* Trang chủ có thêm các tiện ích, bớt khoảng trống */
+  #homePage .home-quick-tools{
+    display:grid !important;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+    margin:0 0 14px;
+  }
+  #homePage .home-quick-tool{
+    border:0;
+    background:rgba(255,255,255,.72);
+    border-radius:16px;
+    padding:12px 8px;
+    font:600 12px/1.2 inherit;
+    color:#394150;
+    box-shadow:0 5px 18px rgba(50,60,90,.07);
+    cursor:pointer;
+    transition:.18s ease;
+  }
+  #homePage .home-quick-tool:hover{transform:translateY(-1px)}
+}
+</style>
+
+<style id="override-remove-sidebar-fix">
+@media (min-width:901px){
+  #app > aside#side{display:flex!important;}
+}
+</style>
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -478,7 +542,14 @@ html.dark .reaction-pill{background:#181c24;color:#eef1f7;border-color:#343a48}
   </aside>
 
   <main class="main">
-    <section class="page" id="homePage"><header class="top"><button class="mobile-menu" id="mobileMenu"></button><div><h2>Trang chủ</h2><small>Bài viết từ cộng đồng HT Chat</small></div><div class="top-spacer"></div><div class="home-actions"><button class="icon-btn" id="homeRefresh" title="Làm mới" aria-label="Làm mới"></button><button class="icon-btn notification-btn" id="homeNotifications" title="Thông báo" aria-label="Thông báo"></button></div></header><div class="page-scroll"><div class="feed"><div class="composer-card glass"><div class="post-compose"><div class="avatar small" id="composeAvatar"></div><button class="compose-input" id="openPostComposer" style="text-align:left">Bạn đang nghĩ gì?</button></div><div class="compose-actions"><button class="compose-action" id="openPostComposerImage" title="Thêm ảnh" aria-label="Thêm ảnh"></button><button class="compose-action" id="openPostComposerText" title="Viết bài" aria-label="Viết bài"></button></div></div><div id="feedList"></div><button id="loadMorePosts" class="load-more hidden">Xem thêm bài viết</button></div></div></section>
+    <section class="page" id="homePage"><header class="top"><button class="mobile-menu" id="mobileMenu"></button><div><h2>Trang chủ</h2>
+<div class="home-quick-tools" aria-label="Tiện ích nhanh">
+  <button class="home-quick-tool" type="button" data-go="messages">💬<br>Tin nhắn</button>
+  <button class="home-quick-tool" type="button" data-go="friends">👥<br>Bạn bè</button>
+  <button class="home-quick-tool" type="button" data-go="profile">👤<br>Cá nhân</button>
+  <button class="home-quick-tool" type="button" data-action="post">➕<br>Đăng bài</button>
+</div>
+<small>Bài viết từ cộng đồng HT Chat</small></div><div class="top-spacer"></div><div class="home-actions"><button class="icon-btn" id="homeRefresh" title="Làm mới" aria-label="Làm mới"></button><button class="icon-btn notification-btn" id="homeNotifications" title="Thông báo" aria-label="Thông báo"></button></div></header><div class="page-scroll"><div class="feed"><div class="composer-card glass"><div class="post-compose"><div class="avatar small" id="composeAvatar"></div><button class="compose-input" id="openPostComposer" style="text-align:left">Bạn đang nghĩ gì?</button></div><div class="compose-actions"><button class="compose-action" id="openPostComposerImage" title="Thêm ảnh" aria-label="Thêm ảnh"></button><button class="compose-action" id="openPostComposerText" title="Viết bài" aria-label="Viết bài"></button></div></div><div id="feedList"></div><button id="loadMorePosts" class="load-more hidden">Xem thêm bài viết</button></div></div></section>
 
     <section class="page hidden" id="messagesPage"><div class="chat-page"><header class="chat-top"><button class="chat-back" id="chatBackButton" aria-label="Quay lại"></button><div class="chat-top-info"><b id="chatName">Tin nhắn</b><small id="chatStatus">Các cuộc trò chuyện</small></div><div class="chat-top-spacer"></div></header><div class="chat-body"><div class="chat-list" id="chatList"></div><div class="chat-window"><div id="chatEmpty" class="chat-empty empty-box"><strong>Chọn một cuộc trò chuyện</strong><span>Nhắn tin với bạn bè của bạn.</span></div><div id="chatContent" class="hidden" style="height:100%;display:flex;flex-direction:column"><div id="messages" class="messages"></div><div class="composer-wrap"><div id="emojiPanel" class="emoji-panel hidden"><div class="emoji-grid" id="emojiGrid"></div></div><div id="voiceRecordingBar" class="voice-recording-bar hidden"><span class="record-dot"></span><span id="voiceRecordingText">Đang ghi âm...</span><button type="button" class="chat-note-add" id="cancelVoiceButton" style="margin-left:auto;width:28px;height:28px;font-size:15px">×</button></div><div class="composer"><button class="tool-btn" id="emojiButton" title="Emoji"></button><button class="tool-btn" id="imageButton" title="Gửi ảnh"></button><button class="tool-btn voice-btn" id="voiceButton" title="Giữ để ghi âm / bấm để bắt đầu"></button><input id="imageInput" type="file" accept="image/*" class="hidden"><input id="messageInput" placeholder="Nhập tin nhắn..." autocomplete="off"><button class="send" id="sendButton"></button></div></div></div></div></div></div></section>
 
@@ -1274,16 +1345,32 @@ $('closeGroupModal').onclick=()=>$('groupModal').classList.add('hidden');$('grou
 })();
 </script>
 
-<script id="desktop-remove-left-sidebar-guard">
-(function(){
-  function keepDesktopSidebarHidden(){
-    if(window.innerWidth >= 901){
-      const side=document.getElementById('side');
-      if(side) side.style.setProperty('display','none','important');
-    }
+
+
+<script id="home-quick-tools-js">
+document.addEventListener('click',function(e){
+  const b=e.target.closest('.home-quick-tool');
+  if(!b)return;
+  const go=b.dataset.go;
+  const action=b.dataset.action;
+  if(action==='post'){
+    const el=document.querySelector('#postModal');
+    if(el) el.classList.remove('hidden');
+    else if(typeof openPostModal==='function') openPostModal();
+    return;
   }
-  window.addEventListener('load',keepDesktopSidebarHidden);
-  window.addEventListener('resize',keepDesktopSidebarHidden);
-})();
+  if(go==='messages'){
+    if(typeof showPage==='function') showPage('messages');
+    else document.querySelector('[data-page="messages"]')?.click();
+  }
+  if(go==='friends'){
+    if(typeof showPage==='function') showPage('friends');
+    else document.querySelector('[data-page="friends"]')?.click();
+  }
+  if(go==='profile'){
+    if(typeof showPage==='function') showPage('profile');
+    else document.querySelector('[data-page="profile"]')?.click();
+  }
+});
 </script>
 </body></html>
