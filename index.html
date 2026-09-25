@@ -393,6 +393,22 @@ html.dark .brand-logo,html.dark .logo,html.dark .app-info-logo{
 /* XMDT verified badge */
 .verified-name{display:inline-flex;align-items:center;gap:4px;min-width:0}.verified-badge{width:18px;height:18px;display:inline-block;flex:0 0 18px;object-fit:contain;vertical-align:-3px}.profile-verified-badge{width:22px;height:22px;vertical-align:-4px}.xmdt-modal-card{width:min(420px,92vw);padding:24px;border-radius:24px;background:var(--card);border:1px solid var(--line);box-shadow:0 25px 80px rgba(20,25,55,.22)}.xmdt-icon{width:68px;height:68px;margin:0 auto 12px;display:block}.xmdt-title{text-align:center;margin:0 0 6px;font-size:20px}.xmdt-sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 18px;line-height:1.5}.xmdt-input{width:100%;border:1px solid var(--line);background:var(--bg);color:inherit;border-radius:14px;padding:13px 14px;outline:0}.xmdt-input:focus{border-color:#625ff2;box-shadow:0 0 0 4px rgba(98,95,242,.12)}.xmdt-error{min-height:20px;color:var(--red);font-size:12px;text-align:center;margin:9px 0}.xmdt-actions{display:flex;gap:8px;margin-top:10px}.xmdt-actions button{flex:1;border:0;border-radius:13px;padding:12px;font-weight:800}.xmdt-cancel{background:var(--soft);color:var(--p)}.xmdt-confirm{background:linear-gradient(135deg,var(--p),var(--p2));color:#fff}
 html.dark .xmdt-modal-card{box-shadow:0 25px 80px rgba(0,0,0,.45)}
+/* compact verified names + long-press reactions */
+.comment-body .verified-name{font-weight:800;gap:3px;margin-right:5px}
+.comment-body .verified-badge{width:14px;height:14px;flex:0 0 14px;vertical-align:-2px}
+.message-bubble .verified-name{font-weight:800}
+.reaction-picker{position:fixed;z-index:99999;display:flex;align-items:center;gap:3px;padding:6px 7px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.96);box-shadow:0 12px 35px rgba(20,25,55,.22);backdrop-filter:blur(18px);transform-origin:center bottom}
+.reaction-picker button{border:0;background:transparent;width:34px;height:34px;border-radius:50%;font-size:21px;cursor:pointer;transition:transform .12s,background .12s}
+.reaction-picker button:hover{background:#f0f2f7;transform:scale(1.16)}
+.reaction-picker button.active{background:#e9e9ff}
+.reaction-reactions{display:flex;align-items:center;gap:2px;margin-top:-3px;position:relative;z-index:2}
+.reaction-pill{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:999px;background:#fff;border:1px solid rgba(0,0,0,.06);box-shadow:0 2px 8px rgba(20,25,55,.12);font-size:11px;line-height:1;cursor:pointer}
+.message-row.mine .reaction-pill{background:#fff;color:#444}
+.comment .reaction-pill{margin-left:0}
+html.dark .reaction-picker{background:rgba(24,28,36,.97);border-color:#303643;box-shadow:0 14px 38px rgba(0,0,0,.45)}
+html.dark .reaction-picker button:hover{background:#292e38}
+html.dark .reaction-pill{background:#181c24;color:#eef1f7;border-color:#343a48}
+
 </style>
 </head>
 <body>
@@ -683,7 +699,122 @@ async function deleteNote(){
 }
 $('closeNoteModal').onclick=closeNoteModal;$('cancelNote').onclick=closeNoteModal;$('saveNote').onclick=saveNote;$('deleteNote').onclick=deleteNote;$('noteModal').addEventListener('click',e=>{if(e.target.id==='noteModal')closeNoteModal()});
 
-async function loadMessages(){if(!selectedUser&&!selectedGroup)return;$('messages').innerHTML='';let q=supabase.from('messages').select('*,profiles:sender_id(username,avatar_url)').order('created_at',{ascending:true});if(selectedGroup)q=q.eq('group_id',selectedGroup.id);else q=q.or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},receiver_id.eq.${currentUser.id})`);const {data,error}=await q;if(error)return;const last=data?.[data.length-1];const lastOwnId=last?.sender_id===currentUser.id?last.id:null;data?.forEach(m=>renderMessage(m,m.id===lastOwnId));if(readReceiptsEnabled&&selectedUser)await markConversationRead();scrollMessages()}
+
+const REACTION_EMOJIS=['❤️','😂','😮','😢','😡','👍'];
+let reactionTarget=null;
+let reactionLongPressTimer=null;
+let reactionLongPressStart=null;
+
+function hideReactionPicker(){
+  const p=$('reactionPicker');
+  if(!p)return;
+  p.classList.add('hidden');
+  p.setAttribute('aria-hidden','true');
+  reactionTarget=null;
+}
+function showReactionPicker(targetEl,type,id){
+  const p=$('reactionPicker');
+  if(!p)return;
+  reactionTarget={el:targetEl,type,id};
+  p.querySelectorAll('[data-reaction]').forEach(b=>b.classList.remove('active'));
+  const current=targetEl?.dataset?.reaction||'';
+  if(current)p.querySelector(`[data-reaction="${CSS.escape(current)}"]`)?.classList.add('active');
+  p.classList.remove('hidden');
+  p.setAttribute('aria-hidden','false');
+  const r=targetEl.getBoundingClientRect();
+  const w=p.offsetWidth||250,h=p.offsetHeight||48;
+  let left=r.left+(r.width-w)/2;
+  left=Math.max(8,Math.min(left,window.innerWidth-w-8));
+  let top=r.top-h-8;
+  if(top<8)top=r.bottom+8;
+  p.style.left=left+'px';p.style.top=top+'px';
+}
+function bindLongPress(el,type,id){
+  if(!el)return;
+  const start=(e)=>{
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    reactionLongPressStart={x:e.clientX,y:e.clientY};
+    clearTimeout(reactionLongPressTimer);
+    reactionLongPressTimer=setTimeout(()=>showReactionPicker(el,type,id),520);
+  };
+  const cancel=(e)=>{
+    if(reactionLongPressStart&&e&&typeof e.clientX==='number'){
+      const dx=e.clientX-reactionLongPressStart.x,dy=e.clientY-reactionLongPressStart.y;
+      if(Math.hypot(dx,dy)>12)clearTimeout(reactionLongPressTimer);
+    }
+    clearTimeout(reactionLongPressTimer);
+  };
+  el.addEventListener('pointerdown',start,{passive:true});
+  el.addEventListener('pointerup',cancel,{passive:true});
+  el.addEventListener('pointercancel',cancel,{passive:true});
+  el.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')cancel(e)},{passive:true});
+  el.addEventListener('contextmenu',e=>{e.preventDefault();showReactionPicker(el,type,id)});
+}
+async function fetchReactions(table,idField,ids){
+  if(!ids?.length)return [];
+  const {data,error}=await supabase.from(table).select(`${idField},user_id,reaction`).in(idField,ids);
+  if(error){console.warn('reaction fetch:',error.message);return []}
+  return data||[];
+}
+function reactionSummary(rows,idField,id){
+  const rs=(rows||[]).filter(x=>String(x[idField])===String(id));
+  const counts={};
+  let mine='';
+  rs.forEach(x=>{counts[x.reaction]=(counts[x.reaction]||0)+1;if(x.user_id===currentUser.id)mine=x.reaction});
+  const order=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  return {counts,mine,total:rs.length,order};
+}
+function reactionPillHtml(summary){
+  if(!summary?.total)return '';
+  const icons=summary.order.map(([r])=>r).join('');
+  return `<span class="reaction-reactions"><button type="button" class="reaction-pill" data-reaction-pill>${icons} <span>${summary.total}</span></button></span>`;
+}
+async function toggleReaction(type,id,reaction){
+  if(!currentUser||!id)return;
+  const table=type==='message'?'message_reactions':'comment_reactions';
+  const idField=type==='message'?'message_id':'comment_id';
+  const {data:old}=await supabase.from(table).select('id,reaction').eq(idField,id).eq('user_id',currentUser.id).maybeSingle();
+  let error=null;
+  if(old?.reaction===reaction){
+    ({error}=await supabase.from(table).delete().eq('id',old.id));
+  }else if(old){
+    ({error}=await supabase.from(table).update({reaction}).eq('id',old.id));
+  }else{
+    ({error}=await supabase.from(table).insert({[idField]:id,user_id:currentUser.id,reaction}));
+  }
+  if(error)return toast('Chưa thể bày tỏ cảm xúc: '+error.message);
+  hideReactionPicker();
+  await refreshReactionUI(type,id);
+}
+async function refreshReactionUI(type,id){
+  const table=type==='message'?'message_reactions':'comment_reactions';
+  const idField=type==='message'?'message_id':'comment_id';
+  const rows=await fetchReactions(table,idField,[id]);
+  const summary=reactionSummary(rows,idField,id);
+  const el=document.querySelector(type==='message'?`#messages [data-message-id="${CSS.escape(String(id))}"]`:`[data-comment-id="${CSS.escape(String(id))}"]`);
+  if(!el)return;
+  let wrap=el.querySelector('[data-reaction-wrap]');
+  if(summary.total){
+    const html=reactionPillHtml(summary).replace('class="reaction-reactions"','class="reaction-reactions" data-reaction-wrap');
+    if(wrap)wrap.outerHTML=html;else el.insertAdjacentHTML('beforeend',html);
+    el.dataset.reaction=summary.mine||'';
+    const pill=el.querySelector('[data-reaction-pill]');
+    if(pill)bindLongPress(pill,type,id);
+  }else{
+    wrap?.remove();delete el.dataset.reaction;
+  }
+}
+function bindReactionPicker(){
+  $('reactionPicker')?.querySelectorAll('[data-reaction]').forEach(b=>b.onclick=()=>{if(reactionTarget)toggleReaction(reactionTarget.type,reactionTarget.id,b.dataset.reaction)});
+  document.addEventListener('pointerdown',e=>{
+    const p=$('reactionPicker');
+    if(p&&!p.classList.contains('hidden')&&!p.contains(e.target)&&!reactionTarget?.el?.contains(e.target))hideReactionPicker();
+  },{passive:true});
+  window.addEventListener('scroll',hideReactionPicker,{passive:true});
+}
+bindReactionPicker();
+
+async function loadMessages(){if(!selectedUser&&!selectedGroup)return;$('messages').innerHTML='';let q=supabase.from('messages').select('*,profiles:sender_id(username,avatar_url)').order('created_at',{ascending:true});if(selectedGroup)q=q.eq('group_id',selectedGroup.id);else q=q.or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},receiver_id.eq.${currentUser.id})`);const {data,error}=await q;if(error)return;const ids=(data||[]).map(m=>m.id);const reactionRows=await fetchReactions('message_reactions','message_id',ids);const last=data?.[data.length-1];const lastOwnId=last?.sender_id===currentUser.id?last.id:null;data?.forEach(m=>{m.__reaction=reactionSummary(reactionRows,'message_id',m.id);renderMessage(m,m.id===lastOwnId)});if(readReceiptsEnabled&&selectedUser)await markConversationRead();scrollMessages()}
 function removeReadReceipts(){document.querySelectorAll('#messages .read-receipt').forEach(el=>el.remove())}
 function renderMessage(m,isLatestMine=false){
   if(!m?.id)return;
@@ -726,6 +857,9 @@ function renderMessage(m,isLatestMine=false){
   row.appendChild(bubble);
   if(mine){const sp=document.createElement('div');sp.className='message-spacer';row.appendChild(sp)}
   $('messages').appendChild(row);
+  const reaction=m.__reaction||{total:0,mine:'',order:[]};
+  if(reaction.total){row.dataset.reaction=reaction.mine||'';row.insertAdjacentHTML('beforeend',reactionPillHtml(reaction).replace('class="reaction-reactions"','class="reaction-reactions" data-reaction-wrap'));const pill=row.querySelector('[data-reaction-pill]');if(pill)bindLongPress(pill,'message',m.id)}
+  bindLongPress(bubble,'message',m.id);
 }function updateReadReceipt(messageId,readAt){const row=document.querySelector(`#messages [data-message-id="${CSS.escape(String(messageId))}"]`);if(!row)return;const bubble=row.querySelector('.message-bubble');let r=bubble?.querySelector('.read-receipt');if(!r&&readReceiptsEnabled&&row.classList.contains('mine')){removeReadReceipts();r=document.createElement('span');r.className='read-receipt';bubble?.appendChild(r)}if(r){r.textContent=readAt?'✓✓':'✓';r.title=readAt?'Đã xem':'Đã gửi'}}
 async function markConversationRead(){if(!selectedUser||!readReceiptsEnabled)return;await supabase.from('messages').update({read_at:new Date().toISOString()}).eq('sender_id',selectedUser.id).eq('receiver_id',currentUser.id).is('read_at',null)}
 function subscribeMessages(){
@@ -950,8 +1084,8 @@ async function loadPosts(reset=true){
 }
 async function renderPost(p){const {data:likeRows}=await supabase.from('post_likes').select('user_id').eq('post_id',p.id);let liked=likeRows?.some(x=>x.user_id===currentUser.id);const {count:commentCount}=await supabase.from('post_comments').select('id',{count:'exact',head:true}).eq('post_id',p.id);const u=p.profiles||{};const card=document.createElement('article');card.className='post-card glass';card.dataset.post=p.id;const own=p.author_id===currentUser.id;card.innerHTML=`<div class="post-head post-author-click" data-profile-user="${escapeHtml(u.id||p.author_id)}">${avatarHtml(u.username||'?',u.avatar_url||avatarUrlFor(u.id),'small',onlineUsers.has(u.id))}<div class="post-meta">${nameHtml(u.username||'Người dùng',u.is_verified)}<small>${new Date(p.created_at).toLocaleString('vi-VN',{dateStyle:'short',timeStyle:'short'})}</small></div>${own?`<button class="post-action delete-post" data-delete>${icons.trash} Xóa</button>`:''}</div>${p.content?`<div class="post-text">${escapeHtml(p.content)}</div>`:''}${p.image_url?`<img class="post-image" src="${escapeHtml(p.image_url)}" alt="Bài viết">`:''}<div class="post-actions"><button class="post-action ${liked?'liked':''}" data-like>${icons.like} <span data-like-count>${likeRows?.length||0}</span> Thích</button><button class="post-action" data-comment>${icons.comment} <span data-comment-count>${commentCount||0}</span> Bình luận</button></div><div class="comment-list" data-comments></div><div class="comment-box"><input data-comment-input placeholder="Viết bình luận..."><button class="post-action" data-send-comment>Gửi</button></div>`;$('feedList').appendChild(card);card.querySelector('[data-like]').onclick=async()=>{const btn=card.querySelector('[data-like]');btn.disabled=true;const {error}=liked?await supabase.from('post_likes').delete().eq('post_id',p.id).eq('user_id',currentUser.id):await supabase.from('post_likes').insert({post_id:p.id,user_id:currentUser.id});btn.disabled=false;if(error)return toast('Không thể cập nhật lượt thích');liked=!liked;const el=card.querySelector('[data-like-count]');el.textContent=Number(el.textContent)+(liked?1:-1);btn.classList.toggle('liked',liked);btn.classList.remove('post-bump');void btn.offsetWidth;btn.classList.add('post-bump');playPostInteractionSound('like');postTouch(card)};card.querySelector('[data-comment]').onclick=async()=>{const btn=card.querySelector('[data-comment]');btn.classList.remove('comment-bump');void btn.offsetWidth;btn.classList.add('comment-bump');playPostInteractionSound('comment');await loadComments(p.id,card,true);card.querySelector('[data-comment-input]').focus()};card.querySelector('[data-send-comment]').onclick=()=>addComment(p.id,card);card.querySelector('[data-comment-input]').onkeydown=e=>{if(e.key==='Enter')addComment(p.id,card)};card.querySelector('[data-delete]')?.addEventListener('click',e=>{e.stopPropagation();deletePost(p.id,card)});card.querySelector('[data-profile-user]')?.addEventListener('click',()=>openProfileView(p.author_id));if(commentCount)await loadComments(p.id,card,false)}
 async function deletePost(postId,card){if(!confirm('Xóa bài viết này?'))return;const {error}=await supabase.from('posts').delete().eq('id',postId).eq('author_id',currentUser.id);if(error)return toast('Không thể xóa bài viết: '+error.message);card.remove();toast('Đã xóa bài viết')}
-async function loadComments(postId,card,all=false){const q=supabase.from('post_comments').select('id,content,created_at,user_id,profiles:user_id(username,avatar_url,is_verified)').eq('post_id',postId).order('created_at',{ascending:true});const {data,error}=all?await q:await q.limit(2);if(error)return;const box=card.querySelector('[data-comments]');box.innerHTML=(data||[]).map(c=>`<div class="comment">${avatarHtml(c.profiles?.username||'?',c.profiles?.avatar_url||avatarUrlFor(c.user_id),'small')}<div class="comment-body">${nameHtml(c.profiles?.username||'Người dùng',c.profiles?.is_verified)}${escapeHtml(c.content)}</div></div>`).join('');const old=card.querySelector('[data-more-comments]');if(old)old.remove();if(!all){const {count}=await supabase.from('post_comments').select('id',{count:'exact',head:true}).eq('post_id',postId);if((count||0)>2){const b=document.createElement('button');b.type='button';b.className='more-comments-btn';b.dataset.moreComments='';b.textContent=`Xem tất cả ${count} bình luận`;b.onclick=()=>loadComments(postId,card,true);box.after(b)}}}
-async function addComment(postId,card){const input=card.querySelector('[data-comment-input]'),content=input.value.trim();if(!content)return;const {data,error}=await supabase.from('post_comments').insert({post_id:postId,user_id:currentUser.id,content}).select('id,content,created_at,user_id,profiles:user_id(username,avatar_url,is_verified)').single();if(error)return toast('Không thể bình luận');input.value='';const c=data||{content,user_id:currentUser.id,profiles:{username:currentProfile?.username,avatar_url:currentProfile?.avatar_url}};const box=card.querySelector('[data-comments]');box.insertAdjacentHTML('beforeend',`<div class="comment comment-in">${avatarHtml(c.profiles?.username||currentProfile?.username||'?',c.profiles?.avatar_url||currentProfile?.avatar_url||avatarUrlFor(c.user_id),'small')}<div class="comment-body">${nameHtml(c.profiles?.username||currentProfile?.username||'Người dùng',c.profiles?.is_verified||currentProfile?.is_verified)}${escapeHtml(c.content)}</div></div>`);const countEl=card.querySelector('[data-comment-count]');countEl.textContent=Number(countEl.textContent)+1;playPostInteractionSound('comment');postTouch(card)}
+async function loadComments(postId,card,all=false){const q=supabase.from('post_comments').select('id,content,created_at,user_id,profiles:user_id(username,avatar_url,is_verified)').eq('post_id',postId).order('created_at',{ascending:true});const {data,error}=all?await q:await q.limit(2);if(error)return;const rows=data||[];const reactionRows=await fetchReactions('comment_reactions','comment_id',rows.map(c=>c.id));const box=card.querySelector('[data-comments]');box.innerHTML=rows.map(c=>{const rs=reactionSummary(reactionRows,'comment_id',c.id);return `<div class="comment" data-comment-id="${c.id}" data-reaction="${escapeHtml(rs.mine||'')}">${avatarHtml(c.profiles?.username||'?',c.profiles?.avatar_url||avatarUrlFor(c.user_id),'small')}<div class="comment-body">${nameHtml(c.profiles?.username||'Người dùng',c.profiles?.is_verified)}${escapeHtml(c.content)}${rs.total?reactionPillHtml(rs).replace('class="reaction-reactions"','class="reaction-reactions" data-reaction-wrap'):''}</div></div>`}).join('');box.querySelectorAll('[data-comment-id]').forEach(el=>{bindLongPress(el,'comment',el.dataset.commentId);const pill=el.querySelector('[data-reaction-pill]');if(pill)bindLongPress(pill,'comment',el.dataset.commentId)});const old=card.querySelector('[data-more-comments]');if(old)old.remove();if(!all){const {count}=await supabase.from('post_comments').select('id',{count:'exact',head:true}).eq('post_id',postId);if((count||0)>2){const b=document.createElement('button');b.type='button';b.className='more-comments-btn';b.dataset.moreComments='';b.textContent=`Xem tất cả ${count} bình luận`;b.onclick=()=>loadComments(postId,card,true);box.after(b)}}}
+async function addComment(postId,card){const input=card.querySelector('[data-comment-input]'),content=input.value.trim();if(!content)return;const {data,error}=await supabase.from('post_comments').insert({post_id:postId,user_id:currentUser.id,content}).select('id,content,created_at,user_id,profiles:user_id(username,avatar_url,is_verified)').single();if(error)return toast('Không thể bình luận');input.value='';const c=data||{content,user_id:currentUser.id,profiles:{username:currentProfile?.username,avatar_url:currentProfile?.avatar_url}};const box=card.querySelector('[data-comments]');box.insertAdjacentHTML('beforeend',`<div class="comment comment-in" data-comment-id="${c.id||''}">${avatarHtml(c.profiles?.username||currentProfile?.username||'?',c.profiles?.avatar_url||currentProfile?.avatar_url||avatarUrlFor(c.user_id),'small')}<div class="comment-body">${nameHtml(c.profiles?.username||currentProfile?.username||'Người dùng',c.profiles?.is_verified||currentProfile?.is_verified)}${escapeHtml(c.content)}</div></div>`);const newComment=box.lastElementChild;if(newComment?.dataset.commentId)bindLongPress(newComment,'comment',newComment.dataset.commentId);const countEl=card.querySelector('[data-comment-count]');countEl.textContent=Number(countEl.textContent)+1;playPostInteractionSound('comment');postTouch(card)}
 async function publishPost(){const content=$('postText').value.trim(),file=$('postImageInput').files?.[0];if(!content&&!file)return toast('Hãy viết gì đó hoặc chọn ảnh');let image_url=null;if(file)image_url=await uploadFile(file,'posts');const {error}=await supabase.from('posts').insert({author_id:currentUser.id,content,image_url});if(error){console.error(error);return toast('Không đăng được bài: '+error.message)}$('postText').value='';$('postImageInput').value='';$('postModal').classList.add('hidden');toast('Đã đăng bài');await loadPosts(true)}
 $('openPostComposer').onclick=()=>{$('postModal').classList.remove('hidden');$('postText').focus()};$('openPostComposerImage').onclick=()=>$('postModal').classList.remove('hidden');$('openPostComposerText').onclick=()=>$('postModal').classList.remove('hidden');$('publishPost').onclick=publishPost;$('closePostModal').onclick=()=>$('postModal').classList.add('hidden');$('postImageLabel').onclick=()=>$('postImageInput').click();$('postImageInput').onchange=e=>{$('postImageLabel').innerHTML=icons.image+' '+(e.target.files?.[0]?.name||'Thêm ảnh')};$('loadMorePosts').onclick=()=>loadPosts(false);$('homeRefresh').onclick=()=>loadPosts(true);
 window.addEventListener('resize',()=>{if(window.visualViewport&&selectedUser){const h=window.visualViewport.height;document.documentElement.style.setProperty('--vvh',h+'px')}});if(window.visualViewport)window.visualViewport.addEventListener('resize',()=>{document.documentElement.style.setProperty('--vvh',window.visualViewport.height+'px')});
