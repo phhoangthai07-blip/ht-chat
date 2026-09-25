@@ -424,6 +424,28 @@ html.dark .reaction-pill{background:#181c24;color:#eef1f7;border-color:#343a48}
   min-width:92px;
 }
 </style>
+
+<style id="desktop-message-panel-fix">
+/* Desktop: bỏ panel danh sách tin nhắn thừa ở bên trái trang Tin nhắn */
+@media (min-width: 901px){
+  #messagesPage .messages-sidebar,
+  #messagesPage .chat-sidebar,
+  #messagesPage .conversation-sidebar,
+  #messagesPage .inbox-sidebar,
+  #messagesPage .message-list-panel{
+    display:none !important;
+  }
+
+  /* Nếu layout dùng grid/flex với panel trái, cho nội dung Tin nhắn chiếm toàn bộ */
+  #messagesPage .messages-layout{
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+  #messagesPage .messages-main{
+    width:100% !important;
+    max-width:none !important;
+  }
+}
+</style>
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -1194,6 +1216,46 @@ $('closeGroupModal').onclick=()=>$('groupModal').classList.add('hidden');$('grou
     }
   };
   window.addEventListener('load',()=>{setTimeout(clearSearchAutofill,150);setTimeout(clearSearchAutofill,800);});
+})();
+</script>
+
+<script id="desktop-message-panel-runtime-fix">
+(function(){
+  function hideExtraMessagePanel(){
+    if (window.innerWidth < 901) return;
+    const page = document.getElementById('messagesPage');
+    if (!page) return;
+
+    // Chỉ tìm panel có tiêu đề "TIN NHẮN", tránh panel tìm kiếm người dùng của toàn app.
+    const nodes = Array.from(page.querySelectorAll('*')).filter(el=>{
+      if (el.children.length > 3) return false;
+      const t=(el.textContent||'').trim();
+      return t === 'TIN NHẮN';
+    });
+
+    nodes.forEach(title=>{
+      let panel=title;
+      for(let i=0;i<6 && panel.parentElement;i++){
+        panel=panel.parentElement;
+        const rect=panel.getBoundingClientRect();
+        const cs=getComputedStyle(panel);
+        if(rect.width>220 && rect.height>300 && (cs.display==='flex'||cs.display==='grid'||cs.position==='relative'||cs.position==='absolute')){
+          panel.classList.add('hide-desktop-extra-message-panel');
+          break;
+        }
+      }
+    });
+  }
+
+  const style=document.createElement('style');
+  style.textContent='@media (min-width:901px){.hide-desktop-extra-message-panel{display:none!important}}';
+  document.head.appendChild(style);
+
+  window.addEventListener('load',()=>setTimeout(hideExtraMessagePanel,100));
+  window.addEventListener('resize',hideExtraMessagePanel);
+
+  const obs=new MutationObserver(()=>setTimeout(hideExtraMessagePanel,50));
+  obs.observe(document.body,{childList:true,subtree:true});
 })();
 </script>
 </body></html>
