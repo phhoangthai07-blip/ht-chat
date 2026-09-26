@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f8ff">
-<title>HT Chat 3.8 • HT Logo • Voice • Notifications</title>
+<title>HT Chat 4.0 • HT Logo • Notifications</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#182033;background:#f7f8fc}body{overflow:hidden}button,input,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}img{max-width:100%}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:#d8dbea;border-radius:99px}
 :root{--p:#625ff2;--p2:#8a54f6;--soft:#f0efff;--bg:#f7f8fc;--card:#fff;--line:#e9ebf2;--muted:#8992a5;--green:#25c27a;--red:#ef5870;--shadow:0 18px 55px rgba(35,40,75,.10)}
@@ -570,6 +570,25 @@ body.home-active #sideFriends{display:none}
   }
 }
 </style>
+
+<style id="v40-final-ui">
+#logoutSettingRow{display:flex!important;visibility:visible!important;opacity:1!important}
+#logoutSettingsButton{
+  display:inline-flex!important;align-items:center;justify-content:center;
+  min-width:104px!important;height:38px!important;padding:0 14px!important;
+  border-radius:12px!important;border:1px solid #ffd0d8!important;
+  background:#fff1f3!important;color:#d83d57!important;
+  font-weight:800!important;cursor:pointer!important;
+}
+#logoutSettingsButton:hover{background:#ffe5e9!important}
+.activity-time{display:block;font-size:10px;color:var(--muted);margin-top:2px;font-weight:600}
+.activity-online{color:#16a56a!important}
+#homeNotifications.notification-btn.has-new{
+  background:#ef334f!important;color:#fff!important;
+  box-shadow:0 0 0 3px rgba(239,51,79,.12),0 7px 20px rgba(239,51,79,.28)!important;
+}
+#homeNotifications.notification-btn.has-new svg{color:#fff!important;stroke:#fff!important}
+</style>
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -644,7 +663,7 @@ body.home-active #sideFriends{display:none}
         </div>
       </div>
     </section>
-    <section class="page hidden" id="profilePage"><header class="top"><button class="mobile-menu" id="profileMobileMenu"></button><div><h2>Trang cá nhân</h2><small>Hồ sơ của bạn</small></div></header><div class="page-scroll"><div class="profile-wrap"><div class="profile-hero glass"><div class="profile-cover"><div class="profile-hero-avatar" id="profileHeroAvatar"><button class="avatar-edit" id="avatarEditBtn" type="button" title="Đổi ảnh đại diện"></button></div></div><h2 id="profileName">...</h2><p id="profileEmail">...</p><div class="profile-buttons"><button class="profile-btn primary2" id="changeAvatarBtn" type="button"></button><input id="avatarInput" type="file" accept="image/*" class="hidden"></div><div class="profile-bio-box"><div class="profile-bio-head"><b>Tiểu sử</b><button id="editBioButton" type="button">Chỉnh sửa</button></div><p id="profileBioText">Chưa có tiểu sử.</p><textarea id="profileBioInput" maxlength="160" class="hidden" placeholder="Viết vài dòng về bạn..."></textarea><div id="profileBioActions" class="hidden" style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px"><button id="cancelBioButton" type="button" class="bio-cancel">Hủy</button><button id="saveBioButton" type="button" class="bio-save">Lưu</button></div></div></div><div class="profile-section glass"><h3>Cài đặt</h3><div class="setting-row"><span>🔔 Thông báo tin nhắn</span><button id="notificationButton">Bật</button></div><div class="setting-row"><span>✓✓ Đã xem tin nhắn</span><button id="readReceiptButton">Bật</button></div><div class="setting-row"><span>🌗 Giao diện</span><button id="themeButton">Tối</button></div><div class="setting-row"><span>☑️ XMDT</span><button id="xmdtButton" type="button">Xác thực</button></div><div class="setting-row"><span>🚪 Đăng xuất</span><button id="logoutSettingsButton" type="button">Đăng xuất</button></div><div class="setting-row"><span>👤 Tài khoản</span><span id="profileUid" style="color:var(--muted);font-size:11px"></span></div><button class="info-btn" id="appInfoButton">ⓘ Thông tin ứng dụng</button></div></div></div></section>
+    <section class="page hidden" id="profilePage"><header class="top"><button class="mobile-menu" id="profileMobileMenu"></button><div><h2>Trang cá nhân</h2><small>Hồ sơ của bạn</small></div></header><div class="page-scroll"><div class="profile-wrap"><div class="profile-hero glass"><div class="profile-cover"><div class="profile-hero-avatar" id="profileHeroAvatar"><button class="avatar-edit" id="avatarEditBtn" type="button" title="Đổi ảnh đại diện"></button></div></div><h2 id="profileName">...</h2><p id="profileEmail">...</p><div class="profile-buttons"><button class="profile-btn primary2" id="changeAvatarBtn" type="button"></button><input id="avatarInput" type="file" accept="image/*" class="hidden"></div><div class="profile-bio-box"><div class="profile-bio-head"><b>Tiểu sử</b><button id="editBioButton" type="button">Chỉnh sửa</button></div><p id="profileBioText">Chưa có tiểu sử.</p><textarea id="profileBioInput" maxlength="160" class="hidden" placeholder="Viết vài dòng về bạn..."></textarea><div id="profileBioActions" class="hidden" style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px"><button id="cancelBioButton" type="button" class="bio-cancel">Hủy</button><button id="saveBioButton" type="button" class="bio-save">Lưu</button></div></div></div><div class="profile-section glass"><h3>Cài đặt</h3><div class="setting-row"><span>🔔 Thông báo tin nhắn</span><button id="notificationButton">Bật</button></div><div class="setting-row"><span>✓✓ Đã xem tin nhắn</span><button id="readReceiptButton">Bật</button></div><div class="setting-row"><span>🌗 Giao diện</span><button id="themeButton">Tối</button></div><div class="setting-row"><span>☑️ XMDT</span><button id="xmdtButton" type="button">Xác thực</button></div><div class="setting-row logout-row-v40" id="logoutSettingRow"><span>🚪 Đăng xuất</span><button id="logoutSettingsButton" type="button">Đăng xuất</button></div><div class="setting-row"><span>👤 Tài khoản</span><span id="profileUid" style="color:var(--muted);font-size:11px"></span></div><button class="info-btn" id="appInfoButton">ⓘ Thông tin ứng dụng</button></div></div></div></section>
   </main>
 
   <nav class="bottom-nav" id="bottomNav"><span class="nav-slider" aria-hidden="true"></span><button data-page="homePage" class="active" id="navHome"><span class="nav-icon" id="iconHome"></span><span>Trang chủ</span></button><button data-page="messagesPage" id="navMessages"><span class="nav-icon" id="iconMessages"></span><span>Tin nhắn</span><span class="nav-dot hidden" id="messageBadge">0</span></button><button data-page="friendsPage" id="navFriends"><span class="nav-icon" id="iconFriends"></span><span>Bạn bè</span><span class="nav-dot hidden" id="friendsBadge">0</span></button><button data-page="profilePage" id="navProfile"><span class="nav-icon" id="iconProfile"></span><span>Cá nhân</span></button></nav>
@@ -779,7 +798,7 @@ async function openChatById(id){
   setMessagesMode(true);
   markChatSeen(id);
   $('chatName').innerHTML=nameHtml(data.username,data.is_verified);
-  $('chatStatus').innerHTML=onlineUsers.has(data.id)?'<span style="color:var(--green)">● Đang hoạt động</span>':'Ngoại tuyến';
+  $('chatStatus').innerHTML=onlineUsers.has(data.id)?'<span class="activity-online">● Đang hoạt động</span>':`<span>${relativeActivityTime(data.last_seen_at,false)}</span>`;
   $('chatEmpty').classList.add('hidden');$('chatContent').classList.remove('hidden');
   document.querySelectorAll('#chatList [data-chat]').forEach(b=>b.classList.toggle('active',b.dataset.chat===String(id)));
   await loadMessages();
@@ -814,9 +833,9 @@ async function renderChatList(){
     const {data}=await supabase.from('profiles').select('*').in('id',ids).order('username');const users=data||[];const metas=await Promise.all(users.map(async u=>[u.id,await chatMetaFor(u.id)]));
 const metaMap=new Map(metas);
 users.sort((a,b)=>{
- const at=metaMap.get(a.id)?.latest?.created_at;
- const bt=metaMap.get(b.id)?.latest?.created_at;
- return (bt?new Date(bt).getTime():0)-(at?new Date(at).getTime():0);
+ const at=metaMap.get(a.id)?.latest?.created_at ? Date.parse(metaMap.get(a.id).latest.created_at) : 0;
+ const bt=metaMap.get(b.id)?.latest?.created_at ? Date.parse(metaMap.get(b.id).latest.created_at) : 0;
+ return bt-at;
 });
 metas.forEach(([id,m])=>chatUnread[id]=m.unread||0);
 renderChatNote(users);
@@ -1232,7 +1251,15 @@ $('readReceiptButton').onclick=async()=>{readReceiptsEnabled=!readReceiptsEnable
 function subscribePresence(){if(presenceChannel)supabase.removeChannel(presenceChannel);presenceChannel=supabase.channel('presence-global',{config:{presence:{key:currentUser.id}}});presenceChannel.on('presence',{event:'sync'},syncPresence).on('presence',{event:'join'},syncPresence).on('presence',{event:'leave'},syncPresence).subscribe(async s=>{if(s==='SUBSCRIBED')await presenceChannel.track({online:true})})}function syncPresence(){onlineUsers.clear();Object.keys(presenceChannel.presenceState()).forEach(id=>onlineUsers.add(id));loadFriends();renderChatList();if(selectedUser)$('chatStatus').textContent=onlineUsers.has(selectedUser.id)?'Đang hoạt động':'Ngoại tuyến'}
 /* home post notifications */
 function notificationTime(v){if(!v)return '';return new Date(v).toLocaleString('vi-VN',{dateStyle:'short',timeStyle:'short'});}
-function setPostNotificationBadge(on){postNotificationUnread=!!on;const b=$('homeNotifications');if(b)b.classList.toggle('has-new',postNotificationUnread);}
+function setPostNotificationBadge(on){
+  postNotificationUnread=!!on;
+  const b=$('homeNotifications');
+  if(b){
+    b.classList.toggle('has-new',postNotificationUnread);
+    const d=$('notificationDot');
+    if(d)d.style.display=postNotificationUnread?'block':'none';
+  }
+}
 async function loadPostNotifications(){
   const list=$('notificationList'); if(!list||!currentUser)return;
   list.innerHTML='<div class="notification-empty">Đang tải thông báo...</div>';
@@ -1249,7 +1276,14 @@ async function loadPostNotifications(){
   list.innerHTML=items.map(x=>{const u=x.profiles||{};const p=pmap.get(String(x.post_id))||{};const text=x.type==='like'?`${nameHtml(u.username||'Người dùng',u.is_verified)} đã thích bài viết của bạn`:`${nameHtml(u.username||'Người dùng',u.is_verified)} đã bình luận bài viết của bạn`;return `<div class="notification-item" data-notification-post="${escapeHtml(String(x.post_id))}">${avatarHtml(u.username||'?',u.avatar_url||avatarUrlFor(x.user_id),'small')}<div class="notification-main">${text}<span class="notification-post">${escapeHtml(p.content||'Bài viết có hình ảnh')}</span><small>${notificationTime(x.created_at)}</small></div></div>`}).join('');
   list.querySelectorAll('[data-notification-post]').forEach(el=>el.onclick=()=>{const id=el.dataset.notificationPost;$('notificationPanel').classList.add('hidden');const card=document.querySelector(`#feedList [data-post="${CSS.escape(id)}"]`);if(card){card.scrollIntoView({behavior:'smooth',block:'center'});postTouch(card)}});
 }
-async function openPostNotifications(){setPostNotificationBadge(false);$('notificationPanel').classList.toggle('hidden');if(!$('notificationPanel').classList.contains('hidden'))await loadPostNotifications();}
+async function openPostNotifications(){
+  $('notificationPanel').classList.toggle('hidden');
+  if(!$('notificationPanel').classList.contains('hidden')){
+    await loadPostNotifications();
+    localStorage.setItem('htchat_notification_seen_'+currentUser.id,new Date().toISOString());
+    setPostNotificationBadge(false);
+  }
+}
 function subscribePostNotifications(){if(postNotificationChannel)supabase.removeChannel(postNotificationChannel);postNotificationChannel=supabase.channel('post-notifications-'+currentUser.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'post_likes'},async p=>{const {data}=await supabase.from('posts').select('id').eq('id',p.new.post_id).eq('author_id',currentUser.id).maybeSingle();if(data&&p.new.user_id!==currentUser.id){setPostNotificationBadge(true);toast('Có người vừa thích bài viết của bạn')}}).on('postgres_changes',{event:'INSERT',schema:'public',table:'post_comments'},async p=>{const {data}=await supabase.from('posts').select('id').eq('id',p.new.post_id).eq('author_id',currentUser.id).maybeSingle();if(data&&p.new.user_id!==currentUser.id){setPostNotificationBadge(true);toast('Có bình luận mới trên bài viết của bạn')}}).subscribe();}
 $('homeNotifications').onclick=openPostNotifications;
 $('clearNotificationBadge').onclick=()=>setPostNotificationBadge(false);
@@ -1353,9 +1387,9 @@ document.querySelectorAll('[data-friends-tab]').forEach(tab=>tab.onclick=()=>{do
 let friendsSearchTimer=null;
 $('friendsSearchInput').oninput=()=>{clearTimeout(friendsSearchTimer);friendsSearchTimer=setTimeout(()=>searchFriendsPage($('friendsSearchInput').value),250)};
 
-$('logoutSettingsButton').onclick=async()=>{if(messageChannel)await supabase.removeChannel(messageChannel);if(friendChannel)await supabase.removeChannel(friendChannel);if(presenceChannel)await supabase.removeChannel(presenceChannel);if(postNotificationChannel)await supabase.removeChannel(postNotificationChannel);await supabase.auth.signOut()};
+
 function subscribeFriends(){if(friendChannel)supabase.removeChannel(friendChannel);friendChannel=supabase.channel('friends-'+currentUser.id).on('postgres_changes',{event:'*',schema:'public',table:'friend_requests'},async()=>{await loadFriends();await loadRequests();if(!$('friendsPage').classList.contains('hidden'))await loadFriendsPage();}).subscribe()}
-$('closeGroupModal').onclick=()=>$('groupModal').classList.add('hidden');$('groupModal').addEventListener('click',e=>{if(e.target.id==='groupModal')$('groupModal').classList.add('hidden')});$('saveGroupButton').onclick=createGroup;supabase.auth.onAuthStateChange(async(event,session)=>{if(session?.user){currentUser=session.user;$('authScreen').classList.add('hidden');$('app').classList.remove('hidden');loadSettings();await loadProfile();await loadFriends();await loadRequests();await loadFriendsPage();await renderChatList();subscribeFriends();subscribePresence();subscribeMessages();subscribePostNotifications();switchPage('homePage')}else{$('app').classList.add('hidden');$('authScreen').classList.remove('hidden');showAuth('login')}});showAuth('login');
+$('closeGroupModal').onclick=()=>$('groupModal').classList.add('hidden');$('groupModal').addEventListener('click',e=>{if(e.target.id==='groupModal')$('groupModal').classList.add('hidden')});$('saveGroupButton').onclick=createGroup;supabase.auth.onAuthStateChange(async(event,session)=>{if(session?.user){currentUser=session.user;$('authScreen').classList.add('hidden');$('app').classList.remove('hidden');loadSettings();await loadProfile();startLastSeen();await loadFriends();await loadRequests();await loadFriendsPage();await renderChatList();subscribeFriends();subscribePresence();subscribeMessages();subscribePostNotifications();switchPage('homePage')}else{$('app').classList.add('hidden');$('authScreen').classList.remove('hidden');showAuth('login')}});showAuth('login');
 });});
 </script>
 <script>
@@ -1464,40 +1498,89 @@ document.addEventListener('click',function(e){
   if(go==='profile' && typeof switchPage==='function') switchPage('profilePage');
 });
 </script>
-<script id="v40-lastseen">
-function relativeActivityTime(iso,online=false){
- if(online)return '<span class="activity-online">Đang hoạt động</span>';
- if(!iso)return 'Chưa hoạt động';
- const m=Math.floor(Math.max(0,Date.now()-new Date(iso).getTime())/60000);
- if(m<1)return 'Vừa hoạt động';
- if(m<60)return `${m} phút trước`;
- const h=Math.floor(m/60);
- if(h<24)return `${h} giờ trước`;
- const d=Math.floor(h/24);
- if(d<7)return `${d} ngày trước`;
- return new Date(iso).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'});
-}
-async function touchLastSeen(){
- if(!currentUser)return;
- await supabase.from('profiles').update({last_seen_at:new Date().toISOString()}).eq('id',currentUser.id);
-}
-function startLastSeen(){
- touchLastSeen();
- clearInterval(window.__htLastSeen);
- window.__htLastSeen=setInterval(touchLastSeen,60000);
-}
-</script><script id="v40-logout">
-document.addEventListener('DOMContentLoaded',()=>{
- const b=document.getElementById('logoutSettingsButton');
- if(b)b.onclick=async()=>{
-   if(!confirm('Bạn có chắc muốn đăng xuất không?'))return;
-   b.disabled=true;b.textContent='Đang đăng xuất...';
-   try{await supabase.auth.signOut();location.reload()}
-   catch(e){b.disabled=false;b.textContent='Đăng xuất';if(typeof toast==='function')toast('Không thể đăng xuất, hãy thử lại.')}
- };
-});
-</script><script id="v40-notification">
+<script id="v40-notification">
 function setNotificationNewState(v){
  document.querySelectorAll('.notification-btn').forEach(b=>b.classList.toggle('has-new',!!v));
 }
-</script></body></html>
+</script>
+<script id="v40-final-logout">
+document.addEventListener('DOMContentLoaded',()=>{
+  const install=()=>{
+    const b=document.getElementById('logoutSettingsButton');
+    const row=document.getElementById('logoutSettingRow');
+    if(row){row.style.setProperty('display','flex','important');row.style.setProperty('visibility','visible','important')}
+    if(!b || b.dataset.v40Bound)return;
+    b.dataset.v40Bound='1';
+    b.onclick=async()=>{
+      if(!confirm('Bạn có chắc muốn đăng xuất không?'))return;
+      b.disabled=true;b.textContent='Đang đăng xuất...';
+      try{
+        for(const key of ['messageChannel','friendChannel','presenceChannel','postNotificationChannel']){
+          try{ if(window[key]) await supabase.removeChannel(window[key]); }catch(e){}
+        }
+        await supabase.auth.signOut();
+        location.reload();
+      }catch(e){
+        console.error(e);b.disabled=false;b.textContent='Đăng xuất';
+      }
+    };
+  };
+  install();
+  new MutationObserver(install).observe(document.body,{childList:true,subtree:true});
+});
+</script>
+
+<script id="v40-final-lastseen">
+function relativeActivityTime(iso, online=false){
+  if(online) return '<span class="activity-online">Đang hoạt động</span>';
+  if(!iso) return 'Chưa hoạt động';
+  const t=Date.parse(iso);
+  if(!Number.isFinite(t)) return 'Chưa hoạt động';
+  const diff=Math.max(0,Date.now()-t);
+  const minutes=Math.floor(diff/60000);
+  if(minutes<1) return 'Vừa hoạt động';
+  if(minutes<60) return `${minutes} phút trước`;
+  const hours=Math.floor(minutes/60);
+  if(hours<24) return `${hours} giờ trước`;
+  const days=Math.floor(hours/24);
+  if(days<7) return `${days} ngày trước`;
+  return `${days} ngày trước`;
+}
+let v40LastSeenTimer=null;
+async function updateMyLastSeen(){
+  if(!currentUser)return;
+  const now=new Date().toISOString();
+  const {error}=await supabase.from('profiles').update({last_seen_at:now}).eq('id',currentUser.id);
+  if(!error && currentProfile) currentProfile.last_seen_at=now;
+}
+function startLastSeen(){
+  clearInterval(v40LastSeenTimer);
+  updateMyLastSeen();
+  v40LastSeenTimer=setInterval(updateMyLastSeen,30000);
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible') updateMyLastSeen();
+});
+window.addEventListener('focus',updateMyLastSeen);
+</script>
+
+<script id="v40-final-notification-poll">
+async function checkPostNotificationUnread(){
+  if(!currentUser)return;
+  const seen=localStorage.getItem('htchat_notification_seen_'+currentUser.id);
+  const since=seen||new Date(0).toISOString();
+  const {data:posts}=await supabase.from('posts').select('id').eq('author_id',currentUser.id);
+  const ids=(posts||[]).map(x=>x.id);
+  if(!ids.length){setPostNotificationBadge(false);return;}
+  const [l,c]=await Promise.all([
+    supabase.from('post_likes').select('id',{count:'exact',head:true}).in('post_id',ids).neq('user_id',currentUser.id).gt('created_at',since),
+    supabase.from('post_comments').select('id',{count:'exact',head:true}).in('post_id',ids).neq('user_id',currentUser.id).gt('created_at',since)
+  ]);
+  setPostNotificationBadge((l.count||0)+(c.count||0)>0);
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(checkPostNotificationUnread,1200);
+  setInterval(checkPostNotificationUnread,10000);
+});
+</script>
+</body></html>
