@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f8ff">
-<title>HT Chat 4.0 • HT Logo • Notifications</title>
+<title>HT Chat 4.0 • Final</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#182033;background:#f7f8fc}body{overflow:hidden}button,input,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}img{max-width:100%}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:#d8dbea;border-radius:99px}
 :root{--p:#625ff2;--p2:#8a54f6;--soft:#f0efff;--bg:#f7f8fc;--card:#fff;--line:#e9ebf2;--muted:#8992a5;--green:#25c27a;--red:#ef5870;--shadow:0 18px 55px rgba(35,40,75,.10)}
@@ -609,6 +609,44 @@ body.home-active #sideFriends{display:none}
 }
 .activity-time{display:block!important;font-size:10px!important;color:var(--muted)!important;margin-top:2px!important;font-weight:600!important}
 .activity-online{color:#16a56a!important}
+</style>
+
+<style id="v40-v3-logout">
+/* Nút Đăng xuất: ép hiển thị chữ ngay cả khi CSS cũ làm chữ trong button biến mất */
+#logoutSettingsButton.logout-settings-button,
+#logoutSettingsButton{
+  display:flex!important;
+  width:100%!important;
+  min-height:48px!important;
+  height:48px!important;
+  margin:14px 0 0!important;
+  padding:0 16px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-sizing:border-box!important;
+  overflow:visible!important;
+  visibility:visible!important;
+  opacity:1!important;
+  color:#d93652!important;
+  background:#fff1f3!important;
+  border:1px solid #ffd0d8!important;
+  border-radius:14px!important;
+  font-family:inherit!important;
+  font-size:14px!important;
+  font-weight:800!important;
+  line-height:1!important;
+  text-indent:0!important;
+  text-transform:none!important;
+}
+#logoutSettingsButton::before{
+  content:"🚪 Đăng xuất"!important;
+  display:block!important;
+  color:#d93652!important;
+  font-size:14px!important;
+  font-weight:800!important;
+  line-height:1!important;
+}
+#logoutSettingsButton{font-size:0!important;}
 </style>
 </head>
 <body>
@@ -1509,38 +1547,7 @@ function setNotificationNewState(v){
 </script>
 
 
-<script id="v40-final-lastseen">
-function relativeActivityTime(iso, online=false){
-  if(online)return '<span class="activity-online">Đang hoạt động</span>';
-  if(!iso)return 'Chưa hoạt động';
-  const t=Date.parse(iso);
-  if(!Number.isFinite(t))return 'Chưa hoạt động';
-  const diff=Math.max(0,Date.now()-t);
-  const minutes=Math.floor(diff/60000);
-  if(minutes<1)return 'Vừa hoạt động';
-  if(minutes<60)return `${minutes} phút trước`;
-  const hours=Math.floor(minutes/60);
-  if(hours<24)return `${hours} giờ trước`;
-  const days=Math.floor(hours/24);
-  return `${days} ngày trước`;
-}
-let v40LastSeenTimer=null;
-async function updateMyLastSeen(){
-  if(!currentUser)return;
-  const now=new Date().toISOString();
-  const {error}=await supabase.from('profiles').update({last_seen_at:now}).eq('id',currentUser.id);
-  if(!error && currentProfile) currentProfile.last_seen_at=now;
-}
-function startLastSeen(){
-  clearInterval(v40LastSeenTimer);
-  updateMyLastSeen();
-  v40LastSeenTimer=setInterval(updateMyLastSeen,30000);
-}
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible') updateMyLastSeen();
-});
-window.addEventListener('focus',updateMyLastSeen);
-</script>
+
 
 
 <script id="v40-final-v2-logout">
@@ -1603,5 +1610,121 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(checkPostNotificationUnread,1000);
   setInterval(checkPostNotificationUnread,5000);
 });
+</script>
+
+<script id="v40-v3-lastseen">
+/*
+  HT Chat 4.0:
+  - last_seen_at chỉ do chính tài khoản đó cập nhật.
+  - Không dùng created_at của tài khoản làm thời gian hoạt động.
+  - Nếu chưa có last_seen_at thì hiển thị "Chưa xác định", không đoán.
+*/
+function relativeActivityTime(iso, online=false){
+  if(online) return '<span class="activity-online">Đang hoạt động</span>';
+  if(!iso) return 'Chưa xác định';
+  const t=Date.parse(iso);
+  if(!Number.isFinite(t)) return 'Chưa xác định';
+  const diff=Math.max(0,Date.now()-t);
+  const minutes=Math.floor(diff/60000);
+  if(minutes<1) return 'Vừa hoạt động';
+  if(minutes<60) return `${minutes} phút trước`;
+  const hours=Math.floor(minutes/60);
+  if(hours<24) return `${hours} giờ trước`;
+  const days=Math.floor(hours/24);
+  return `${days} ngày trước`;
+}
+
+let v40LastSeenTimer=null;
+
+async function updateMyLastSeen(){
+  if(!currentUser) return;
+  const now=new Date().toISOString();
+  const {data,error}=await supabase
+    .from('profiles')
+    .update({last_seen_at:now})
+    .eq('id',currentUser.id)
+    .select('id,last_seen_at')
+    .maybeSingle();
+
+  if(!error && currentProfile){
+    currentProfile.last_seen_at=data?.last_seen_at||now;
+  }
+}
+
+function startLastSeen(){
+  if(v40LastSeenTimer) clearInterval(v40LastSeenTimer);
+  updateMyLastSeen();
+  v40LastSeenTimer=setInterval(updateMyLastSeen,30000);
+}
+
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible') updateMyLastSeen();
+});
+window.addEventListener('focus',updateMyLastSeen);
+</script>
+
+<script id="v40-v3-notifications">
+function setPostNotificationBadge(on){
+  postNotificationUnread=!!on;
+  const b=document.getElementById('homeNotifications');
+  if(b){
+    b.classList.toggle('has-new',!!on);
+    b.setAttribute('data-has-notification',on?'1':'0');
+  }
+  const d=document.getElementById('notificationDot');
+  if(d) d.style.display=on?'block':'none';
+}
+
+async function checkPostNotificationUnread(){
+  if(!currentUser) return;
+
+  const {data:posts,error:pe}=await supabase
+    .from('posts')
+    .select('id')
+    .eq('author_id',currentUser.id);
+
+  if(pe){
+    console.warn('Không kiểm tra được thông báo:',pe.message);
+    return;
+  }
+
+  const ids=(posts||[]).map(x=>x.id);
+  if(!ids.length){
+    setPostNotificationBadge(false);
+    return;
+  }
+
+  const [likes,comments]=await Promise.all([
+    supabase
+      .from('post_likes')
+      .select('id')
+      .in('post_id',ids)
+      .neq('user_id',currentUser.id)
+      .limit(1),
+    supabase
+      .from('post_comments')
+      .select('id')
+      .in('post_id',ids)
+      .neq('user_id',currentUser.id)
+      .limit(1)
+  ]);
+
+  /* Chỉ cần tồn tại thông báo là nút đỏ. */
+  setPostNotificationBadge(
+    Boolean((likes.data&&likes.data.length)||(comments.data&&comments.data.length))
+  );
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(checkPostNotificationUnread,1500);
+  setInterval(checkPostNotificationUnread,5000);
+});
+
+/* Realtime: có like/comment mới -> đỏ ngay */
+try{
+  if(typeof subscribePostNotifications==='function'){
+    /* Hàm cũ đã có setPostNotificationBadge(true), giữ nguyên. */
+  }
+}catch(e){}
 </script>
 </body></html>
