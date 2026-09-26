@@ -704,7 +704,14 @@ body.home-active #sideFriends{display:none}
 window.addEventListener('DOMContentLoaded',()=>{import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm').then(async({createClient})=>{
 const SUPABASE_URL='https://bclybeujuhhiwevgppgt.supabase.co';
 const SUPABASE_KEY='sb_publishable_yFagLzYinzPyztZkhJb-BQ_6xx_LRcF';
-const supabase=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'htchat-auth-v4'}});
+const supabase=createClient(SUPABASE_URL,SUPABASE_KEY,{
+  auth:{
+    persistSession:true,
+    autoRefreshToken:true,
+    detectSessionInUrl:true,
+    storage:window.localStorage
+  }
+});
 const $=id=>document.getElementById(id);
 const escapeHtml=(s='')=>{const d=document.createElement('div');d.textContent=s;return d.innerHTML};
 const initials=(n='?')=>n.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'?';
@@ -1468,19 +1475,25 @@ $('friendsSearchInput').oninput=()=>{clearTimeout(friendsSearchTimer);friendsSea
 
 $('logoutSettingsButton').onclick=async()=>{if(messageChannel)await supabase.removeChannel(messageChannel);if(friendChannel)await supabase.removeChannel(friendChannel);if(presenceChannel)await supabase.removeChannel(presenceChannel);if(postNotificationChannel)await supabase.removeChannel(postNotificationChannel);await supabase.auth.signOut()};
 function subscribeFriends(){if(friendChannel)supabase.removeChannel(friendChannel);friendChannel=supabase.channel('friends-'+currentUser.id).on('postgres_changes',{event:'*',schema:'public',table:'friend_requests'},async()=>{await loadFriends();await loadRequests();if(!$('friendsPage').classList.contains('hidden'))await loadFriendsPage();}).subscribe()}
-$('closeGroupModal').onclick=()=>$('groupModal').classList.add('hidden');$('groupModal').addEventListener('click',e=>{if(e.target.id==='groupModal')$('groupModal').classList.add('hidden')});$('saveGroupButton').onclick=createGroup;
-let bootedUserId=null,authBooting=false;
-async function bootAuthenticatedApp(user){
-  if(!user)return;
-  if(bootedUserId===user.id || authBooting)return;
-  authBooting=true;
-  currentUser=user;
+$('closeGroupModal').onclick=()=>$('groupModal').classList.add('hidden');$('groupModal').addEventListener('click',e=>{if(e.target.id==='groupModal')$('groupModal').classList.add('hidden')});$('saveGroupButton').onclick=createGroup;// HT Chat 4.0 - quản lý phiên đăng nhập ổn định.
+// Không đưa người dùng về màn hình đăng nhập chỉ vì một sự kiện auth tạm thời.
+// Chỉ SIGNED_OUT thực sự mới hiển thị màn hình đăng nhập.
+let appBooted=false;
+let bootingUserId=null;
+
+async function enterApp(session){
+  if(!session?.user)return;
+  if(bootingUserId===session.user.id && appBooted)return;
+  bootingUserId=session.user.id;
+  currentUser=session.user;
+
   $('authScreen').classList.add('hidden');
   $('app').classList.remove('hidden');
+
   try{
-    loadSettings();
     await loadProfile();
     startLastSeenTracking();
+    loadSettings();
     await loadFriends();
     await loadRequests();
     await loadFriendsPage();
@@ -1490,41 +1503,49 @@ async function bootAuthenticatedApp(user){
     subscribeMessages();
     subscribePostNotifications();
     switchPage('homePage');
-    bootedUserId=user.id;
+    appBooted=true;
   }catch(err){
-    console.error('HT Chat startup error:',err);
-    toast('Đã khôi phục phiên đăng nhập.');
-  }finally{
-    authBooting=false;
+    console.error('HT Chat 4.0 app init:',err);
+    // Lỗi tải dữ liệu không được coi là lỗi đăng nhập.
+    $('authScreen').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    appBooted=true;
   }
 }
-function showLoggedOut(){
-  currentUser=null;currentProfile=null;bootedUserId=null;authBooting=false;
-  if(messageChannel)supabase.removeChannel(messageChannel);
-  if(friendChannel)supabase.removeChannel(friendChannel);
-  if(presenceChannel)supabase.removeChannel(presenceChannel);
-  if(postNotificationChannel)supabase.removeChannel(postNotificationChannel);
+
+function leaveApp(){
+  appBooted=false;
+  bootingUserId=null;
+  currentUser=null;
+  currentProfile=null;
   $('app').classList.add('hidden');
   $('authScreen').classList.remove('hidden');
   showAuth('login');
 }
-supabase.auth.onAuthStateChange((event,session)=>{
-  /* Không chạy truy vấn Supabase trực tiếp trong callback auth để tránh khóa phiên. */
+
+(async function initAuth(){
+  // Khôi phục session đã lưu trước khi render màn hình đăng nhập.
+  const {data:{session},error}=await supabase.auth.getSession();
+  if(error){
+    console.error('Không đọc được session:',error);
+  }
   if(session?.user){
-    setTimeout(()=>bootAuthenticatedApp(session.user),0);
-  }else if(event==='SIGNED_OUT'){
-    setTimeout(showLoggedOut,0);
-  }
-});
-(async()=>{
-  const {data}=await supabase.auth.getSession();
-  if(data?.session?.user){
-    await bootAuthenticatedApp(data.session.user);
+    await enterApp(session);
   }else{
-    $('app').classList.add('hidden');
-    $('authScreen').classList.remove('hidden');
-    showAuth('login');
+    leaveApp();
   }
+
+  // Không async/await các truy vấn DB trực tiếp trong callback auth.
+  // Tránh race-condition làm session đang còn hiệu lực bị hiểu nhầm là logout.
+  supabase.auth.onAuthStateChange((event,session)=>{
+    if(event==='SIGNED_OUT'){
+      setTimeout(()=>leaveApp(),0);
+      return;
+    }
+    if((event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED') && session?.user){
+      setTimeout(()=>enterApp(session),0);
+    }
+  });
 })();
 });});
 </script>
@@ -1692,6 +1713,8 @@ function activityLabel(profile){
 </script>
 
 <script id="v4-button-safety">
-document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('#app button:not([type])').forEach(b=>b.type='button')});
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('#app button:not([type])').forEach(b=>b.type='button');
+});
 </script>
 </body></html>
