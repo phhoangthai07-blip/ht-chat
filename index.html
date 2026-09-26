@@ -1347,7 +1347,7 @@ $('readReceiptButton').onclick=async()=>{readReceiptsEnabled=!readReceiptsEnable
 function subscribePresence(){if(presenceChannel)supabase.removeChannel(presenceChannel);presenceChannel=supabase.channel('presence-global',{config:{presence:{key:currentUser.id}}});presenceChannel.on('presence',{event:'sync'},syncPresence).on('presence',{event:'join'},syncPresence).on('presence',{event:'leave'},syncPresence).subscribe(async s=>{if(s==='SUBSCRIBED')await presenceChannel.track({online:true})})}function syncPresence(){onlineUsers.clear();Object.keys(presenceChannel.presenceState()).forEach(id=>onlineUsers.add(id));loadFriends();renderChatList();if(selectedUser)$('chatStatus').textContent=onlineUsers.has(selectedUser.id)?'Đang hoạt động':'Ngoại tuyến'}
 /* home post notifications */
 function notificationTime(v){if(!v)return '';return new Date(v).toLocaleString('vi-VN',{dateStyle:'short',timeStyle:'short'});}
-async async function loadPostNotifications(){
+async function loadPostNotifications(){
   const list=$('notificationList');
   if(!list||!currentUser)return;
 
