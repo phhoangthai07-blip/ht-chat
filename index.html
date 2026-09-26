@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f8ff">
-<title>HT Chat 4.0 • Notifications Fixed</title>
+<title>HT Chat 4.0 • Notifications & Activity Fixed</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#182033;background:#f7f8fc}body{overflow:hidden}button,input,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}img{max-width:100%}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:#d8dbea;border-radius:99px}
 :root{--p:#625ff2;--p2:#8a54f6;--soft:#f0efff;--bg:#f7f8fc;--card:#fff;--line:#e9ebf2;--muted:#8992a5;--green:#25c27a;--red:#ef5870;--shadow:0 18px 55px rgba(35,40,75,.10)}
@@ -697,6 +697,12 @@ body.home-active #sideFriends{display:none}
 .notification-main{min-width:0;flex:1;font-size:13px!important}
 .notification-main small{display:block!important;margin-top:4px!important;color:#98a1b3!important}
 </style>
+
+<style id="v40-v6-notification-layout">
+#notificationPanel{min-height:120px!important;}
+#notificationList{min-height:52px!important;}
+.notification-empty{display:block!important;min-height:52px!important;}
+</style>
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -906,7 +912,10 @@ async function openChatById(id){
   setMessagesMode(true);
   markChatSeen(id);
   $('chatName').innerHTML=nameHtml(data.username,data.is_verified);
-  $('chatStatus').innerHTML=onlineUsers.has(data.id)?'<span class="activity-online">● Đang hoạt động</span>':`<span>${relativeActivityTime(data.last_seen_at,false)}</span>`;
+  const freshActivity=activityMap.get(String(data.id))||data.last_seen_at||null;
+  $('chatStatus').innerHTML=onlineUsers.has(data.id)
+    ? '<span class="activity-online">● Đang hoạt động</span>'
+    : `<span>${relativeActivityTime(freshActivity,false)}</span>`;
   $('chatEmpty').classList.add('hidden');$('chatContent').classList.remove('hidden');
   document.querySelectorAll('#chatList [data-chat]').forEach(b=>b.classList.toggle('active',b.dataset.chat===String(id)));
   await loadMessages();
@@ -916,7 +925,7 @@ async function openChatById(id){
 /* HT Chat 4.0 — activity */
 function relativeActivityTime(iso,online=false){
   if(online)return '<span class="activity-online">Đang hoạt động</span>';
-  if(!iso)return 'Chưa xác định';
+  if(!iso)return 'Ngoại tuyến';
   const t=Date.parse(iso);
   if(!Number.isFinite(t))return 'Chưa xác định';
   const diff=Math.max(0,Date.now()-t);
@@ -929,9 +938,25 @@ function relativeActivityTime(iso,online=false){
 }
 let activityMap=new Map();
 async function refreshActivityMap(ids){
+  activityMap=new Map();
   if(!ids?.length)return;
-  const {data,error}=await supabase.rpc('get_activity_for_users',{p_ids:ids});
-  if(!error&&data)activityMap=new Map(data.map(x=>[String(x.id),x.last_seen_at]));
+
+  try{
+    const {data,error}=await supabase.rpc('get_activity_for_users',{p_ids:ids});
+    if(!error&&data){
+      data.forEach(x=>activityMap.set(String(x.id),x.last_seen_at||null));
+      return;
+    }
+  }catch(e){}
+
+  // Fallback nếu RPC chưa được tạo: dùng last_seen_at trong profiles.
+  try{
+    const {data}=await supabase
+      .from('profiles')
+      .select('id,last_seen_at')
+      .in('id',ids);
+    (data||[]).forEach(x=>activityMap.set(String(x.id),x.last_seen_at||null));
+  }catch(e){}
 }
 let v40LastSeenTimer=null;
 async function updateMyLastSeen(){
@@ -1414,38 +1439,146 @@ function notificationTime(v){if(!v)return '';return new Date(v).toLocaleString('
 async function loadPostNotifications(){
   const list=$('notificationList');
   if(!list||!currentUser)return;
+
   list.innerHTML='<div class="notification-empty">Đang tải thông báo...</div>';
-  const {data,error}=await supabase.rpc('get_my_post_notifications',{p_limit:80});
-  if(error){
-    console.error(error);
-    list.innerHTML=`<div class="notification-empty">Không tải được thông báo.<br><small>${escapeHtml(error.message||'Lỗi Supabase')}</small></div>`;
-    return;
-  }
-  const rows=data||[];
-  if(!rows.length){
-    list.innerHTML='<div class="notification-empty">Chưa có thông báo.</div>';
-    return;
-  }
-  list.innerHTML=rows.map(x=>{
-    const who=nameHtml(x.username||'Người dùng',!!x.is_verified);
-    const avatar=avatarHtml(x.username||'?',x.avatar_url||avatarUrlFor(x.user_id),'small');
-    const main=x.notification_type==='like'
-      ? `${who} đã thích bài viết của bạn`
-      : `${who} đã bình luận bài viết của bạn`;
-    const preview=x.notification_type==='comment'
-      ? `<span class="notification-comment">${escapeHtml(x.comment_content||'')}</span>`
-      : `<span class="notification-post">${escapeHtml(x.post_content||'Bài viết của bạn')}</span>`;
-    return `<div class="notification-item" data-notification-post="${escapeHtml(String(x.post_id))}">
-      ${avatar}<div class="notification-main"><div>${main}</div>${preview}<small>${notificationTime(x.created_at)}</small></div>
+
+  try{
+    // Ưu tiên RPC đã được sửa trong Supabase.
+    let {data,error}=await supabase.rpc('get_my_post_notifications',{p_limit:80});
+
+    if(error){
+      console.warn('RPC notification lỗi, chuyển sang truy vấn trực tiếp:',error.message);
+      data=null;
+    }
+
+    let rows=Array.isArray(data)?data:[];
+
+    // Fallback: đọc trực tiếp nếu RPC chưa có/không chạy.
+    if(!rows.length){
+      const {data:posts,error:pe}=await supabase
+        .from('posts')
+        .select('id,content,created_at')
+        .eq('author_id',currentUser.id)
+        .order('created_at',{ascending:false})
+        .limit(50);
+
+      if(pe) throw pe;
+
+      const ids=(posts||[]).map(p=>p.id);
+
+      if(ids.length){
+        const [lr,cr]=await Promise.all([
+          supabase.from('post_likes')
+            .select('post_id,user_id,created_at')
+            .in('post_id',ids)
+            .neq('user_id',currentUser.id)
+            .order('created_at',{ascending:false})
+            .limit(80),
+          supabase.from('post_comments')
+            .select('id,post_id,user_id,content,created_at')
+            .in('post_id',ids)
+            .neq('user_id',currentUser.id)
+            .order('created_at',{ascending:false})
+            .limit(80)
+        ]);
+
+        if(lr.error)throw lr.error;
+        if(cr.error)throw cr.error;
+
+        const raw=[
+          ...(lr.data||[]).map(x=>({
+            notification_type:'like',
+            notification_id:String(x.post_id),
+            post_id:String(x.post_id),
+            user_id:x.user_id,
+            created_at:x.created_at
+          })),
+          ...(cr.data||[]).map(x=>({
+            notification_type:'comment',
+            notification_id:String(x.id),
+            post_id:String(x.post_id),
+            user_id:x.user_id,
+            comment_content:x.content,
+            created_at:x.created_at
+          }))
+        ];
+
+        // Lấy thông tin người dùng riêng, tránh lỗi FK relation.
+        const userIds=[...new Set(raw.map(x=>x.user_id).filter(Boolean))];
+        let profs=[];
+        if(userIds.length){
+          const pr=await supabase
+            .from('profiles')
+            .select('id,username,avatar_url,is_verified')
+            .in('id',userIds);
+          if(pr.error)throw pr.error;
+          profs=pr.data||[];
+        }
+
+        const pmap=new Map(profs.map(p=>[String(p.id),p]));
+        const postMap=new Map((posts||[]).map(p=>[String(p.id),p]));
+
+        rows=raw.map(x=>{
+          const u=pmap.get(String(x.user_id))||{};
+          const p=postMap.get(String(x.post_id))||{};
+          return {
+            ...x,
+            username:u.username||'Người dùng',
+            avatar_url:u.avatar_url||'',
+            is_verified:!!u.is_verified,
+            post_content:p.content||'Bài viết của bạn'
+          };
+        });
+      }
+    }
+
+    rows.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+
+    if(!rows.length){
+      list.innerHTML='<div class="notification-empty">Chưa có thông báo mới.<br><small>Khi có người thích hoặc bình luận bài viết của bạn, thông báo sẽ xuất hiện ở đây.</small></div>';
+      return;
+    }
+
+    list.innerHTML=rows.slice(0,80).map(x=>{
+      const who=nameHtml(x.username||'Người dùng',!!x.is_verified);
+      const avatar=avatarHtml(
+        x.username||'?',
+        x.avatar_url||avatarUrlFor(x.user_id),
+        'small'
+      );
+      const main=x.notification_type==='like'
+        ? `${who} đã thích bài viết của bạn`
+        : `${who} đã bình luận bài viết của bạn`;
+      const preview=x.notification_type==='comment'
+        ? `<span class="notification-comment">${escapeHtml(x.comment_content||'')}</span>`
+        : `<span class="notification-post">${escapeHtml(x.post_content||'Bài viết của bạn')}</span>`;
+
+      return `<div class="notification-item" data-notification-post="${escapeHtml(String(x.post_id||''))}">
+        ${avatar}
+        <div class="notification-main">
+          <div>${main}</div>
+          ${preview}
+          <small>${notificationTime(x.created_at)}</small>
+        </div>
+      </div>`;
+    }).join('');
+
+    list.querySelectorAll('[data-notification-post]').forEach(el=>{
+      el.onclick=()=>{
+        const id=el.dataset.notificationPost;
+        $('notificationPanel').classList.add('hidden');
+        const card=document.querySelector(`#feedList [data-post="${CSS.escape(id)}"]`);
+        if(card)card.scrollIntoView({behavior:'smooth',block:'center'});
+      };
+    });
+
+  }catch(err){
+    console.error('loadPostNotifications:',err);
+    list.innerHTML=`<div class="notification-empty">
+      Không tải được thông báo.<br>
+      <small>${escapeHtml(err.message||'Lỗi dữ liệu Supabase')}</small>
     </div>`;
-  }).join('');
-  list.querySelectorAll('[data-notification-post]').forEach(el=>{
-    el.onclick=()=>{
-      const card=document.querySelector(`#feedList [data-post="${CSS.escape(el.dataset.notificationPost)}"]`);
-      $('notificationPanel').classList.add('hidden');
-      if(card)card.scrollIntoView({behavior:'smooth',block:'center'});
-    };
-  });
+  }
 }
 
 function subscribePostNotifications(){
