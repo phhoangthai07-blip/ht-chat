@@ -548,6 +548,72 @@ body.home-active #sideFriends{display:none}
   body.home-active #sideHomeTools{display:block}
 }
 </style>
+
+<style id="v4-taskbar-stability">
+@media (min-width:901px){
+  body.chat-focus .bottom-nav{
+    display:grid !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    pointer-events:auto !important;
+    z-index:500 !important;
+  }
+}
+.bottom-nav{
+  visibility:visible;
+  opacity:1;
+}
+</style>
+
+<style id="v4-activity-ui">
+.chat-activity{
+  display:block;
+  margin-top:3px;
+  color:var(--muted);
+  font-size:10px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.chat-activity.active{
+  color:var(--green);
+  font-weight:700;
+}
+.chat-preview-text{max-width:100%}
+#homeNotifications.has-new{
+  background:#ef476f !important;
+  color:#fff !important;
+  box-shadow:0 7px 22px rgba(239,71,111,.30) !important;
+  transform:scale(1.03);
+}
+#homeNotifications.has-new .notification-dot{
+  display:block !important;
+  background:#fff !important;
+  box-shadow:0 0 0 3px #ef476f;
+}
+#notificationDot{
+  position:absolute;
+  top:3px;
+  right:3px;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#ef476f;
+  display:none;
+}
+#homeNotifications{position:relative;transition:.18s ease}
+</style>
+
+<style id="v4-logout-fix">
+#logoutSettingsButton{
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  min-width:96px;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+</style>
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -757,7 +823,7 @@ async function openChatById(id){
   setMessagesMode(true);
   markChatSeen(id);
   $('chatName').innerHTML=nameHtml(data.username,data.is_verified);
-  $('chatStatus').innerHTML=onlineUsers.has(data.id)?'<span style="color:var(--green)">● Đang hoạt động</span>':'Ngoại tuyến';
+  $('chatStatus').innerHTML=onlineUsers.has(data.id)?'<span style="color:var(--green)">● Đang hoạt động</span>':`<span>${escapeHtml(relativeActivityTime(data.last_seen_at))}</span>`;
   $('chatEmpty').classList.add('hidden');$('chatContent').classList.remove('hidden');
   document.querySelectorAll('#chatList [data-chat]').forEach(b=>b.classList.toggle('active',b.dataset.chat===String(id)));
   await loadMessages();
@@ -773,28 +839,84 @@ async function renderChatList(){
     $('createGroupButton').onclick=()=>openGroupModal();
     $('chatListSearch').oninput=()=>filterChatList($('chatListSearch').value);
   }
+
   const count=$('chatConversationCount');
-  const items=$('chatListItems'); const groupItems=$('groupListItems');
+  const items=$('chatListItems');
+  const groupItems=$('groupListItems');
+
   const {data:members}=await supabase.from('chat_group_members').select('group_id').eq('user_id',currentUser.id);
   const groupIds=(members||[]).map(x=>x.group_id);
   let groups=[];
-  if(groupIds.length){const q=await supabase.from('chat_groups').select('*').in('id',groupIds).order('created_at',{ascending:false});groups=q.data||[]}
+  if(groupIds.length){
+    const q=await supabase.from('chat_groups').select('*').in('id',groupIds).order('created_at',{ascending:false});
+    groups=q.data||[];
+  }
+
   if(count)count.textContent=`${ids.length+groups.length} cuộc trò chuyện`;
   renderChatNote([]);
+
   if(groups.length){
-    const groupMetas=await Promise.all(groups.map(async g=>{const key=seenKey('group_'+g.id),lastSeen=Number(localStorage.getItem(key)||0);const latestQ=await supabase.from('messages').select('id,sender_id,content,created_at').eq('group_id',g.id).order('created_at',{ascending:false}).limit(1);const unreadQ=lastSeen?await supabase.from('messages').select('id',{count:'exact',head:true}).eq('group_id',g.id).neq('sender_id',currentUser.id).gt('created_at',new Date(lastSeen).toISOString()):await supabase.from('messages').select('id',{count:'exact',head:true}).eq('group_id',g.id).neq('sender_id',currentUser.id);return [g.id,{latest:latestQ.data?.[0]||null,unread:unreadQ.count||0}] }));
+    const groupMetas=await Promise.all(groups.map(async g=>{
+      const key=seenKey('group_'+g.id),lastSeen=Number(localStorage.getItem(key)||0);
+      const latestQ=await supabase.from('messages').select('id,sender_id,content,created_at').eq('group_id',g.id).order('created_at',{ascending:false}).limit(1);
+      const unreadQ=lastSeen
+        ?await supabase.from('messages').select('id',{count:'exact',head:true}).eq('group_id',g.id).neq('sender_id',currentUser.id).gt('created_at',new Date(lastSeen).toISOString())
+        :await supabase.from('messages').select('id',{count:'exact',head:true}).eq('group_id',g.id).neq('sender_id',currentUser.id);
+      return [g.id,{latest:latestQ.data?.[0]||null,unread:unreadQ.count||0}];
+    }));
     groupMetas.forEach(([id,m])=>chatUnread['g:'+id]=m.unread||0);
-    groupItems.innerHTML=groups.map(g=>{const m=groupMetas.find(x=>x[0]===g.id)?.[1]||{};const latest=m.latest;const preview=latest?(latest.sender_id===currentUser.id?'Bạn: ':'')+messagePreview(latest.content):'Chưa có tin nhắn';const unread=m.unread||0;return `<div class="chat-person group-row"><button class="person-row ${selectedGroup?.id===g.id?'active':''}" data-group="${g.id}"><span class="group-avatar">👥</span><span class="chat-preview"><span class="chat-preview-top"><b>${escapeHtml(g.name)}</b><span class="chat-time">${chatTime(latest?.created_at)}</span></span><span class="chat-preview-text"><span>${escapeHtml(preview)}</span>${unread?`<span class="chat-unread">${unread>99?'99+':unread}</span>`:''}</span></span></button></div>`}).join('');
-    groupItems.querySelectorAll('[data-group]').forEach(b=>b.onclick=()=>{localStorage.setItem(seenKey('group_'+b.dataset.group),String(Date.now()));openGroupById(b.dataset.group)});
+    groups.sort((a,b)=>{
+      const ma=groupMetas.find(x=>x[0]===a.id)?.[1]?.latest?.created_at||0;
+      const mb=groupMetas.find(x=>x[0]===b.id)?.[1]?.latest?.created_at||0;
+      return new Date(mb)-new Date(ma);
+    });
+    groupItems.innerHTML=groups.map(g=>{
+      const m=groupMetas.find(x=>x[0]===g.id)?.[1]||{};
+      const latest=m.latest;
+      const preview=latest?(latest.sender_id===currentUser.id?'Bạn: ':'')+messagePreview(latest.content):'Chưa có tin nhắn';
+      const unread=m.unread||0;
+      return `<div class="chat-person group-row"><button class="person-row ${selectedGroup?.id===g.id?'active':''}" data-group="${g.id}"><span class="group-avatar">👥</span><span class="chat-preview"><span class="chat-preview-top"><b>${escapeHtml(g.name)}</b><span class="chat-time">${chatTime(latest?.created_at)}</span></span><span class="chat-preview-text"><span>${escapeHtml(preview)}</span>${unread?`<span class="chat-unread">${unread>99?'99+':unread}</span>`:''}</span></span></button></div>`;
+    }).join('');
+    groupItems.querySelectorAll('[data-group]').forEach(b=>b.onclick=()=>{
+      localStorage.setItem(seenKey('group_'+b.dataset.group),String(Date.now()));
+      openGroupById(b.dataset.group);
+    });
   }else groupItems.innerHTML='';
-  if(!ids.length){items.innerHTML='<div class="chat-list-empty"><strong>Chưa có cuộc trò chuyện</strong><div style="margin-top:5px">Hãy kết bạn để bắt đầu nhắn tin.</div></div>';renderChatNote([])}
-  else{
-    const {data}=await supabase.from('profiles').select('*').in('id',ids).order('username');const users=data||[];renderChatNote(users);
-    const metas=await Promise.all(users.map(async u=>[u.id,await chatMetaFor(u.id)]));metas.forEach(([id,m])=>chatUnread[id]=m.unread||0);
-    items.innerHTML=users.map(u=>{const m=metas.find(x=>x[0]===u.id)?.[1]||{};const latest=m.latest;const mine=latest?.sender_id===currentUser.id;const preview=latest?messagePreview(latest.content):'Chưa có tin nhắn';const unread=m.unread||0;return `<div class="chat-person"><button class="person-row ${selectedUser?.id===u.id?'active':''}" data-chat="${u.id}">${avatarHtml(u.username,u.avatar_url||avatarUrlFor(u.id),'small',onlineUsers.has(u.id))}<span class="chat-preview"><span class="chat-preview-top">${nameHtml(u.username,u.is_verified)}<span class="chat-time">${chatTime(latest?.created_at)}</span></span><span class="chat-preview-text"><span>${mine?'Bạn: ':''}${escapeHtml(preview)}</span>${unread?`<span class="chat-unread">${unread>99?'99+':unread}</span>`:''}</span></span></button></div>`}).join('');
+
+  if(!ids.length){
+    items.innerHTML='<div class="chat-list-empty"><strong>Chưa có cuộc trò chuyện</strong><div style="margin-top:5px">Hãy kết bạn để bắt đầu nhắn tin.</div></div>';
+    renderChatNote([]);
+  }else{
+    const {data}=await supabase.from('profiles').select('*').in('id',ids);
+    const users=data||[];
+    renderChatNote(users);
+
+    const metas=await Promise.all(users.map(async u=>[u.id,await chatMetaFor(u.id)]));
+    metas.forEach(([id,m])=>chatUnread[id]=m.unread||0);
+
+    /* Người có tin nhắn mới/hoạt động nhắn tin gần nhất luôn lên đầu. */
+    users.sort((a,b)=>{
+      const ma=metas.find(x=>x[0]===a.id)?.[1]?.latest?.created_at||0;
+      const mb=metas.find(x=>x[0]===b.id)?.[1]?.latest?.created_at||0;
+      if(ma||mb)return new Date(mb)-new Date(ma);
+      return String(a.username||'').localeCompare(String(b.username||''),'vi');
+    });
+
+    items.innerHTML=users.map(u=>{
+      const m=metas.find(x=>x[0]===u.id)?.[1]||{};
+      const latest=m.latest;
+      const mine=latest?.sender_id===currentUser.id;
+      const preview=latest?messagePreview(latest.content):'Chưa có tin nhắn';
+      const unread=m.unread||0;
+      const activity=activityLabel(u);
+      return `<div class="chat-person"><button class="person-row ${selectedUser?.id===u.id?'active':''}" data-chat="${u.id}">${avatarHtml(u.username,u.avatar_url||avatarUrlFor(u.id),'small',onlineUsers.has(u.id))}<span class="chat-preview"><span class="chat-preview-top">${nameHtml(u.username,u.is_verified)}<span class="chat-time">${chatTime(latest?.created_at)}</span></span><span class="chat-preview-text"><span>${mine?'Bạn: ':''}${escapeHtml(preview)}</span>${unread?`<span class="chat-unread">${unread>99?'99+':unread}</span>`:''}</span><small class="chat-activity ${onlineUsers.has(u.id)?'active':''}">${escapeHtml(activity)}</small></span></button></div>`;
+    }).join('');
+
     items.querySelectorAll('[data-chat]').forEach(b=>b.onclick=()=>openChatById(b.dataset.chat));
   }
-  updateMessageBadge();filterChatList($('chatListSearch')?.value||'');
+
+  updateMessageBadge();
+  filterChatList($('chatListSearch')?.value||'');
 }
 function filterChatList(value){
   const items=$('chatListItems');if(!items)return;
@@ -1200,10 +1322,30 @@ $('xmdtPassword').onkeydown=e=>{if(e.key==='Enter')verifyXmdt()};
 function loadSettings(){const xmdtVerified=currentProfile?.is_verified===true||localStorage.getItem('htchat_xmdt_verified_'+currentUser.id)==='1';$('xmdtButton').textContent=xmdtVerified?'Đã tích xanh':'Xác thực';$('xmdtButton').classList.toggle('on',xmdtVerified);notificationsEnabled=localStorage.getItem('htchat_notifications_'+currentUser.id)==='1';readReceiptsEnabled=localStorage.getItem('htchat_read_receipts_'+currentUser.id)!=='0';$('notificationButton').textContent=notificationsEnabled?'Đã bật':'Bật';$('notificationButton').classList.toggle('on',notificationsEnabled);$('readReceiptButton').textContent=readReceiptsEnabled?'Đã bật':'Tắt';$('readReceiptButton').classList.toggle('on',readReceiptsEnabled)}
 $('notificationButton').onclick=async()=>{await enableNotifications();localStorage.setItem('htchat_notifications_'+currentUser.id,notificationsEnabled?'1':'0');loadSettings()};
 $('readReceiptButton').onclick=async()=>{readReceiptsEnabled=!readReceiptsEnabled;localStorage.setItem('htchat_read_receipts_'+currentUser.id,readReceiptsEnabled?'1':'0');loadSettings();if(readReceiptsEnabled&&selectedUser)await markConversationRead();if(selectedUser)await loadMessages()};$('appInfoButton').onclick=()=>$('appInfoModal').classList.remove('hidden');$('closeAppInfo').onclick=()=>$('appInfoModal').classList.add('hidden');$('appInfoModal').addEventListener('click',e=>{if(e.target.id==='appInfoModal')$('appInfoModal').classList.add('hidden')});
-function subscribePresence(){if(presenceChannel)supabase.removeChannel(presenceChannel);presenceChannel=supabase.channel('presence-global',{config:{presence:{key:currentUser.id}}});presenceChannel.on('presence',{event:'sync'},syncPresence).on('presence',{event:'join'},syncPresence).on('presence',{event:'leave'},syncPresence).subscribe(async s=>{if(s==='SUBSCRIBED')await presenceChannel.track({online:true})})}function syncPresence(){onlineUsers.clear();Object.keys(presenceChannel.presenceState()).forEach(id=>onlineUsers.add(id));loadFriends();renderChatList();if(selectedUser)$('chatStatus').textContent=onlineUsers.has(selectedUser.id)?'Đang hoạt động':'Ngoại tuyến'}
+function subscribePresence(){if(presenceChannel)supabase.removeChannel(presenceChannel);presenceChannel=supabase.channel('presence-global',{config:{presence:{key:currentUser.id}}});presenceChannel.on('presence',{event:'sync'},syncPresence).on('presence',{event:'join'},syncPresence).on('presence',{event:'leave'},syncPresence).subscribe(async s=>{if(s==='SUBSCRIBED')await presenceChannel.track({online:true})})}async function syncPresence(){
+  onlineUsers.clear();
+  Object.keys(presenceChannel.presenceState()).forEach(id=>onlineUsers.add(id));
+  loadFriends();
+  renderChatList();
+  if(selectedUser){
+    if(onlineUsers.has(selectedUser.id))$('chatStatus').innerHTML='<span style="color:var(--green)">● Đang hoạt động</span>';
+    else{
+      const q=await supabase.from('profiles').select('last_seen_at').eq('id',selectedUser.id).maybeSingle();
+      $('chatStatus').textContent=relativeActivityTime(q.data?.last_seen_at);
+    }
+  }
+}
 /* home post notifications */
 function notificationTime(v){if(!v)return '';return new Date(v).toLocaleString('vi-VN',{dateStyle:'short',timeStyle:'short'});}
-function setPostNotificationBadge(on){postNotificationUnread=!!on;const b=$('homeNotifications');if(b)b.classList.toggle('has-new',postNotificationUnread);}
+function setPostNotificationBadge(on){
+  postNotificationUnread=!!on;
+  const b=$('homeNotifications');
+  if(b){
+    b.classList.toggle('has-new',postNotificationUnread);
+    const dot=$('notificationDot');
+    if(dot)dot.style.display=postNotificationUnread?'block':'none';
+  }
+}
 async function loadPostNotifications(){
   const list=$('notificationList'); if(!list||!currentUser)return;
   list.innerHTML='<div class="notification-empty">Đang tải thông báo...</div>';
@@ -1318,7 +1460,7 @@ $('messageInput').addEventListener('focus',keepComposerVisible);
 if(window.visualViewport){window.visualViewport.addEventListener('resize',()=>{if(document.activeElement===$('messageInput'))keepComposerVisible()})}
 
 function moveNavSlider(id){const nav=$('bottomNav'),slider=nav?.querySelector('.nav-slider'),btn=nav?.querySelector(`button[data-page="${id}"]`);if(!nav||!slider||!btn)return;const nr=nav.getBoundingClientRect(),br=btn.getBoundingClientRect();slider.style.left=(br.left-nr.left)+'px';slider.style.width=br.width+'px'}
-function switchPage(id,preserveChat=false){document.body.classList.toggle('home-active',id==='homePage');if(id==='messagesPage'&&!preserveChat){selectedUser=null;selectedGroup=null;chatType='user';setMessagesMode(false);$('chatName').textContent='Tin nhắn';$('chatStatus').textContent='Các cuộc trò chuyện';$('chatEmpty').classList.remove('hidden');$('chatContent').classList.add('hidden')}document.querySelectorAll('.page').forEach(p=>p.classList.toggle('hidden',p.id!==id));document.querySelectorAll('#bottomNav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));requestAnimationFrame(()=>moveNavSlider(id));if(id==='homePage')loadPosts(true);if(id==='messagesPage')renderChatList();if(id==='friendsPage')loadFriendsPage();if(id==='profilePage')loadProfile();$('side').classList.remove('open')}
+function switchPage(id,preserveChat=false){if(id!=='messagesPage'||!preserveChat){document.body.classList.remove('chat-focus');}document.body.classList.toggle('home-active',id==='homePage');if(id==='messagesPage'&&!preserveChat){selectedUser=null;selectedGroup=null;chatType='user';setMessagesMode(false);$('chatName').textContent='Tin nhắn';$('chatStatus').textContent='Các cuộc trò chuyện';$('chatEmpty').classList.remove('hidden');$('chatContent').classList.add('hidden')}document.querySelectorAll('.page').forEach(p=>p.classList.toggle('hidden',p.id!==id));document.querySelectorAll('#bottomNav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));requestAnimationFrame(()=>moveNavSlider(id));if(id==='homePage')loadPosts(true);if(id==='messagesPage')renderChatList();if(id==='friendsPage')loadFriendsPage();if(id==='profilePage')loadProfile();$('side').classList.remove('open')}
 document.querySelectorAll('#bottomNav button').forEach(b=>b.onclick=()=>switchPage(b.dataset.page));if($('chatBackButton'))$('chatBackButton').onclick=()=>{selectedUser=null;selectedGroup=null;chatType='user';setMessagesMode(false);$('chatName').textContent='Tin nhắn';$('chatStatus').textContent='Các cuộc trò chuyện';$('chatEmpty').classList.remove('hidden');$('chatContent').classList.add('hidden');renderChatList()};document.addEventListener('click',e=>{const row=e.target.closest('[data-profile-open]');if(row)openProfileView(row.dataset.profileOpen)});window.addEventListener('resize',()=>{const active=document.querySelector('#bottomNav button.active');if(active)moveNavSlider(active.dataset.page)});requestAnimationFrame(()=>moveNavSlider(document.querySelector('#bottomNav button.active')?.dataset.page||'homePage'));$('profileQuick').onclick=()=>switchPage('profilePage');$('mobileMenu').onclick=()=>$('side').classList.toggle('open');$('friendsMobileMenu').onclick=()=>$('side').classList.toggle('open');$('profileMobileMenu').onclick=()=>$('side').classList.toggle('open');$('homePage').onclick=e=>{if(e.target.closest('.post-image'))window.open(e.target.closest('.post-image').src,'_blank')};
 document.querySelectorAll('[data-friends-tab]').forEach(tab=>tab.onclick=()=>{document.querySelectorAll('[data-friends-tab]').forEach(x=>x.classList.toggle('active',x===tab));const requests=tab.dataset.friendsTab==='requests';$('friendsRequestsPanel').classList.toggle('hidden',!requests);$('friendsSearchPanel').classList.toggle('hidden',requests);if(requests)loadFriendsPage()});
 let friendsSearchTimer=null;
@@ -1326,7 +1468,7 @@ $('friendsSearchInput').oninput=()=>{clearTimeout(friendsSearchTimer);friendsSea
 
 $('logoutSettingsButton').onclick=async()=>{if(messageChannel)await supabase.removeChannel(messageChannel);if(friendChannel)await supabase.removeChannel(friendChannel);if(presenceChannel)await supabase.removeChannel(presenceChannel);if(postNotificationChannel)await supabase.removeChannel(postNotificationChannel);await supabase.auth.signOut()};
 function subscribeFriends(){if(friendChannel)supabase.removeChannel(friendChannel);friendChannel=supabase.channel('friends-'+currentUser.id).on('postgres_changes',{event:'*',schema:'public',table:'friend_requests'},async()=>{await loadFriends();await loadRequests();if(!$('friendsPage').classList.contains('hidden'))await loadFriendsPage();}).subscribe()}
-$('closeGroupModal').onclick=()=>$('groupModal').classList.add('hidden');$('groupModal').addEventListener('click',e=>{if(e.target.id==='groupModal')$('groupModal').classList.add('hidden')});$('saveGroupButton').onclick=createGroup;supabase.auth.onAuthStateChange(async(event,session)=>{if(session?.user){currentUser=session.user;$('authScreen').classList.add('hidden');$('app').classList.remove('hidden');loadSettings();await loadProfile();await loadFriends();await loadRequests();await loadFriendsPage();await renderChatList();subscribeFriends();subscribePresence();subscribeMessages();subscribePostNotifications();switchPage('homePage')}else{$('app').classList.add('hidden');$('authScreen').classList.remove('hidden');showAuth('login')}});showAuth('login');
+$('closeGroupModal').onclick=()=>$('groupModal').classList.add('hidden');$('groupModal').addEventListener('click',e=>{if(e.target.id==='groupModal')$('groupModal').classList.add('hidden')});$('saveGroupButton').onclick=createGroup;supabase.auth.onAuthStateChange(async(event,session)=>{if(session?.user){currentUser=session.user;$('authScreen').classList.add('hidden');$('app').classList.remove('hidden');loadSettings();await loadProfile();startLastSeenTracking();await loadFriends();await loadRequests();await loadFriendsPage();await renderChatList();subscribeFriends();subscribePresence();subscribeMessages();subscribePostNotifications();switchPage('homePage')}else{$('app').classList.add('hidden');$('authScreen').classList.remove('hidden');showAuth('login')}});showAuth('login');
 });});
 </script>
 <script>
@@ -1434,5 +1576,61 @@ document.addEventListener('click',function(e){
   if(go==='friends' && typeof switchPage==='function') switchPage('friendsPage');
   if(go==='profile' && typeof switchPage==='function') switchPage('profilePage');
 });
+</script>
+
+<script id="v4-activity-functions">
+function relativeActivityTime(iso){
+  if(!iso)return 'Chưa hoạt động';
+  const t=new Date(iso).getTime();
+  if(!Number.isFinite(t))return 'Chưa hoạt động';
+  let sec=Math.max(0,Math.floor((Date.now()-t)/1000));
+  if(sec<60)return 'Hoạt động vừa xong';
+  const min=Math.floor(sec/60);
+  if(min<60)return `Hoạt động ${min} phút trước`;
+  const h=Math.floor(min/60);
+  if(h<24)return `Hoạt động ${h} giờ trước`;
+  const d=Math.floor(h/24);
+  if(d<7)return `Hoạt động ${d} ngày trước`;
+  return `Hoạt động ${Math.floor(d/7)} tuần trước`;
+}
+let lastSeenTimer=null;
+async function touchLastSeen(){
+  if(!currentUser)return;
+  try{
+    await supabase.from('profiles').update({last_seen_at:new Date().toISOString()}).eq('id',currentUser.id);
+  }catch(e){console.warn('last_seen_at unavailable',e)}
+}
+function startLastSeenTracking(){
+  touchLastSeen();
+  if(lastSeenTimer)clearInterval(lastSeenTimer);
+  lastSeenTimer=setInterval(touchLastSeen,60000);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible')touchLastSeen();
+  });
+  window.addEventListener('focus',touchLastSeen);
+}
+function activityLabel(profile){
+  if(profile?.id===currentUser?.id)return 'Đang hoạt động';
+  if(onlineUsers.has(profile?.id))return 'Đang hoạt động';
+  return relativeActivityTime(profile?.last_seen_at);
+}
+</script>
+
+<script id="v4-taskbar-guard">
+(function(){
+  function restoreDesktopTaskbar(){
+    if(window.innerWidth>=901){
+      const nav=document.getElementById('bottomNav');
+      if(nav){
+        nav.style.setProperty('display','grid','important');
+        nav.style.setProperty('visibility','visible','important');
+        nav.style.setProperty('opacity','1','important');
+      }
+    }
+  }
+  window.addEventListener('load',restoreDesktopTaskbar);
+  window.addEventListener('resize',restoreDesktopTaskbar);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')restoreDesktopTaskbar()});
+})();
 </script>
 </body></html>
