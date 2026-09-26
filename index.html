@@ -548,7 +548,14 @@ body.home-active #sideFriends{display:none}
   body.home-active #sideHomeTools{display:block}
 }
 </style>
-</head>
+<style id="v40-fixes">
+.logout-row{display:flex!important;visibility:visible!important;opacity:1!important}
+#logoutSettingsButton{display:inline-flex!important;align-items:center;justify-content:center;min-width:100px;background:#fff0f2!important;color:#d83d57!important;border:1px solid #ffd1d9!important;font-weight:800}
+.activity-time{display:block;font-size:10px;color:var(--muted);margin-top:2px;font-weight:600}
+.activity-online{color:#18a66a!important}
+.notification-btn.has-new{background:#ef4f69!important;color:#fff!important;box-shadow:0 5px 18px rgba(239,79,105,.25)}
+.notification-btn.has-new svg{color:#fff!important}
+</style></head>
 <body>
 <section id="authScreen"><div class="auth-card">
   <div class="logo" id="authLogo"></div><h1 id="authTitle">Chào mừng trở lại</h1><p class="auth-sub" id="authSubtitle">Đăng nhập vào HT Chat</p>
@@ -789,9 +796,17 @@ async function renderChatList(){
   }else groupItems.innerHTML='';
   if(!ids.length){items.innerHTML='<div class="chat-list-empty"><strong>Chưa có cuộc trò chuyện</strong><div style="margin-top:5px">Hãy kết bạn để bắt đầu nhắn tin.</div></div>';renderChatNote([])}
   else{
-    const {data}=await supabase.from('profiles').select('*').in('id',ids).order('username');const users=data||[];renderChatNote(users);
+    const {data}=await supabase.from('profiles').select('*').in('id',ids).order('username');const users=data||[];const metas=await Promise.all(users.map(async u=>[u.id,await chatMetaFor(u.id)]));
+const metaMap=new Map(metas);
+users.sort((a,b)=>{
+ const at=metaMap.get(a.id)?.latest?.created_at;
+ const bt=metaMap.get(b.id)?.latest?.created_at;
+ return (bt?new Date(bt).getTime():0)-(at?new Date(at).getTime():0);
+});
+metas.forEach(([id,m])=>chatUnread[id]=m.unread||0);
+renderChatNote(users);
     const metas=await Promise.all(users.map(async u=>[u.id,await chatMetaFor(u.id)]));metas.forEach(([id,m])=>chatUnread[id]=m.unread||0);
-    items.innerHTML=users.map(u=>{const m=metas.find(x=>x[0]===u.id)?.[1]||{};const latest=m.latest;const mine=latest?.sender_id===currentUser.id;const preview=latest?messagePreview(latest.content):'Chưa có tin nhắn';const unread=m.unread||0;return `<div class="chat-person"><button class="person-row ${selectedUser?.id===u.id?'active':''}" data-chat="${u.id}">${avatarHtml(u.username,u.avatar_url||avatarUrlFor(u.id),'small',onlineUsers.has(u.id))}<span class="chat-preview"><span class="chat-preview-top">${nameHtml(u.username,u.is_verified)}<span class="chat-time">${chatTime(latest?.created_at)}</span></span><span class="chat-preview-text"><span>${mine?'Bạn: ':''}${escapeHtml(preview)}</span>${unread?`<span class="chat-unread">${unread>99?'99+':unread}</span>`:''}</span></span></button></div>`}).join('');
+    items.innerHTML=users.map(u=>{const m=metas.find(x=>x[0]===u.id)?.[1]||{};const latest=m.latest;const mine=latest?.sender_id===currentUser.id;const preview=latest?messagePreview(latest.content):'Chưa có tin nhắn';const unread=m.unread||0;return `<div class="chat-person"><button class="person-row ${selectedUser?.id===u.id?'active':''}" data-chat="${u.id}">${avatarHtml(u.username,u.avatar_url||avatarUrlFor(u.id),'small',onlineUsers.has(u.id))}<span class="chat-preview"><span class="chat-preview-top">${nameHtml(u.username,u.is_verified)}<span class="chat-time">${chatTime(latest?.created_at)}</span><span class="activity-time">${relativeActivityTime(u.last_seen_at,onlineUsers.has(u.id))}</span></span><span class="chat-preview-text"><span>${mine?'Bạn: ':''}${escapeHtml(preview)}</span>${unread?`<span class="chat-unread">${unread>99?'99+':unread}</span>`:''}</span></span></button></div>`}).join('');
     items.querySelectorAll('[data-chat]').forEach(b=>b.onclick=()=>openChatById(b.dataset.chat));
   }
   updateMessageBadge();filterChatList($('chatListSearch')?.value||'');
@@ -1160,7 +1175,7 @@ async function sendVoiceBlob(blob){
 $('voiceButton').onclick=()=>voiceRecorder?stopVoiceRecording(false):startVoiceRecording();
 $('cancelVoiceButton').onclick=()=>stopVoiceRecording(true);
 $('imageButton').onclick=()=>{if(selectedUser||selectedGroup)$('imageInput').click();else toast('Hãy mở một cuộc trò chuyện trước')};$('imageInput').onchange=async e=>{const f=e.target.files?.[0];e.target.value='';if(!f||(!selectedUser&&!selectedGroup))return;const sendBtn=$('imageButton');sendBtn.disabled=true;try{const url=await uploadFile(f,'messages');if(!url)return;const payload={sender_id:currentUser.id,receiver_id:selectedUser?.id||null,group_id:selectedGroup?.id||null,content:'[image]'+url};const {data,error}=await supabase.from('messages').insert(payload).select('*,profiles:sender_id(username,avatar_url)').single();if(error){console.error('Message image insert error',error);toast('Ảnh đã tải nhưng chưa gửi được tin nhắn: '+error.message);return}if(data)renderMessage(data,true);playSendSound();scrollMessages();}finally{sendBtn.disabled=false}};
-async function updateAvatar(file){if(!file)return;if(!file.type.startsWith('image/'))return toast('Vui lòng chọn ảnh');if(file.size>8*1024*1024)return toast('Ảnh tối đa 8MB');const path=`avatars/${currentUser.id}.jpg`;const {error}=await supabase.storage.from(AVATAR_BUCKET).upload(path,file,{upsert:true,contentType:file.type,cacheControl:'3600'});if(error){console.error(error);return toast('Không cập nhật được avatar: '+error.message)}const url=postImageUrl(path)+'?v='+Date.now();const {error:e2}=await supabase.from('profiles').update({avatar_url:url}).eq('id',currentUser.id);if(e2){console.error(e2);return toast('Ảnh đã tải nhưng hồ sơ chưa lưu: '+e2.message)}await loadProfile();await loadFriends();await renderChatList();if(selectedUser)await openChatById(selectedUser.id);toast('Đã cập nhật ảnh đại diện')}
+async function updateAvatar(file){if(!file)return;if(!file.type.startsWith('image/'))return toast('Vui lòng chọn ảnh');if(file.size>8*1024*1024)return toast('Ảnh tối đa 8MB');const path=`avatars/${currentUser.id}.jpg`;const {error}=await supabase.storage.from(AVATAR_BUCKET).upload(path,file,{upsert:true,contentType:file.type,cacheControl:'3600'});if(error){console.error(error);return toast('Không cập nhật được avatar: '+error.message)}const url=postImageUrl(path)+'?v='+Date.now();const {error:e2}=await supabase.from('profiles').update({avatar_url:url}).eq('id',currentUser.id);if(e2){console.error(e2);return toast('Ảnh đã tải nhưng hồ sơ chưa lưu: '+e2.message)}await loadProfile();startLastSeen();await loadFriends();await renderChatList();if(selectedUser)await openChatById(selectedUser.id);toast('Đã cập nhật ảnh đại diện')}
 $('changeAvatarBtn').onclick=()=>$('avatarInput').click();$('avatarEditBtn').onclick=()=>$('avatarInput').click();$('avatarInput').onchange=e=>{updateAvatar(e.target.files?.[0]);e.target.value=''};
 async function saveBio(){const bio=$('profileBioInput').value.trim().slice(0,160);const {data,error}=await supabase.from('profiles').update({bio}).eq('id',currentUser.id).select('*').single();if(error)return toast('Không lưu được tiểu sử: '+error.message);currentProfile={...currentProfile,...(data||{bio})};$('profileBioText').textContent=bio||'Chưa có tiểu sử.';$('profileBioInput').classList.add('hidden');$('profileBioActions').classList.add('hidden');toast('Đã cập nhật tiểu sử')}
 $('editBioButton').onclick=()=>{$('profileBioInput').value=currentProfile?.bio||'';$('profileBioInput').classList.remove('hidden');$('profileBioActions').classList.remove('hidden');$('profileBioInput').focus()};$('cancelBioButton').onclick=()=>{$('profileBioInput').classList.add('hidden');$('profileBioActions').classList.add('hidden')};$('saveBioButton').onclick=saveBio;
@@ -1435,4 +1450,40 @@ document.addEventListener('click',function(e){
   if(go==='profile' && typeof switchPage==='function') switchPage('profilePage');
 });
 </script>
-</body></html>
+<script id="v40-lastseen">
+function relativeActivityTime(iso,online=false){
+ if(online)return '<span class="activity-online">Đang hoạt động</span>';
+ if(!iso)return 'Chưa hoạt động';
+ const m=Math.floor(Math.max(0,Date.now()-new Date(iso).getTime())/60000);
+ if(m<1)return 'Vừa hoạt động';
+ if(m<60)return `${m} phút trước`;
+ const h=Math.floor(m/60);
+ if(h<24)return `${h} giờ trước`;
+ const d=Math.floor(h/24);
+ if(d<7)return `${d} ngày trước`;
+ return new Date(iso).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'});
+}
+async function touchLastSeen(){
+ if(!currentUser)return;
+ await supabase.from('profiles').update({last_seen_at:new Date().toISOString()}).eq('id',currentUser.id);
+}
+function startLastSeen(){
+ touchLastSeen();
+ clearInterval(window.__htLastSeen);
+ window.__htLastSeen=setInterval(touchLastSeen,60000);
+}
+</script><script id="v40-logout">
+document.addEventListener('DOMContentLoaded',()=>{
+ const b=document.getElementById('logoutSettingsButton');
+ if(b)b.onclick=async()=>{
+   if(!confirm('Bạn có chắc muốn đăng xuất không?'))return;
+   b.disabled=true;b.textContent='Đang đăng xuất...';
+   try{await supabase.auth.signOut();location.reload()}
+   catch(e){b.disabled=false;b.textContent='Đăng xuất';if(typeof toast==='function')toast('Không thể đăng xuất, hãy thử lại.')}
+ };
+});
+</script><script id="v40-notification">
+function setNotificationNewState(v){
+ document.querySelectorAll('.notification-btn').forEach(b=>b.classList.toggle('has-new',!!v));
+}
+</script></body></html>
