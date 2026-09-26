@@ -555,7 +555,22 @@ body.home-active #sideFriends{display:none}
 .activity-online{color:#18a66a!important}
 .notification-btn.has-new{background:#ef4f69!important;color:#fff!important;box-shadow:0 5px 18px rgba(239,79,105,.25)}
 .notification-btn.has-new svg{color:#fff!important}
-</style></head>
+</style>
+<style id="v40-final-layout-fix">
+@media (min-width:901px){
+  #app > aside#side{
+    display:flex!important;
+    visibility:visible!important;
+  }
+  #app > main.main{
+    width:auto!important;
+    max-width:none!important;
+    flex:1 1 auto!important;
+    min-width:0!important;
+  }
+}
+</style>
+</head>
 <body>
 <section id="authScreen"><div class="auth-card">
   <div class="logo" id="authLogo"></div><h1 id="authTitle">Chào mừng trở lại</h1><p class="auth-sub" id="authSubtitle">Đăng nhập vào HT Chat</p>
@@ -805,8 +820,7 @@ users.sort((a,b)=>{
 });
 metas.forEach(([id,m])=>chatUnread[id]=m.unread||0);
 renderChatNote(users);
-    const metas=await Promise.all(users.map(async u=>[u.id,await chatMetaFor(u.id)]));metas.forEach(([id,m])=>chatUnread[id]=m.unread||0);
-    items.innerHTML=users.map(u=>{const m=metas.find(x=>x[0]===u.id)?.[1]||{};const latest=m.latest;const mine=latest?.sender_id===currentUser.id;const preview=latest?messagePreview(latest.content):'Chưa có tin nhắn';const unread=m.unread||0;return `<div class="chat-person"><button class="person-row ${selectedUser?.id===u.id?'active':''}" data-chat="${u.id}">${avatarHtml(u.username,u.avatar_url||avatarUrlFor(u.id),'small',onlineUsers.has(u.id))}<span class="chat-preview"><span class="chat-preview-top">${nameHtml(u.username,u.is_verified)}<span class="chat-time">${chatTime(latest?.created_at)}</span><span class="activity-time">${relativeActivityTime(u.last_seen_at,onlineUsers.has(u.id))}</span></span><span class="chat-preview-text"><span>${mine?'Bạn: ':''}${escapeHtml(preview)}</span>${unread?`<span class="chat-unread">${unread>99?'99+':unread}</span>`:''}</span></span></button></div>`}).join('');
+    items.innerHTML=users.map(u=>{const m=metaMap.get(u.id)||{};const latest=m.latest;const mine=latest?.sender_id===currentUser.id;const preview=latest?messagePreview(latest.content):'Chưa có tin nhắn';const unread=m.unread||0;return `<div class="chat-person"><button class="person-row ${selectedUser?.id===u.id?'active':''}" data-chat="${u.id}">${avatarHtml(u.username,u.avatar_url||avatarUrlFor(u.id),'small',onlineUsers.has(u.id))}<span class="chat-preview"><span class="chat-preview-top">${nameHtml(u.username,u.is_verified)}<span class="chat-time">${chatTime(latest?.created_at)}</span><span class="activity-time">${relativeActivityTime(u.last_seen_at,onlineUsers.has(u.id))}</span></span><span class="chat-preview-text"><span>${mine?'Bạn: ':''}${escapeHtml(preview)}</span>${unread?`<span class="chat-unread">${unread>99?'99+':unread}</span>`:''}</span></span></button></div>`}).join('');
     items.querySelectorAll('[data-chat]').forEach(b=>b.onclick=()=>openChatById(b.dataset.chat));
   }
   updateMessageBadge();filterChatList($('chatListSearch')?.value||'');
