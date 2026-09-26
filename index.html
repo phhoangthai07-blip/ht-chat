@@ -685,6 +685,18 @@ body.home-active #sideFriends{display:none}
 .notification-item:hover{background:#f5f7fb!important}
 .notification-empty{padding:22px 14px!important;text-align:center!important;color:#8993a8!important}
 </style>
+
+<style id="v40-v5-final-css">
+#homeNotifications.has-new{background:#ef334f!important;color:#fff!important;box-shadow:0 0 0 4px rgba(239,51,79,.14),0 8px 22px rgba(239,51,79,.25)!important}
+#homeNotifications.has-new svg{stroke:#fff!important;color:#fff!important}
+#notificationPanel{z-index:99999!important;width:min(430px,calc(100vw - 32px))!important;max-height:70vh!important;overflow:hidden!important}
+#notificationList{max-height:56vh!important;overflow-y:auto!important;padding:6px 8px 10px!important}
+.notification-item{display:flex!important;gap:10px!important;padding:12px 10px!important;border-radius:14px!important;align-items:flex-start!important}
+.notification-item:hover{background:#f4f6fa!important}
+.notification-empty{padding:24px 12px!important;text-align:center!important;color:#8791a5!important}
+.notification-main{min-width:0;flex:1;font-size:13px!important}
+.notification-main small{display:block!important;margin-top:4px!important;color:#98a1b3!important}
+</style>
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -900,6 +912,58 @@ async function openChatById(id){
   await loadMessages();
   subscribeTyping();
 }
+
+/* HT Chat 4.0 — activity */
+function relativeActivityTime(iso,online=false){
+  if(online)return '<span class="activity-online">Đang hoạt động</span>';
+  if(!iso)return 'Chưa xác định';
+  const t=Date.parse(iso);
+  if(!Number.isFinite(t))return 'Chưa xác định';
+  const diff=Math.max(0,Date.now()-t);
+  const minutes=Math.floor(diff/60000);
+  if(minutes<1)return 'Vừa hoạt động';
+  if(minutes<60)return `${minutes} phút trước`;
+  const hours=Math.floor(minutes/60);
+  if(hours<24)return `${hours} giờ trước`;
+  return `${Math.floor(hours/24)} ngày trước`;
+}
+let activityMap=new Map();
+async function refreshActivityMap(ids){
+  if(!ids?.length)return;
+  const {data,error}=await supabase.rpc('get_activity_for_users',{p_ids:ids});
+  if(!error&&data)activityMap=new Map(data.map(x=>[String(x.id),x.last_seen_at]));
+}
+let v40LastSeenTimer=null;
+async function updateMyLastSeen(){
+  if(!currentUser)return;
+  const {data,error}=await supabase.rpc('touch_my_presence');
+  if(error)console.warn('last_seen:',error.message);
+  if(currentProfile&&data)currentProfile.last_seen_at=data;
+}
+function startLastSeen(){
+  if(v40LastSeenTimer)clearInterval(v40LastSeenTimer);
+  updateMyLastSeen();
+  v40LastSeenTimer=setInterval(updateMyLastSeen,30000);
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')updateMyLastSeen()});
+window.addEventListener('focus',updateMyLastSeen);
+setInterval(async()=>{
+  if(!currentUser)return;
+  const page=$('messagesPage');
+  if(page&&!page.classList.contains('hidden')){
+    try{
+      await renderChatList();
+      if(selectedUser){
+        const r=await supabase.rpc('get_activity_for_users',{p_ids:[selectedUser.id]});
+        const seen=r.data?.[0]?.last_seen_at;
+        $('chatStatus').innerHTML=onlineUsers.has(selectedUser.id)
+          ? '<span class="activity-online">● Đang hoạt động</span>'
+          : `<span>${relativeActivityTime(seen,false)}</span>`;
+      }
+    }catch(e){}
+  }
+},30000);
+
 async function renderChatList(){
   const ids=await acceptedIds();
   const list=$('chatList');
@@ -926,7 +990,7 @@ async function renderChatList(){
   }else groupItems.innerHTML='';
   if(!ids.length){items.innerHTML='<div class="chat-list-empty"><strong>Chưa có cuộc trò chuyện</strong><div style="margin-top:5px">Hãy kết bạn để bắt đầu nhắn tin.</div></div>';renderChatNote([])}
   else{
-    const {data}=await supabase.from('profiles').select('*').in('id',ids).order('username');const users=data||[];const metas=await Promise.all(users.map(async u=>[u.id,await chatMetaFor(u.id)]));
+    const {data}=await supabase.from('profiles').select('*').in('id',ids).order('username');const users=data||[];await refreshActivityMap(users.map(u=>u.id));const metas=await Promise.all(users.map(async u=>[u.id,await chatMetaFor(u.id)]));
 const metaMap=new Map(metas);
 users.sort((a,b)=>{
  const at=metaMap.get(a.id)?.latest?.created_at ? Date.parse(metaMap.get(a.id).latest.created_at) : 0;
@@ -935,7 +999,7 @@ users.sort((a,b)=>{
 });
 metas.forEach(([id,m])=>chatUnread[id]=m.unread||0);
 renderChatNote(users);
-    items.innerHTML=users.map(u=>{const m=metaMap.get(u.id)||{};const latest=m.latest;const mine=latest?.sender_id===currentUser.id;const preview=latest?messagePreview(latest.content):'Chưa có tin nhắn';const unread=m.unread||0;return `<div class="chat-person"><button class="person-row ${selectedUser?.id===u.id?'active':''}" data-chat="${u.id}">${avatarHtml(u.username,u.avatar_url||avatarUrlFor(u.id),'small',onlineUsers.has(u.id))}<span class="chat-preview"><span class="chat-preview-top">${nameHtml(u.username,u.is_verified)}<span class="chat-time">${chatTime(latest?.created_at)}</span><span class="activity-time">${relativeActivityTime(u.last_seen_at,onlineUsers.has(u.id))}</span></span><span class="chat-preview-text"><span>${mine?'Bạn: ':''}${escapeHtml(preview)}</span>${unread?`<span class="chat-unread">${unread>99?'99+':unread}</span>`:''}</span></span></button></div>`}).join('');
+    items.innerHTML=users.map(u=>{const m=metaMap.get(u.id)||{};const latest=m.latest;const mine=latest?.sender_id===currentUser.id;const preview=latest?messagePreview(latest.content):'Chưa có tin nhắn';const unread=m.unread||0;return `<div class="chat-person"><button class="person-row ${selectedUser?.id===u.id?'active':''}" data-chat="${u.id}">${avatarHtml(u.username,u.avatar_url||avatarUrlFor(u.id),'small',onlineUsers.has(u.id))}<span class="chat-preview"><span class="chat-preview-top">${nameHtml(u.username,u.is_verified)}<span class="chat-time">${chatTime(latest?.created_at)}</span><span class="activity-time">${relativeActivityTime(activityMap.get(String(u.id)),onlineUsers.has(u.id))}</span></span><span class="chat-preview-text"><span>${mine?'Bạn: ':''}${escapeHtml(preview)}</span>${unread?`<span class="chat-unread">${unread>99?'99+':unread}</span>`:''}</span></span></button></div>`}).join('');
     items.querySelectorAll('[data-chat]').forEach(b=>b.onclick=()=>openChatById(b.dataset.chat));
   }
   updateMessageBadge();filterChatList($('chatListSearch')?.value||'');
@@ -1350,112 +1414,63 @@ function notificationTime(v){if(!v)return '';return new Date(v).toLocaleString('
 async function loadPostNotifications(){
   const list=$('notificationList');
   if(!list||!currentUser)return;
-
   list.innerHTML='<div class="notification-empty">Đang tải thông báo...</div>';
-
-  try{
-    const {data:posts,error:pe}=await supabase
-      .from('posts')
-      .select('id,content,created_at')
-      .eq('author_id',currentUser.id)
-      .order('created_at',{ascending:false})
-      .limit(50);
-
-    if(pe) throw new Error('Không đọc được bài viết: '+pe.message);
-    if(!posts?.length){
-      list.innerHTML='<div class="notification-empty">Bạn chưa có bài viết nào.</div>';
-      return;
-    }
-
-    const ids=posts.map(p=>p.id);
-
-    const [lr,cr]=await Promise.all([
-      supabase.from('post_likes')
-        .select('id,post_id,user_id,created_at')
-        .in('post_id',ids)
-        .neq('user_id',currentUser.id)
-        .order('created_at',{ascending:false})
-        .limit(100),
-      supabase.from('post_comments')
-        .select('id,post_id,user_id,content,created_at')
-        .in('post_id',ids)
-        .neq('user_id',currentUser.id)
-        .order('created_at',{ascending:false})
-        .limit(100)
-    ]);
-
-    if(lr.error) throw new Error('Không đọc được lượt thích: '+lr.error.message);
-    if(cr.error) throw new Error('Không đọc được bình luận: '+cr.error.message);
-
-    const raw=[...(lr.data||[]).map(x=>({...x,type:'like'})),
-               ...(cr.data||[]).map(x=>({...x,type:'comment'}))];
-
-    if(!raw.length){
-      list.innerHTML='<div class="notification-empty">Chưa có ai thích hoặc bình luận bài viết của bạn.</div>';
-      return;
-    }
-
-    // Lấy profile riêng, tránh lỗi do quan hệ FK/embedded select.
-    const userIds=[...new Set(raw.map(x=>x.user_id).filter(Boolean))];
-    let profiles=[];
-    if(userIds.length){
-      const pr=await supabase.from('profiles')
-        .select('id,username,avatar_url,is_verified')
-        .in('id',userIds);
-      if(pr.error) throw new Error('Không đọc được người dùng: '+pr.error.message);
-      profiles=pr.data||[];
-    }
-    const pmap=new Map(profiles.map(p=>[String(p.id),p]));
-    const postMap=new Map(posts.map(p=>[String(p.id),p]));
-
-    raw.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
-    const items=raw.slice(0,80);
-
-    list.innerHTML=items.map(x=>{
-      const u=pmap.get(String(x.user_id))||{};
-      const p=postMap.get(String(x.post_id))||{};
-      const who=nameHtml(u.username||'Người dùng',u.is_verified);
-      const text=x.type==='like'
-        ? `${who} đã thích bài viết của bạn`
-        : `${who} đã bình luận bài viết của bạn`;
-      const avatar=avatarHtml(
-        u.username||'?',
-        u.avatar_url||avatarUrlFor(x.user_id),
-        'small'
-      );
-      const preview=x.type==='comment'
-        ? `<span class="notification-comment">${escapeHtml(x.content||'')}</span>`
-        : `<span class="notification-post">${escapeHtml(p.content||'Bài viết của bạn')}</span>`;
-      return `<div class="notification-item" data-notification-post="${escapeHtml(String(x.post_id))}">
-        ${avatar}
-        <div class="notification-main">
-          <div>${text}</div>
-          ${preview}
-          <small>${notificationTime(x.created_at)}</small>
-        </div>
-      </div>`;
-    }).join('');
-
-    list.querySelectorAll('[data-notification-post]').forEach(el=>{
-      el.onclick=()=>{
-        const id=el.dataset.notificationPost;
-        $('notificationPanel').classList.add('hidden');
-        const card=document.querySelector(`#feedList [data-post="${CSS.escape(id)}"]`);
-        if(card){
-          card.scrollIntoView({behavior:'smooth',block:'center'});
-          if(typeof postTouch==='function')postTouch(card);
-        }
-      };
-    });
-  }catch(err){
-    console.error(err);
-    list.innerHTML=`<div class="notification-empty">
-      Không tải được thông báo.<br>
-      <small>${escapeHtml(err.message||'Lỗi không xác định')}</small>
-    </div>`;
+  const {data,error}=await supabase.rpc('get_my_post_notifications',{p_limit:80});
+  if(error){
+    console.error(error);
+    list.innerHTML=`<div class="notification-empty">Không tải được thông báo.<br><small>${escapeHtml(error.message||'Lỗi Supabase')}</small></div>`;
+    return;
   }
+  const rows=data||[];
+  if(!rows.length){
+    list.innerHTML='<div class="notification-empty">Chưa có thông báo.</div>';
+    return;
+  }
+  list.innerHTML=rows.map(x=>{
+    const who=nameHtml(x.username||'Người dùng',!!x.is_verified);
+    const avatar=avatarHtml(x.username||'?',x.avatar_url||avatarUrlFor(x.user_id),'small');
+    const main=x.notification_type==='like'
+      ? `${who} đã thích bài viết của bạn`
+      : `${who} đã bình luận bài viết của bạn`;
+    const preview=x.notification_type==='comment'
+      ? `<span class="notification-comment">${escapeHtml(x.comment_content||'')}</span>`
+      : `<span class="notification-post">${escapeHtml(x.post_content||'Bài viết của bạn')}</span>`;
+    return `<div class="notification-item" data-notification-post="${escapeHtml(String(x.post_id))}">
+      ${avatar}<div class="notification-main"><div>${main}</div>${preview}<small>${notificationTime(x.created_at)}</small></div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('[data-notification-post]').forEach(el=>{
+    el.onclick=()=>{
+      const card=document.querySelector(`#feedList [data-post="${CSS.escape(el.dataset.notificationPost)}"]`);
+      $('notificationPanel').classList.add('hidden');
+      if(card)card.scrollIntoView({behavior:'smooth',block:'center'});
+    };
+  });
 }
-function subscribePostNotifications(){if(postNotificationChannel)supabase.removeChannel(postNotificationChannel);postNotificationChannel=supabase.channel('post-notifications-'+currentUser.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'post_likes'},async p=>{const {data}=await supabase.from('posts').select('id').eq('id',p.new.post_id).eq('author_id',currentUser.id).maybeSingle();if(data&&p.new.user_id!==currentUser.id){setPostNotificationBadge(true);toast('Có người vừa thích bài viết của bạn')}}).on('postgres_changes',{event:'INSERT',schema:'public',table:'post_comments'},async p=>{const {data}=await supabase.from('posts').select('id').eq('id',p.new.post_id).eq('author_id',currentUser.id).maybeSingle();if(data&&p.new.user_id!==currentUser.id){setPostNotificationBadge(true);toast('Có bình luận mới trên bài viết của bạn')}}).subscribe();}
+
+function subscribePostNotifications(){
+  if(postNotificationChannel)supabase.removeChannel(postNotificationChannel);
+  postNotificationChannel=supabase.channel('post-notifications-'+currentUser.id)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'post_likes'},async p=>{
+      const {data}=await supabase.from('posts').select('id').eq('id',p.new.post_id).eq('author_id',currentUser.id).maybeSingle();
+      if(data&&p.new.user_id!==currentUser.id){setPostNotificationBadge(true);toast('Có người vừa thích bài viết của bạn');}
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'post_comments'},async p=>{
+      const {data}=await supabase.from('posts').select('id').eq('id',p.new.post_id).eq('author_id',currentUser.id).maybeSingle();
+      if(data&&p.new.user_id!==currentUser.id){setPostNotificationBadge(true);toast('Có bình luận mới trên bài viết của bạn');}
+    }).subscribe();
+}
+$('homeNotifications').onclick=async()=>{
+  const panel=$('notificationPanel');
+  if(!panel)return;
+  panel.classList.toggle('hidden');
+  if(!panel.classList.contains('hidden'))await loadPostNotifications();
+};
+$('clearNotificationBadge').onclick=()=>{setPostNotificationBadge(false);$('notificationPanel').classList.add('hidden');};
+async function checkPostNotificationUnread(){if(!currentUser)return;const {data,error}=await supabase.rpc('get_my_post_notifications',{p_limit:1});if(!error)setPostNotificationBadge(!!(data&&data.length));}setTimeout(checkPostNotificationUnread,1200);setInterval(checkPostNotificationUnread,5000);
+
+setTimeout(checkPostNotificationUnread,1200);
+setInterval(checkPostNotificationUnread,5000);
 $('homeNotifications').onclick=openPostNotifications;
 $('clearNotificationBadge').onclick=()=>{localStorage.setItem('htchat_notification_seen_'+currentUser.id,new Date().toISOString());setPostNotificationBadge(false);$('notificationPanel').classList.add('hidden');};
 document.addEventListener('click',e=>{const panel=$('notificationPanel'),btn=$('homeNotifications');if(panel&&!panel.classList.contains('hidden')&&!panel.contains(e.target)&&!btn.contains(e.target))panel.classList.add('hidden')});
@@ -1749,138 +1764,4 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 
-<script id="v40-v3-lastseen">
-/*
-  HT Chat 4.0:
-  - last_seen_at chỉ do chính tài khoản đó cập nhật.
-  - Không dùng created_at của tài khoản làm thời gian hoạt động.
-  - Nếu chưa có last_seen_at thì hiển thị "Chưa xác định", không đoán.
-*/
-function relativeActivityTime(iso, online=false){
-  if(online) return '<span class="activity-online">Đang hoạt động</span>';
-  if(!iso) return 'Chưa xác định';
-  const t=Date.parse(iso);
-  if(!Number.isFinite(t)) return 'Chưa xác định';
-  const diff=Math.max(0,Date.now()-t);
-  const minutes=Math.floor(diff/60000);
-  if(minutes<1) return 'Vừa hoạt động';
-  if(minutes<60) return `${minutes} phút trước`;
-  const hours=Math.floor(minutes/60);
-  if(hours<24) return `${hours} giờ trước`;
-  const days=Math.floor(hours/24);
-  return `${days} ngày trước`;
-}
-
-let v40LastSeenTimer=null;
-
-async function updateMyLastSeen(){
-  if(!currentUser) return;
-  const now=new Date().toISOString();
-  const {data,error}=await supabase
-    .from('profiles')
-    .update({last_seen_at:now})
-    .eq('id',currentUser.id)
-    .select('id,last_seen_at')
-    .maybeSingle();
-
-  if(!error && currentProfile){
-    currentProfile.last_seen_at=data?.last_seen_at||now;
-  }
-}
-
-function startLastSeen(){
-  if(v40LastSeenTimer) clearInterval(v40LastSeenTimer);
-  updateMyLastSeen();
-  v40LastSeenTimer=setInterval(updateMyLastSeen,30000);
-}
-
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible') updateMyLastSeen();
-});
-window.addEventListener('focus',updateMyLastSeen);
-
-setInterval(async()=>{
-  if(!currentUser)return;
-  const page=$('messagesPage');
-  if(page && !page.classList.contains('hidden')){
-    try{
-      if(typeof renderChatList==='function') await renderChatList();
-      if(selectedUser){
-        const r=await supabase.from('profiles').select('last_seen_at').eq('id',selectedUser.id).maybeSingle();
-        if(r.data?.last_seen_at){
-          selectedUser.last_seen_at=r.data.last_seen_at;
-          $('chatStatus').innerHTML=onlineUsers.has(selectedUser.id)
-            ? '<span class="activity-online">● Đang hoạt động</span>'
-            : `<span>${relativeActivityTime(selectedUser.last_seen_at,false)}</span>`;
-        }
-      }
-    }catch(e){}
-  }
-},30000);
-</script>
-
-<script id="v40-v3-notifications">
-function setPostNotificationBadge(on){
-  postNotificationUnread=!!on;
-  const b=document.getElementById('homeNotifications');
-  if(b){
-    b.classList.toggle('has-new',!!on);
-    b.setAttribute('data-has-notification',on?'1':'0');
-  }
-  const d=document.getElementById('notificationDot');
-  if(d) d.style.display=on?'block':'none';
-}
-
-async function checkPostNotificationUnread(){
-  if(!currentUser) return;
-
-  const {data:posts,error:pe}=await supabase
-    .from('posts')
-    .select('id')
-    .eq('author_id',currentUser.id);
-
-  if(pe){
-    console.warn('Không kiểm tra được thông báo:',pe.message);
-    return;
-  }
-
-  const ids=(posts||[]).map(x=>x.id);
-  if(!ids.length){
-    setPostNotificationBadge(false);
-    return;
-  }
-
-  const [likes,comments]=await Promise.all([
-    supabase
-      .from('post_likes')
-      .select('id')
-      .in('post_id',ids)
-      .neq('user_id',currentUser.id)
-      .limit(1),
-    supabase
-      .from('post_comments')
-      .select('id')
-      .in('post_id',ids)
-      .neq('user_id',currentUser.id)
-      .limit(1)
-  ]);
-
-  /* Chỉ cần tồn tại thông báo là nút đỏ. */
-  setPostNotificationBadge(
-    Boolean((likes.data&&likes.data.length)||(comments.data&&comments.data.length))
-  );
-}
-
-document.addEventListener('DOMContentLoaded',()=>{
-  setTimeout(checkPostNotificationUnread,1500);
-  setInterval(checkPostNotificationUnread,5000);
-});
-
-/* Realtime: có like/comment mới -> đỏ ngay */
-try{
-  if(typeof subscribePostNotifications==='function'){
-    /* Hàm cũ đã có setPostNotificationBadge(true), giữ nguyên. */
-  }
-}catch(e){}
-</script>
 </body></html>
