@@ -2079,4 +2079,144 @@ document.addEventListener('DOMContentLoaded',()=>{
 #notificationList{display:block!important;visibility:visible!important;min-height:58px!important;color:#273248!important}
 #notificationList .notification-empty{display:block!important;visibility:visible!important}
 </style>
+
+<script id="htchat-notification-authority-v9">
+/*
+ HT Chat 4.0 — notification authority
+ This is the ONLY source of truth for the red bell:
+ - old notifications do not keep the bell red
+ - opening the bell marks the newest existing notification as seen
+ - only a notification created AFTER that moment turns it red again
+*/
+(function(){
+  const SUPABASE_URL='https://bclybeujuhhiwevgppgt.supabase.co';
+  const SUPABASE_KEY='sb_publishable_yFagLzYinzPyztZkhJb-BQ_6xx_LRcF';
+  let client=null, currentId=null, busy=false;
+
+  const seenKey=()=>currentId?'htchat_notifications_seen_v9_'+currentId:null;
+  const btn=()=>document.getElementById('homeNotifications');
+
+  function paint(red){
+    const b=btn();
+    if(!b)return;
+    b.classList.toggle('has-new',!!red);
+    b.setAttribute('data-notification-new',red?'1':'0');
+    const d=document.getElementById('notificationDot');
+    if(d)d.style.display=red?'block':'none';
+  }
+
+  async function getClient(){
+    if(client)return client;
+    const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    client=mod.createClient(SUPABASE_URL,SUPABASE_KEY);
+    return client;
+  }
+
+  async function latestNotificationTime(){
+    const c=await getClient();
+    const {data:{session}}=await c.auth.getSession();
+    if(!session?.user)return null;
+    currentId=session.user.id;
+
+    const {data:posts,error:pe}=await c.from('posts')
+      .select('id').eq('author_id',currentId);
+    if(pe)throw pe;
+
+    const ids=(posts||[]).map(p=>p.id);
+    if(!ids.length)return null;
+
+    const [lr,cr]=await Promise.all([
+      c.from('post_likes').select('created_at')
+        .in('post_id',ids).neq('user_id',currentId)
+        .order('created_at',{ascending:false}).limit(1),
+      c.from('post_comments').select('created_at')
+        .in('post_id',ids).neq('user_id',currentId)
+        .order('created_at',{ascending:false}).limit(1)
+    ]);
+    if(lr.error)throw lr.error;
+    if(cr.error)throw cr.error;
+
+    const a=lr.data?.[0]?.created_at;
+    const b=cr.data?.[0]?.created_at;
+    const ta=a?Date.parse(a):0;
+    const tb=b?Date.parse(b):0;
+    return Math.max(ta,tb)||null;
+  }
+
+  async function sync(){
+    if(busy)return;
+    busy=true;
+    try{
+      const latest=await latestNotificationTime();
+      if(!currentId){
+        paint(false);
+        return;
+      }
+
+      const key=seenKey();
+      const saved=Number(localStorage.getItem(key)||0);
+
+      if(!latest){
+        paint(false);
+      }else if(latest>saved){
+        paint(true);
+      }else{
+        paint(false);
+      }
+    }catch(e){
+      // Do NOT turn the bell red just because an old engine errored.
+      console.warn('Notification authority:',e.message);
+      paint(false);
+    }finally{
+      busy=false;
+    }
+  }
+
+  async function markSeen(){
+    try{
+      const latest=await latestNotificationTime();
+      const key=seenKey();
+      // Mark everything currently present as seen.
+      localStorage.setItem(key,String(Math.max(Date.now(),latest||0)));
+    }catch(e){
+      // Even if the network is temporarily unavailable, opening the bell
+      // should visually clear the red state.
+      if(currentId)localStorage.setItem(seenKey(),String(Date.now()));
+    }
+    paint(false);
+  }
+
+  function install(){
+    const b=btn();
+    if(!b){
+      setTimeout(install,500);
+      return;
+    }
+
+    // Capture phase makes this run before older onclick handlers.
+    b.addEventListener('click',()=>{ markSeen(); },true);
+
+    // Other old v4 scripts can still toggle .has-new. Immediately correct it
+    // according to our own seen timestamp.
+    const observer=new MutationObserver(()=>{
+      const key=seenKey();
+      if(!key)return;
+      const saved=Number(localStorage.getItem(key)||0);
+      latestNotificationTime().then(latest=>{
+        const should=!!latest && latest>saved;
+        const b2=btn();
+        if(b2 && b2.classList.contains('has-new')!==should){
+          b2.classList.toggle('has-new',should);
+        }
+      }).catch(()=>paint(false));
+    });
+    observer.observe(b,{attributes:true,attributeFilter:['class']});
+
+    sync();
+    setInterval(sync,5000);
+  }
+
+  window.addEventListener('DOMContentLoaded',install);
+})();
+</script>
 </body></html>
