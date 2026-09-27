@@ -703,6 +703,41 @@ body.home-active #sideFriends{display:none}
 #notificationList{min-height:52px!important;}
 .notification-empty{display:block!important;min-height:52px!important;}
 </style>
+
+<style id="htchat-notification-authority-css-v10">
+/* The old v4 notification engines may still add .has-new.
+   Only .authority-new is allowed to make the bell visibly red. */
+#homeNotifications.has-new:not(.authority-new){
+  background:#eef1f7!important;
+  color:#667085!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+#homeNotifications.has-new:not(.authority-new) svg{
+  stroke:#667085!important;
+  color:#667085!important;
+}
+#homeNotifications.has-new:not(.authority-new)::after{
+  display:none!important;
+}
+#homeNotifications.authority-new{
+  background:#ef334f!important;
+  color:#fff!important;
+  border-color:#ef334f!important;
+  box-shadow:0 0 0 4px rgba(239,51,79,.12),0 8px 22px rgba(239,51,79,.30)!important;
+}
+#homeNotifications.authority-new svg{stroke:#fff!important;color:#fff!important}
+#homeNotifications.authority-new::after{
+  content:""!important;
+  display:block!important;
+  position:absolute!important;
+  right:3px!important;top:3px!important;
+  width:9px!important;height:9px!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  border:2px solid #ef334f!important;
+}
+</style>
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -2217,6 +2252,115 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
 
   window.addEventListener('DOMContentLoaded',install);
+})();
+</script>
+
+<script id="htchat-notification-authority-v10">
+/* FINAL authority for the red notification bell.
+   Old .has-new classes are ignored visually.
+   Only .authority-new is controlled here. */
+(function(){
+  const URL='https://bclybeujuhhiwevgppgt.supabase.co';
+  const KEY='sb_publishable_yFagLzYinzPyztZkhJb-BQ_6xx_LRcF';
+  let client=null, uid=null, running=false;
+
+  function button(){return document.getElementById('homeNotifications')}
+  function seenKey(){return uid ? 'htchat_notification_authority_seen_'+uid : null}
+
+  function setRed(on){
+    const b=button();
+    if(!b)return;
+    b.classList.toggle('authority-new',!!on);
+    b.setAttribute('data-authority-new',on?'1':'0');
+  }
+
+  async function getClient(){
+    if(client)return client;
+    const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    client=mod.createClient(URL,KEY);
+    return client;
+  }
+
+  async function newest(){
+    const c=await getClient();
+    const {data:{session}}=await c.auth.getSession();
+    if(!session?.user){uid=null;return 0}
+    uid=session.user.id;
+
+    const {data:posts,error:pe}=await c.from('posts')
+      .select('id').eq('author_id',uid);
+    if(pe)throw pe;
+
+    const ids=(posts||[]).map(x=>x.id);
+    if(!ids.length)return 0;
+
+    const [a,b]=await Promise.all([
+      c.from('post_likes').select('created_at')
+        .in('post_id',ids).neq('user_id',uid)
+        .order('created_at',{ascending:false}).limit(1),
+      c.from('post_comments').select('created_at')
+        .in('post_id',ids).neq('user_id',uid)
+        .order('created_at',{ascending:false}).limit(1)
+    ]);
+    if(a.error)throw a.error;
+    if(b.error)throw b.error;
+
+    const ta=a.data?.[0]?.created_at ? Date.parse(a.data[0].created_at) : 0;
+    const tb=b.data?.[0]?.created_at ? Date.parse(b.data[0].created_at) : 0;
+    return Math.max(ta,tb);
+  }
+
+  async function sync(){
+    if(running)return;
+    running=true;
+    try{
+      const t=await newest();
+      if(!uid || !t){setRed(false);return}
+      const saved=Number(localStorage.getItem(seenKey())||0);
+      setRed(t>saved);
+    }catch(e){
+      // Never show red merely because a query failed.
+      setRed(false);
+    }finally{
+      running=false;
+    }
+  }
+
+  async function markSeen(){
+    try{
+      const t=await newest();
+      if(uid){
+        localStorage.setItem(seenKey(),String(Math.max(Date.now(),t||0)));
+      }
+    }catch(e){
+      if(uid)localStorage.setItem(seenKey(),String(Date.now()));
+    }
+    setRed(false);
+  }
+
+  function install(){
+    const b=button();
+    if(!b){setTimeout(install,400);return}
+
+    // Capture phase: runs before every older onclick handler.
+    b.addEventListener('click',function(){
+      markSeen();
+    },true);
+
+    // Old code may add/remove .has-new. It is harmless because CSS above
+    // only allows .authority-new to turn the button red.
+    sync();
+    setInterval(sync,5000);
+
+    // If the user logs in later, sync again.
+    setTimeout(sync,1500);
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',install);
+  }else{
+    install();
+  }
 })();
 </script>
 </body></html>
