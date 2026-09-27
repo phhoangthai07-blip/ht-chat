@@ -1599,8 +1599,64 @@ $('homeNotifications').onclick=async()=>{
   panel.classList.toggle('hidden');
   if(!panel.classList.contains('hidden'))await loadPostNotifications();
 };
-$('clearNotificationBadge').onclick=()=>{setPostNotificationBadge(false);$('notificationPanel').classList.add('hidden');};
-async function checkPostNotificationUnread(){if(!currentUser)return;const {data,error}=await supabase.rpc('get_my_post_notifications',{p_limit:1});if(!error)setPostNotificationBadge(!!(data&&data.length));}setTimeout(checkPostNotificationUnread,1200);setInterval(checkPostNotificationUnread,5000);
+$('clearNotificationBadge').onclick=()=>{
+  if(currentUser)localStorage.setItem('htchat_notifications_seen_'+currentUser.id,new Date().toISOString());
+  setPostNotificationBadge(false);
+  $('notificationPanel').classList.add('hidden');
+};
+async function checkPostNotificationUnread(){
+  if(!currentUser)return;
+  const seenKey='htchat_notifications_seen_'+currentUser.id;
+  const seenAt=localStorage.getItem(seenKey);
+
+  try{
+    let rows=null;
+    try{
+      const r=await supabase.rpc('get_my_post_notifications',{p_limit:80});
+      if(!r.error) rows=r.data||[];
+    }catch(e){}
+
+    if(!rows){
+      const {data:posts,error:pe}=await supabase.from('posts')
+        .select('id').eq('author_id',currentUser.id);
+      if(pe)throw pe;
+      const ids=(posts||[]).map(x=>x.id);
+      if(!ids.length){setPostNotificationBadge(false);return;}
+
+      const [lr,cr]=await Promise.all([
+        supabase.from('post_likes').select('post_id,user_id,created_at')
+          .in('post_id',ids).neq('user_id',currentUser.id)
+          .order('created_at',{ascending:false}).limit(80),
+        supabase.from('post_comments').select('id,post_id,user_id,created_at')
+          .in('post_id',ids).neq('user_id',currentUser.id)
+          .order('created_at',{ascending:false}).limit(80)
+      ]);
+      if(lr.error)throw lr.error;
+      if(cr.error)throw cr.error;
+      rows=[
+        ...(lr.data||[]).map(x=>({created_at:x.created_at})),
+        ...(cr.data||[]).map(x=>({created_at:x.created_at}))
+      ];
+    }
+
+    if(!rows.length){setPostNotificationBadge(false);return;}
+
+    if(!seenAt){
+      setPostNotificationBadge(true);
+      return;
+    }
+
+    const seenMs=Date.parse(seenAt);
+    const hasNew=rows.some(x=>{
+      const t=Date.parse(x.created_at);
+      return Number.isFinite(t) && t>seenMs;
+    });
+    setPostNotificationBadge(hasNew);
+  }catch(e){
+    console.warn('Kiểm tra thông báo:',e.message);
+    setPostNotificationBadge(false);
+  }
+}setTimeout(checkPostNotificationUnread,1200);setInterval(checkPostNotificationUnread,5000);
 
 setTimeout(checkPostNotificationUnread,1200);
 setInterval(checkPostNotificationUnread,5000);
@@ -1887,8 +1943,16 @@ async function openPostNotifications(){
   const panel=document.getElementById('notificationPanel');
   if(!panel)return;
   panel.classList.toggle('hidden');
+
   if(!panel.classList.contains('hidden')){
     await loadPostNotifications();
+    if(currentUser){
+      localStorage.setItem(
+        'htchat_notifications_seen_'+currentUser.id,
+        new Date().toISOString()
+      );
+    }
+    setPostNotificationBadge(false);
   }
 }
 document.addEventListener('DOMContentLoaded',()=>{
