@@ -1897,4 +1897,122 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 
+
+<script>
+/* HT Chat 4.0 v7 — notification engine independent from the main module. */
+(function(){
+  const URL='https://bclybeujuhhiwevgppgt.supabase.co';
+  const KEY='sb_publishable_yFagLzYinzPyztZkhJb-BQ_6xx_LRcF';
+  let client=null;
+  let busy=false;
+
+  function esc(v){const d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+  function box(){return document.getElementById('notificationList');}
+  function panel(){return document.getElementById('notificationPanel');}
+  function btn(){return document.getElementById('homeNotifications');}
+  function setLoading(){const x=box();if(x)x.innerHTML='<div class="notification-empty" style="display:block!important;padding:24px!important;color:#68738a!important">Đang tải thông báo…</div>';}
+  function setText(t){const x=box();if(x)x.innerHTML='<div class="notification-empty" style="display:block!important;padding:24px!important;color:#68738a!important;line-height:1.6">'+esc(t)+'</div>';}
+  function time(v){if(!v)return '';try{return new Date(v).toLocaleString('vi-VN',{dateStyle:'short',timeStyle:'short'});}catch(e){return '';}}
+  function name(u){
+    const n=esc(u.username||'Người dùng');
+    return u.is_verified ? '<b>'+n+'</b> <span style="display:inline-flex;width:16px;height:16px;border-radius:50%;background:#4f8df7;color:#fff;align-items:center;justify-content:center;font-size:10px;font-weight:900;vertical-align:-2px">✓</span>' : '<b>'+n+'</b>';
+  }
+  function avatar(u){
+    const src=u.avatar_url||'';
+    return src
+      ? '<img src="'+esc(src)+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex:0 0 40px">'
+      : '<div style="width:40px;height:40px;border-radius:50%;background:#e8eef8;display:flex;align-items:center;justify-content:center;font-weight:800;color:#66748e;flex:0 0 40px">'+esc((u.username||'?').trim().charAt(0).toUpperCase())+'</div>';
+  }
+  function render(rows){
+    const x=box(); if(!x)return;
+    if(!rows.length){setText('Chưa có thông báo mới.');return;}
+    x.innerHTML=rows.map(r=>{
+      const u={username:r.username,avatar_url:r.avatar_url,is_verified:r.is_verified};
+      const text=r.notification_type==='comment'
+        ? name(u)+' đã bình luận bài viết của bạn'
+        : name(u)+' đã thích bài viết của bạn';
+      const extra=r.notification_type==='comment'
+        ? '<div style="margin-top:5px;color:#69758b;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">“'+esc(r.comment_content||'')+'”</div>'
+        : '<div style="margin-top:5px;color:#8b95a8;font-size:12px">Bài viết của bạn</div>';
+      return '<div class="notification-item" style="display:flex!important;gap:10px!important;padding:12px!important;border-radius:14px!important;align-items:flex-start!important">'+avatar(u)+'<div style="min-width:0;flex:1;font-size:13px;line-height:1.35">'+text+extra+'<small style="display:block;margin-top:5px;color:#9aa4b6">'+esc(time(r.created_at))+'</small></div></div>';
+    }).join('');
+  }
+  async function load(){
+    if(busy)return;
+    busy=true; setLoading();
+    try{
+      if(!client){
+        const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+        client=mod.createClient(URL,KEY);
+      }
+      const sess=await client.auth.getSession();
+      const user=sess?.data?.session?.user;
+      if(!user){setText('Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.');return;}
+
+      let rows=[];
+      let rpc=await client.rpc('get_my_post_notifications',{p_limit:80});
+      if(!rpc.error && Array.isArray(rpc.data)) rows=rpc.data;
+
+      // Direct fallback if RPC returns no rows or is unavailable.
+      if(!rows.length){
+        const postsQ=await client.from('posts').select('id,content,created_at').eq('author_id',user.id).order('created_at',{ascending:false}).limit(100);
+        if(postsQ.error) throw postsQ.error;
+        const ids=(postsQ.data||[]).map(p=>p.id);
+        if(ids.length){
+          const [l,c]=await Promise.all([
+            client.from('post_likes').select('post_id,user_id,created_at').in('post_id',ids).neq('user_id',user.id).order('created_at',{ascending:false}).limit(100),
+            client.from('post_comments').select('id,post_id,user_id,content,created_at').in('post_id',ids).neq('user_id',user.id).order('created_at',{ascending:false}).limit(100)
+          ]);
+          if(l.error) throw l.error; if(c.error) throw c.error;
+          const raw=[...(l.data||[]).map(a=>({notification_type:'like',notification_id:String(a.post_id),post_id:String(a.post_id),user_id:a.user_id,created_at:a.created_at})),...(c.data||[]).map(a=>({notification_type:'comment',notification_id:String(a.id),post_id:String(a.post_id),user_id:a.user_id,comment_content:a.content,created_at:a.created_at}))];
+          const ids2=[...new Set(raw.map(a=>a.user_id).filter(Boolean))];
+          let prof=[];
+          if(ids2.length){const q=await client.from('profiles').select('id,username,avatar_url,is_verified').in('id',ids2);if(q.error)throw q.error;prof=q.data||[];}
+          const pm=new Map(prof.map(a=>[String(a.id),a]));
+          rows=raw.map(a=>({...a,...(pm.get(String(a.user_id))||{username:'Người dùng',avatar_url:'',is_verified:false})}));
+        }
+      }
+      rows.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+      render(rows.slice(0,80));
+    }catch(e){
+      console.error('HT Chat notification v7',e);
+      setText('Không tải được thông báo: '+(e?.message||'Lỗi dữ liệu'));
+    }finally{busy=false;}
+  }
+  function open(){
+    const p=panel();if(!p)return;
+    p.classList.remove('hidden');
+    load();
+  }
+  function close(){const p=panel();if(p)p.classList.add('hidden');}
+
+  // Use capture phase so this handler works even if the old module attached another onclick.
+  document.addEventListener('click',function(e){
+    const b=btn();
+    if(b && (e.target===b || b.contains(e.target))){
+      e.preventDefault();e.stopImmediatePropagation();
+      const p=panel();
+      if(p && !p.classList.contains('hidden')) close(); else open();
+    }
+  },true);
+
+  // Keep the red state if there is an unread notification; this standalone checker
+  // does not modify the panel contents.
+  async function badge(){
+    try{
+      if(!client){const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');client=mod.createClient(URL,KEY);}
+      const sess=await client.auth.getSession(); const u=sess?.data?.session?.user; if(!u)return;
+      const r=await client.rpc('get_my_post_notifications',{p_limit:1});
+      if(!r.error && r.data?.length){const b=btn();if(b)b.classList.add('has-new');}
+    }catch(e){}
+  }
+  setTimeout(badge,1500); setInterval(badge,7000);
+})();
+</script>
+<style id="htchat-v7-notification-force">
+#notificationPanel{display:block!important;visibility:visible!important;opacity:1!important;z-index:999999!important}
+#notificationPanel.hidden{display:none!important}
+#notificationList{display:block!important;visibility:visible!important;min-height:58px!important;color:#273248!important}
+#notificationList .notification-empty{display:block!important;visibility:visible!important}
+</style>
 </body></html>
