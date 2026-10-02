@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f8ff">
-<title>HT Chat 4.0 • Notifications & Activity Fixed</title>
+<title>HT Chat 4.1 • Notifications & Activity Fixed</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#182033;background:#f7f8fc}body{overflow:hidden}button,input,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}img{max-width:100%}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:#d8dbea;border-radius:99px}
 :root{--p:#625ff2;--p2:#8a54f6;--soft:#f0efff;--bg:#f7f8fc;--card:#fff;--line:#e9ebf2;--muted:#8992a5;--green:#25c27a;--red:#ef5870;--shadow:0 18px 55px rgba(35,40,75,.10)}
@@ -371,7 +371,7 @@ html.dark .brand-logo,html.dark .logo,html.dark .app-info-logo{
 
 
 <style id="htchat-3-9-fix">
-/* HT Chat 4.0 — logo sạch + thông báo cùng hàng với làm mới */
+/* HT Chat 4.1 — logo sạch + thông báo cùng hàng với làm mới */
 .brand-logo,.logo,.app-info-logo{overflow:hidden!important;}
 .brand-logo img,.logo img,.app-info-logo img{object-fit:contain!important;object-position:center!important;}
 .brand-logo{padding:7px!important;}
@@ -573,7 +573,7 @@ body.home-active #sideFriends{display:none}
 
 
 <style id="v40-final-v2-ui">
-/* HT Chat 4.0 — nút đăng xuất luôn nhìn thấy */
+/* HT Chat 4.1 — nút đăng xuất luôn nhìn thấy */
 .logout-settings-button{
   display:flex!important;
   width:100%!important;
@@ -957,7 +957,7 @@ async function openChatById(id){
   subscribeTyping();
 }
 
-/* HT Chat 4.0 — activity */
+/* HT Chat 4.1 — activity */
 function relativeActivityTime(iso,online=false){
   if(online)return '<span class="activity-online">Đang hoạt động</span>';
   if(!iso)return 'Ngoại tuyến';
@@ -1242,7 +1242,7 @@ function bindReactionPicker(){
 }
 bindReactionPicker();
 
-async function loadMessages(){if(!selectedUser&&!selectedGroup)return;$('messages').innerHTML='';let q=supabase.from('messages').select('*,profiles:sender_id(username,avatar_url)').order('created_at',{ascending:true});if(selectedGroup)q=q.eq('group_id',selectedGroup.id);else q=q.or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},receiver_id.eq.${currentUser.id})`);const {data,error}=await q;if(error)return;const ids=(data||[]).map(m=>m.id);const reactionRows=await fetchReactions('message_reactions','message_id',ids);const last=data?.[data.length-1];const lastOwnId=last?.sender_id===currentUser.id?last.id:null;data?.forEach(m=>{m.__reaction=reactionSummary(reactionRows,'message_id',m.id);renderMessage(m,m.id===lastOwnId)});if(readReceiptsEnabled&&selectedUser)await markConversationRead();scrollMessages()}
+async function loadMessages(){if(!selectedUser&&!selectedGroup)return;$('messages').innerHTML='';let q=supabase.from('messages').select('*,profiles:sender_id(username,avatar_url)').order('created_at',{ascending:true});if(selectedGroup)q=q.eq('group_id',selectedGroup.id);else q=q.or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},receiver_id.eq.${currentUser.id})`);const {data,error}=await q;if(error)return;const ids=(data||[]).map(m=>m.id);const reactionRows=await fetchReactions('message_reactions','message_id',ids);const last=data?.[data.length-1];const lastOwnId=last?.sender_id===currentUser.id?last.id:null;data?.forEach(m=>{m.__reaction=reactionSummary(reactionRows,'message_id',m.id);renderMessage(m,m.id===lastOwnId)});formatMessageTimeline();if(readReceiptsEnabled&&selectedUser)await markConversationRead();scrollMessages()}
 function removeReadReceipts(){document.querySelectorAll('#messages .read-receipt').forEach(el=>el.remove())}
 function renderMessage(m,isLatestMine=false){
   if(!m?.id)return;
@@ -1254,6 +1254,7 @@ function renderMessage(m,isLatestMine=false){
   }
   const mine=m.sender_id===currentUser.id,row=document.createElement('div');
   row.dataset.messageId=String(m.id);
+  row.dataset.createdAt=String(m.created_at||'');
   row.className='message-row '+(mine?'mine':'theirs')+(isLatestMine?' message-send-in':'');
   if(isLatestMine&&readReceiptsEnabled)removeReadReceipts();
   if(!mine){
@@ -1998,7 +1999,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 <script>
-/* HT Chat 4.0 v7 — notification engine independent from the main module. */
+/* HT Chat 4.1 v7 — notification engine independent from the main module. */
 (function(){
   const URL='https://bclybeujuhhiwevgppgt.supabase.co';
   const KEY='sb_publishable_yFagLzYinzPyztZkhJb-BQ_6xx_LRcF';
@@ -2117,7 +2118,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 <script id="htchat-notification-authority-v9">
 /*
- HT Chat 4.0 — notification authority
+ HT Chat 4.1 — notification authority
  This is the ONLY source of truth for the red bell:
  - old notifications do not keep the bell red
  - opening the bell marks the newest existing notification as seen
@@ -2361,6 +2362,219 @@ document.addEventListener('DOMContentLoaded',()=>{
   }else{
     install();
   }
+})();
+</script>
+
+<style id="htchat-v41-style">
+.message-time.is-hidden{display:none!important}
+.chat-time-divider{display:flex;align-items:center;justify-content:center;margin:18px 0 14px;color:#8a93a5;font-size:11px;font-weight:800}
+.chat-time-divider span{background:rgba(235,238,247,.9);padding:6px 11px;border-radius:999px;box-shadow:0 2px 8px rgba(35,42,66,.05)}
+.chat-person{position:relative}
+.chat-more{width:30px;height:34px;flex:0 0 30px;border:0;background:transparent;color:#7b8497;border-radius:10px;display:grid;place-items:center;font-size:19px;line-height:1;cursor:pointer}
+.chat-more:hover{background:var(--soft);color:var(--text)}
+.chat-more-menu{position:fixed;z-index:5000;width:205px;background:rgba(255,255,255,.98);border:1px solid var(--line);border-radius:15px;box-shadow:0 18px 55px rgba(20,25,45,.18);padding:6px;display:none}
+.chat-more-menu.show{display:block}
+.chat-more-menu button{width:100%;border:0;background:transparent;text-align:left;padding:10px 11px;border-radius:10px;color:var(--text);font:600 13px inherit;cursor:pointer}
+.chat-more-menu button:hover{background:var(--soft)}
+.chat-more-menu button.danger{color:#d43e57}
+.chat-more-menu button .check{float:right;color:var(--p)}
+.chat-theme-menu{position:fixed;z-index:5000;width:260px;background:rgba(255,255,255,.98);border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 55px rgba(20,25,45,.18);padding:12px;display:none}
+.chat-theme-menu.show{display:block}
+.chat-theme-title{font-weight:900;margin:2px 4px 10px}
+.chat-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chat-theme-choice{border:1px solid var(--line);border-radius:13px;padding:9px 5px;background:#fff;cursor:pointer;text-align:center;font-size:11px;font-weight:800;color:#4d5668}
+.chat-theme-swatch{height:38px;border-radius:10px;margin-bottom:6px}
+.chat-theme-choice.active{outline:2px solid var(--p);outline-offset:1px}
+.chat-theme-ocean{background:linear-gradient(135deg,#dff4ff,#f7fbff)!important}
+.chat-theme-sunset{background:linear-gradient(135deg,#fff0e8,#fff8f2)!important}
+.chat-theme-mint{background:linear-gradient(135deg,#e6fff6,#f8fffc)!important}
+.chat-theme-lavender{background:linear-gradient(135deg,#eeeaff,#faf8ff)!important}
+.chat-theme-night{background:linear-gradient(135deg,#1d2434,#252d42)!important;color:#eef3ff!important}
+.chat-theme-rose{background:linear-gradient(135deg,#ffe9f0,#fff7fa)!important}
+#chatContent.theme-ocean .messages{background:linear-gradient(180deg,#eef9ff,#f9fcff)}
+#chatContent.theme-sunset .messages{background:linear-gradient(180deg,#fff5ee,#fffaf7)}
+#chatContent.theme-mint .messages{background:linear-gradient(180deg,#effff9,#fbfffd)}
+#chatContent.theme-lavender .messages{background:linear-gradient(180deg,#f5f2ff,#fcfbff)}
+#chatContent.theme-night .messages{background:linear-gradient(180deg,#1d2434,#161c2b)}
+#chatContent.theme-night .message-bubble.theirs,#chatContent.theme-night .message-bubble{background:#2a3347;color:#eef3ff}
+#chatContent.theme-rose .messages{background:linear-gradient(180deg,#fff3f7,#fffafb)}
+.v41-chat-tools{display:flex;gap:6px;align-items:center}
+.v41-chat-tool{width:36px;height:36px;border:0;border-radius:11px;background:#f0f2f7;color:#667084;display:grid;place-items:center;cursor:pointer;font-size:17px}
+.v41-quick-bar{display:flex;align-items:center;gap:5px;margin-bottom:7px;overflow:auto;padding:2px 2px 3px}
+.v41-quick-bar button{width:31px;height:31px;border:0;border-radius:10px;background:#f0f2f7;font-size:18px;cursor:pointer;flex:0 0 31px}
+.v41-quick-bar button:hover{transform:scale(1.08)}
+.v41-quick-edit{font-size:14px!important;color:#687083}
+@media(max-width:700px){.chat-more-menu,.chat-theme-menu{width:210px}.chat-more{width:27px;flex-basis:27px}.v41-chat-tool{width:33px;height:33px}}
+</style>
+
+<script id="htchat-v41-features">
+(function(){
+  const QUICK_KEY=()=>currentUser?'htchat_v41_quick_'+currentUser.id:null;
+  const HIDDEN_KEY=()=>currentUser?'htchat_v41_hidden_'+currentUser.id:null;
+  const MUTE_KEY=()=>currentUser?'htchat_v41_mute_'+currentUser.id:null;
+  const BLOCK_KEY=()=>currentUser?'htchat_v41_block_'+currentUser.id:null;
+  const THEME_KEY=id=>currentUser?'htchat_v41_theme_'+currentUser.id+'_'+id:null;
+  const defaultQuick=['❤️','😂','👍','😮','😢','🔥'];
+  const themes=[
+    ['default','Mặc định','linear-gradient(135deg,#f0f2f7,#ffffff)'],
+    ['ocean','Đại dương','linear-gradient(135deg,#dff4ff,#f7fbff)'],
+    ['sunset','Hoàng hôn','linear-gradient(135deg,#fff0e8,#fff8f2)'],
+    ['mint','Bạc hà','linear-gradient(135deg,#e6fff6,#f8fffc)'],
+    ['lavender','Tím mây','linear-gradient(135deg,#eeeaff,#faf8ff)'],
+    ['rose','Hồng','linear-gradient(135deg,#ffe9f0,#fff7fa)'],
+    ['night','Đêm','linear-gradient(135deg,#1d2434,#252d42)']
+  ];
+  const getObj=k=>{try{return JSON.parse(localStorage.getItem(k)||'{}')}catch(e){return {}}};
+  const setObj=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+
+  window.formatMessageTimeline=function(){
+    const box=document.getElementById('messages'); if(!box)return;
+    box.querySelectorAll('.chat-time-divider').forEach(x=>x.remove());
+    const rows=[...box.querySelectorAll('.message-row')];
+    rows.forEach((row,i)=>{
+      row.dataset.createdAt=row.dataset.createdAt||'';
+      const t=row.querySelector('.message-time');
+      if(t)t.classList.remove('is-hidden');
+      const prev=rows[i-1];
+      const cur=Date.parse(row.dataset.createdAt||'');
+      const pt=prev?Date.parse(prev.dataset.createdAt||''):NaN;
+      const gap=Number.isFinite(cur)&&Number.isFinite(pt)?cur-pt:0;
+      if(prev&&gap>=10*60*1000){
+        const d=new Date(cur);
+        const div=document.createElement('div');div.className='chat-time-divider';
+        const span=document.createElement('span');
+        span.textContent=d.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
+        div.appendChild(span);box.insertBefore(div,row);
+      }
+      // Within a continuous block, show time only on the last message before a gap.
+      const next=rows[i+1];
+      const nt=next?Date.parse(next.dataset.createdAt||''):NaN;
+      const nextGap=Number.isFinite(nt)&&Number.isFinite(cur)?nt-cur:Infinity;
+      if(t&&next&&nextGap<10*60*1000)t.classList.add('is-hidden');
+    });
+  };
+
+  function hiddenChats(){return getObj(HIDDEN_KEY())}
+  function mutedChats(){return getObj(MUTE_KEY())}
+  function blockedChats(){return getObj(BLOCK_KEY())}
+  window.isV41Blocked=id=>!!blockedChats()[String(id)];
+
+  function applyTheme(id){
+    const c=document.getElementById('chatContent'); if(!c||!id)return;
+    const t=localStorage.getItem(THEME_KEY(id))||'default';
+    ['ocean','sunset','mint','lavender','night','rose'].forEach(x=>c.classList.remove('theme-'+x));
+    if(t!=='default')c.classList.add('theme-'+t);
+  }
+
+  function positionMenu(menu,anchor){
+    const r=anchor.getBoundingClientRect();
+    const w=menu.offsetWidth||205,h=menu.offsetHeight||180;
+    menu.style.left=Math.min(window.innerWidth-w-8,Math.max(8,r.right-w))+'px';
+    menu.style.top=Math.min(window.innerHeight-h-8,r.bottom+5)+'px';
+  }
+
+  let activeMenu=null;
+  function closeMenus(){document.querySelectorAll('.chat-more-menu,.chat-theme-menu').forEach(x=>x.classList.remove('show'));activeMenu=null}
+  document.addEventListener('pointerdown',e=>{
+    if(!e.target.closest('.chat-more-menu,.chat-more,.chat-theme-menu,.v41-chat-tool'))closeMenus();
+  },{passive:true});
+
+  function chatMenu(id,anchor,row){
+    closeMenus();
+    const menu=document.createElement('div');menu.className='chat-more-menu show';
+    const muted=!!mutedChats()[String(id)],blocked=!!blockedChats()[String(id)];
+    menu.innerHTML=`
+      <button data-v41="open">💬 Mở đoạn chat</button>
+      <button data-v41="delete">🗑️ Xóa khỏi danh sách</button>
+      <button data-v41="mute">🔕 ${muted?'Bật lại thông báo':'Tắt thông báo'}${muted?'<span class="check">✓</span>':''}</button>
+      <button data-v41="block" class="danger">🚫 ${blocked?'Bỏ chặn':'Chặn'}</button>`;
+    document.body.appendChild(menu);positionMenu(menu,anchor);activeMenu=menu;
+    menu.onclick=e=>{
+      const b=e.target.closest('[data-v41]');if(!b)return;
+      const act=b.dataset.v41;
+      if(act==='open'){closeMenus();document.querySelector(`#chatListItems [data-chat="${CSS.escape(String(id))}"]`)?.click();return}
+      if(act==='delete'){
+        const h=hiddenChats();h[String(id)]=true;setObj(HIDDEN_KEY(),h);row.classList.add('hidden');toast('Đã xóa đoạn chat khỏi danh sách');closeMenus();return;
+      }
+      if(act==='mute'){
+        const m=mutedChats();if(m[String(id)])delete m[String(id)];else m[String(id)]=true;setObj(MUTE_KEY(),m);toast(m[String(id)]?'Đã tắt thông báo':'Đã bật lại thông báo');closeMenus();return;
+      }
+      if(act==='block'){
+        const bmap=blockedChats();if(bmap[String(id)])delete bmap[String(id)];else bmap[String(id)]=true;setObj(BLOCK_KEY(),bmap);toast(bmap[String(id)]?'Đã chặn tài khoản':'Đã bỏ chặn');closeMenus();return;
+      }
+    };
+  }
+
+  function ensureMoreButtons(){
+    const root=document.getElementById('chatListItems');if(!root)return;
+    const hidden=hiddenChats();
+    root.querySelectorAll('.chat-person').forEach(row=>{
+      const b=row.querySelector('[data-chat]');if(!b)return;
+      const id=b.dataset.chat;
+      if(hidden[String(id)])row.classList.add('hidden');
+      if(row.querySelector('.chat-more'))return;
+      const more=document.createElement('button');more.type='button';more.className='chat-more';more.title='Tùy chọn đoạn chat';more.textContent='⋮';
+      more.onclick=e=>{e.preventDefault();e.stopPropagation();chatMenu(id,more,row)};
+      row.appendChild(more);
+    });
+  }
+
+  function quickList(){
+    try{return JSON.parse(localStorage.getItem(QUICK_KEY())||'null')||defaultQuick}catch(e){return defaultQuick}
+  }
+  function renderQuickBar(){
+    const bar=document.getElementById('v41QuickBar');if(!bar)return;
+    const qs=quickList();bar.innerHTML=qs.map(x=>`<button type="button" data-quick="${x}">${x}</button>`).join('')+`<button type="button" class="v41-quick-edit" id="v41QuickEdit" title="Đổi cảm xúc nhanh">⚙</button>`;
+    bar.querySelectorAll('[data-quick]').forEach(b=>b.onclick=async()=>{
+      const rows=[...document.querySelectorAll('#messages .message-row')];const last=rows.at(-1);const id=last?.dataset.messageId;
+      if(id&&/^\d+$/.test(String(id)))await toggleReaction('message',id,b.dataset.quick);
+    });
+    bar.querySelector('#v41QuickEdit').onclick=()=>{
+      const current=quickList().join('');const v=prompt('Nhập tối đa 6 emoji, ví dụ: ❤️😂👍🔥😮😢',current);if(v===null)return;
+      const arr=[...v].filter(x=>x.trim()).slice(0,6);if(!arr.length)return;localStorage.setItem(QUICK_KEY(),JSON.stringify(arr));renderQuickBar();toast('Đã đổi cảm xúc nhanh');
+    };
+  }
+
+  function themeMenu(anchor){
+    closeMenus();const menu=document.createElement('div');menu.className='chat-theme-menu show';
+    const id=selectedUser?.id||('group_'+selectedGroup?.id);const current=localStorage.getItem(THEME_KEY(id))||'default';
+    menu.innerHTML='<div class="chat-theme-title">🎨 Chủ đề đoạn chat</div><div class="chat-theme-grid">'+themes.map(t=>`<button type="button" class="chat-theme-choice ${t[0]===current?'active':''}" data-theme="${t[0]}"><div class="chat-theme-swatch chat-theme-${t[0]}" style="background:${t[2]}"></div>${t[1]}</button>`).join('')+'</div>';
+    document.body.appendChild(menu);positionMenu(menu,anchor);activeMenu=menu;
+    menu.querySelectorAll('[data-theme]').forEach(b=>b.onclick=()=>{localStorage.setItem(THEME_KEY(id),b.dataset.theme);applyTheme(id);closeMenus();toast('Đã đổi chủ đề đoạn chat')});
+  }
+
+  function installChatTools(){
+    const spacer=document.querySelector('#messagesPage .chat-top-spacer');
+    if(spacer&&!spacer.querySelector('#v41ThemeButton')){
+      const wrap=document.createElement('div');wrap.className='v41-chat-tools';
+      wrap.innerHTML='<button type="button" class="v41-chat-tool" id="v41ThemeButton" title="Chủ đề">🎨</button>';
+      spacer.appendChild(wrap);wrap.querySelector('#v41ThemeButton').onclick=e=>{e.stopPropagation();themeMenu(e.currentTarget)};
+    }
+    const cw=document.querySelector('#messagesPage .composer-wrap');
+    if(cw&&!cw.querySelector('#v41QuickBar')){
+      const bar=document.createElement('div');bar.id='v41QuickBar';bar.className='v41-quick-bar';cw.insertBefore(bar,cw.firstElementChild);renderQuickBar();
+    }
+  }
+
+  // Keep the new UI attached after the existing renderChatList redraws the list.
+  const obs=new MutationObserver(()=>{ensureMoreButtons();installChatTools();formatMessageTimeline()});
+  const watch=()=>{const a=document.getElementById('chatListItems'),m=document.getElementById('messages');if(a)obs.observe(a,{childList:true,subtree:true});if(m)obs.observe(m,{childList:true,subtree:true})};
+  window.addEventListener('DOMContentLoaded',()=>{setTimeout(watch,1000);setTimeout(()=>{ensureMoreButtons();installChatTools();formatMessageTimeline()},1500)});
+  setInterval(()=>{ensureMoreButtons();installChatTools();},1200);
+
+  // Apply theme whenever a chat is opened.
+  const oldOpen=window.openChatById;
+  if(typeof oldOpen==='function'){
+    window.openChatById=async function(id){const r=await oldOpen(id);applyTheme(id);return r};
+  }
+
+  // Prevent sending to a locally blocked account.
+  document.addEventListener('click',e=>{
+    if(e.target.closest('#sendButton')&&selectedUser?.id&&isV41Blocked(selectedUser.id)){e.stopImmediatePropagation();e.preventDefault();toast('Bạn đã chặn tài khoản này');}
+  },true);
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey&&e.target.id==='messageInput'&&selectedUser?.id&&isV41Blocked(selectedUser.id)){e.stopImmediatePropagation();e.preventDefault();toast('Bạn đã chặn tài khoản này');}
+  },true);
 })();
 </script>
 </body></html>
