@@ -768,7 +768,54 @@ html.dark .chat-more-menu-v401,html.dark .chat-theme-menu-v401,html.dark .quick-
 html.dark .chat-more-v401{background:#252a34!important;color:#d5dbea!important}
 html.dark .chat-more-menu-v401 button:hover{background:#252a34!important}
 html.dark .chat-theme-grid-v401 button{background:#20242e!important;color:#eef1f7!important;border-color:#303644!important}
-</style></head>
+</style>
+<style id="htchat-v401-v3-fixes">
+/* Profile / cover */
+.profile-cover, .cover-photo, .profile-header-cover{
+  overflow:hidden!important;
+}
+.profile-cover img, .cover-photo img, .profile-header-cover img{
+  width:100%!important;height:100%!important;object-fit:cover!important;
+  display:block!important;
+}
+#profileCoverInput{display:none!important}
+
+/* Message composer: send icon must remain visible */
+#sendMessageBtn{
+  width:48px!important;height:48px!important;min-width:48px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  border-radius:15px!important;
+  position:relative!important;
+}
+#sendMessageBtn svg{width:21px!important;height:21px!important;display:block!important}
+#sendMessageBtn .send-label{display:none!important}
+
+/* Hide per-message tiny timestamps; separator timestamps remain */
+.message .message-time,
+.message-row .message-time,
+.chat-message .message-time,
+.msg-time,
+.message-meta .time,
+.bubble-time{
+  display:none!important;
+}
+
+/* Rich visual themes */
+.ht-theme-card{
+  position:relative;overflow:hidden;border-radius:18px;
+  min-height:96px;padding:16px;color:#fff;
+  cursor:pointer;background-size:cover;background-position:center;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+}
+.ht-theme-card::before{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,0,0,.04),rgba(0,0,0,.28));
+}
+.ht-theme-card>*{position:relative;z-index:1}
+.ht-theme-card .theme-icon{font-size:30px}
+.ht-theme-card .theme-name{font-weight:700;font-size:15px;margin-top:6px}
+</style>
+</head>
 <body>
 <section id="authScreen"><div class="auth-card">
   <div class="logo" id="authLogo"></div><h1 id="authTitle">Chào mừng trở lại</h1><p class="auth-sub" id="authSubtitle">Đăng nhập vào HT Chat</p>
@@ -2584,4 +2631,192 @@ window.addEventListener('error',function(e){
   console.error('HT Chat runtime error:',e.error||e.message);
 });
 window.addEventListener('unhandledrejection',function(e){console.error('HT Chat promise error:',e.reason);});
-</script></body></html>
+</script>
+<script id="htchat-v401-v3-cover-and-ui-fixes">
+(function(){
+  const SUPABASE_URL='https://bclybeujuhhiwevgppgt.supabase.co';
+  const SUPABASE_KEY='sb_publishable_yFagLzYinzPyztZkhJb-BQ_6xx_LRcF';
+  let sb=null;
+  async function getSB(){
+    if(sb)return sb;
+    const m=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    sb=m.createClient(SUPABASE_URL,SUPABASE_KEY);
+    return sb;
+  }
+
+  function findCoverInput(){
+    return document.querySelector(
+      '#profileCoverInput,input[type=file][accept*="image"][data-cover],input[type=file][name="cover"],input[type=file][id*="cover" i]'
+    );
+  }
+
+  async function uploadCover(file){
+    const c=await getSB();
+    const {data:{user},error:ue}=await c.auth.getUser();
+    if(ue||!user) throw new Error('Bạn chưa đăng nhập.');
+    const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+    const path=`${user.id}/cover-${Date.now()}.${ext}`;
+
+    const up=await c.storage.from('chat-images').upload(path,file,{
+      upsert:true,contentType:file.type||'image/jpeg',cacheControl:'3600'
+    });
+    if(up.error) throw up.error;
+
+    const pub=c.storage.from('chat-images').getPublicUrl(path);
+    const url=pub.data.publicUrl;
+
+    const pr=await c.from('profiles').update({cover_url:url}).eq('id',user.id);
+    if(pr.error) throw pr.error;
+
+    localStorage.setItem('htchat_cover_url_'+user.id,url);
+    return url;
+  }
+
+  function applyCover(url){
+    if(!url)return;
+    document.querySelectorAll(
+      '.profile-cover,.cover-photo,.profile-header-cover,[data-profile-cover]'
+    ).forEach(el=>{
+      el.style.backgroundImage=`url("${url}")`;
+      const img=el.querySelector('img');
+      if(img)img.src=url;
+    });
+  }
+
+  async function initCover(){
+    const input=findCoverInput();
+    const buttons=[...document.querySelectorAll('button,a,[role="button"]')]
+      .filter(x=>/đổi ảnh bìa|ảnh bìa|cover/i.test(x.textContent||''));
+
+    if(input){
+      input.addEventListener('change',async e=>{
+        const f=e.target.files?.[0];
+        if(!f)return;
+        try{
+          const url=await uploadCover(f);
+          applyCover(url);
+          alert('Đã đổi ảnh bìa.');
+        }catch(err){
+          console.error(err);
+          alert('Không đổi được ảnh bìa: '+(err.message||err));
+        }
+        e.target.value='';
+      });
+    }
+
+    buttons.forEach(b=>{
+      if(b.dataset.coverBound==='1')return;
+      b.dataset.coverBound='1';
+      b.addEventListener('click',e=>{
+        e.preventDefault();
+        const i=findCoverInput();
+        if(i)i.click();
+        else{
+          const n=document.createElement('input');
+          n.type='file'; n.accept='image/*'; n.id='profileCoverInput';
+          n.style.display='none';
+          document.body.appendChild(n);
+          n.addEventListener('change',async ev=>{
+            const f=ev.target.files?.[0]; if(!f)return;
+            try{applyCover(await uploadCover(f));alert('Đã đổi ảnh bìa.')}
+            catch(err){alert('Không đổi được ảnh bìa: '+(err.message||err))}
+            n.remove();
+          });
+          n.click();
+        }
+      });
+    });
+
+    try{
+      const c=await getSB();
+      const {data:{user}}=await c.auth.getUser();
+      if(user){
+        const {data}=await c.from('profiles').select('cover_url').eq('id',user.id).maybeSingle();
+        if(data?.cover_url)applyCover(data.cover_url);
+        else{
+          const cached=localStorage.getItem('htchat_cover_url_'+user.id);
+          if(cached)applyCover(cached);
+        }
+      }
+    }catch(e){console.warn('cover init',e)}
+  }
+
+  function fixSendButton(){
+    const b=document.querySelector('#sendMessageBtn,[data-send-message]');
+    if(!b)return;
+    if(!b.querySelector('svg')){
+      b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/></svg>';
+    }
+  }
+
+  function removeBubbleTimes(){
+    document.querySelectorAll('.message .message-time,.message-row .message-time,.chat-message .message-time,.msg-time,.message-meta .time,.bubble-time')
+      .forEach(x=>x.remove());
+  }
+
+  function start(){
+    initCover();
+    fixSendButton();
+    removeBubbleTimes();
+    const obs=new MutationObserver(()=>{fixSendButton();removeBubbleTimes()});
+    obs.observe(document.body,{childList:true,subtree:true});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);
+  else start();
+})();
+</script>
+
+<script id="htchat-v401-v3-themes">
+(function(){
+  const themes=[
+    ['ocean','🌊','Đại dương','linear-gradient(135deg,#087fbd,#54c8e8 55%,#d9f7ff)'],
+    ['sunset','🌅','Hoàng hôn','linear-gradient(135deg,#6d3bb5,#e85d75 55%,#ffb36b)'],
+    ['mint','🌿','Bạc hà','linear-gradient(135deg,#087f5b,#51c878 55%,#d7ffe8)'],
+    ['purple','💜','Tím mây','linear-gradient(135deg,#5146b9,#9d7bea 55%,#e9ddff)'],
+    ['pink','🌸','Hồng','linear-gradient(135deg,#c43d76,#f38ba8 55%,#ffe0ec)'],
+    ['night','🌙','Đêm','linear-gradient(135deg,#10182f,#253b73 55%,#5269a9)'],
+    ['aurora','✨','Cực quang','linear-gradient(135deg,#075985,#14b8a6 45%,#7c3aed)'],
+    ['fire','🔥','Lửa','linear-gradient(135deg,#7f1d1d,#ea580c 55%,#facc15)']
+  ];
+
+  function openThemeGallery(){
+    let old=document.getElementById('htThemeGallery');
+    if(old){old.remove();return}
+    const box=document.createElement('div');
+    box.id='htThemeGallery';
+    box.style.cssText='position:fixed;z-index:99999;inset:0;background:rgba(12,18,35,.38);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px';
+    box.innerHTML='<div style="width:min(680px,94vw);max-height:88vh;overflow:auto;background:white;border-radius:24px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><b style="font-size:20px">🎨 Chủ đề đoạn chat</b><button id="htThemeClose" style="border:0;background:#eef1f7;border-radius:12px;padding:9px 13px">✕</button></div><div id="htThemeGrid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px"></div></div>';
+    document.body.appendChild(box);
+    const grid=box.querySelector('#htThemeGrid');
+    themes.forEach(t=>{
+      const card=document.createElement('button');
+      card.className='ht-theme-card';
+      card.style.cssText+=`border:0;text-align:left;background:${t[3]};`;
+      card.innerHTML=`<div class="theme-icon">${t[1]}</div><div class="theme-name">${t[2]}</div>`;
+      card.onclick=()=>{
+        const key='htchat_theme_'+(window.currentChatUserId||window.currentChatId||'default');
+        localStorage.setItem(key,t[0]);
+        const area=document.querySelector('.chat-messages,.messages-area,.chat-content');
+        if(area)area.style.background=t[3];
+        box.remove();
+      };
+      grid.appendChild(card);
+    });
+    box.querySelector('#htThemeClose').onclick=()=>box.remove();
+    box.onclick=e=>{if(e.target===box)box.remove()};
+  }
+
+  function bind(){
+    document.querySelectorAll('button,a,[role="button"]').forEach(b=>{
+      if(b.dataset.themeBound==='1')return;
+      if(/chủ đề|theme/i.test(b.textContent||'')){
+        b.dataset.themeBound='1';
+        b.addEventListener('click',e=>{e.preventDefault();openThemeGallery()});
+      }
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  new MutationObserver(bind).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+</body></html>
