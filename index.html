@@ -752,6 +752,34 @@ body.home-active #sideFriends{display:none}
 html.dark .chat-theme-panel,html.dark .chat-action-menu,html.dark .quick-reaction-picker{background:#171a22;border-color:#292e3a}.dark .chat-time-marker span{background:#292e3a}.dark .cover-edit-btn{background:rgba(0,0,0,.68)}
 @media(max-width:700px){.chat-theme-panel{top:70px;right:10px}.chat-action-menu{min-width:180px}.chat-more{opacity:.8}.chat-theme-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
+
+<style id="ht41-v2-fix-css">
+/* Each ⋮ belongs to its own conversation row. */
+#chatListItems .chat-person,#groupListItems .chat-person{
+  position:relative!important;
+  display:block!important;
+  width:100%!important;
+  min-height:68px!important;
+}
+#chatListItems .chat-person>.person-row,#groupListItems .chat-person>.person-row{
+  width:100%!important;
+  min-height:68px!important;
+  box-sizing:border-box!important;
+}
+#chatListItems .chat-person>.chat-more,#groupListItems .chat-person>.chat-more{
+  position:absolute!important;
+  right:7px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  width:34px!important;
+  height:38px!important;
+  margin:0!important;
+  padding:0!important;
+  z-index:30!important;
+  display:grid!important;
+  place-items:center!important;
+}
+</style>
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -969,6 +997,9 @@ async function openChatById(id){
   $('chatEmpty').classList.add('hidden');$('chatContent').classList.remove('hidden');
   document.querySelectorAll('#chatList [data-chat]').forEach(b=>b.classList.toggle('active',b.dataset.chat===String(id)));
   await loadMessages();
+  await loadSharedChatSettings(id,true);
+  applySharedChatTheme();
+  paintSharedQuickReaction();
   subscribeTyping();
 }
 
@@ -1458,17 +1489,33 @@ function chatPrefsKey(other){return 'htchat_chat_prefs_'+currentUser.id+'_'+othe
 function getChatPrefs(other){try{return JSON.parse(localStorage.getItem(chatPrefsKey(other))||'{}')}catch(_){return {}}}
 function saveChatPrefs(other,p){localStorage.setItem(chatPrefsKey(other),JSON.stringify(p))}
 function currentChatKey(){return selectedGroup?'group_'+selectedGroup.id:selectedUser?.id||''}
-function applyChatTheme(){const box=$('messages');if(!box)return;box.classList.remove(...V41_THEMES.map(x=>x[2]));const key=currentChatKey();if(!key)return;const p=getChatPrefs(key);if(p.theme&&p.theme!=='default')box.classList.add('theme-'+p.theme);document.querySelectorAll('.chat-theme').forEach(x=>x.classList.toggle('active',x.dataset.theme===p.theme||(!p.theme&&x.dataset.theme==='default')))}
-function openChatTheme(){const panel=$('chatThemePanel');if(!panel)return;const grid=$('chatThemeGrid');const key=currentChatKey();if(!key)return toast('Hãy mở một đoạn chat trước');const p=getChatPrefs(key);grid.innerHTML=V41_THEMES.map(([id,name,cls])=>`<button type="button" class="chat-theme ${cls}" data-theme="${id}"><small>${name}</small></button>`).join('');grid.querySelectorAll('[data-theme]').forEach(b=>b.onclick=()=>{const q=getChatPrefs(key);q.theme=b.dataset.theme;saveChatPrefs(key,q);applyChatTheme();panel.classList.add('hidden');toast('Đã đổi chủ đề đoạn chat')});applyChatTheme();panel.classList.remove('hidden')}
-$('chatThemeButton')?.addEventListener('click',openChatTheme);$('closeChatTheme')?.addEventListener('click',()=>$('chatThemePanel')?.classList.add('hidden'));
+function applyChatTheme(){applySharedChatTheme()}
+async function openChatTheme(){await openSharedChatTheme()}
+$('chatThemeButton')?.addEventListener('click',e=>{e.preventDefault();openSharedChatTheme()});$('closeChatTheme')?.addEventListener('click',()=>$('chatThemePanel')?.classList.add('hidden'));
 
-function quickReactionValue(){return localStorage.getItem('htchat_quick_reaction_'+currentUser.id)||'❤️'}
-function paintQuickReaction(){const b=$('sendButton');if(!b)return;const input=$('messageInput');const hasText=!!input?.value.trim();if(hasText){b.dataset.mode='send';b.innerHTML=icons.send||'➤';b.title='Gửi tin nhắn';b.classList.remove('quick-reaction-button')}else{b.dataset.mode='reaction';b.innerHTML=`<span class="quick-reaction-face">${quickReactionValue()}</span>`;b.title='Cảm xúc nhanh • nhấn giữ để đổi';b.classList.add('quick-reaction-button')}}
-async function sendQuickReaction(){if(!selectedUser&&!selectedGroup)return;const reaction=quickReactionValue();playSendSound();const payload={sender_id:currentUser.id,receiver_id:selectedUser?.id||null,group_id:selectedGroup?.id||null,content:reaction};const {data,error}=await supabase.from('messages').insert(payload).select('*,profiles:sender_id(username,avatar_url)').single();if(error)return toast('Không gửi được cảm xúc: '+error.message);if(data)renderMessage(data,true);scrollMessages()}
-function showQuickReactionPicker(){let p=$('quickReactionPicker');if(!p){p=document.createElement('div');p.id='quickReactionPicker';p.className='quick-reaction-picker';p.innerHTML=V41_REACTIONS.map(x=>`<button type="button" data-qr="${x}">${x}</button>`).join('');document.body.appendChild(p);p.querySelectorAll('[data-qr]').forEach(b=>b.onclick=()=>{localStorage.setItem('htchat_quick_reaction_'+currentUser.id,b.dataset.qr);p.remove();paintQuickReaction()})}const b=$('sendButton');const r=b.getBoundingClientRect();p.style.left=Math.max(8,r.right-300)+'px';p.style.top=Math.max(8,r.top-54)+'px'}
-
-let quickHoldTimer=null;$('sendButton')?.addEventListener('pointerdown',()=>{clearTimeout(quickHoldTimer);quickHoldTimer=setTimeout(showQuickReactionPicker,500)});$('sendButton')?.addEventListener('pointerup',()=>clearTimeout(quickHoldTimer));$('sendButton')?.addEventListener('pointerleave',()=>clearTimeout(quickHoldTimer));
-$('messageInput')?.addEventListener('input',paintQuickReaction);$('sendButton').onclick=()=>{if($('sendButton').dataset.mode==='reaction')sendQuickReaction();else sendMessage()};setTimeout(paintQuickReaction,100);
+function quickReactionValue(){return sharedChatSettings.quick_reaction||'❤️'}
+function paintQuickReaction(){paintSharedQuickReaction()}
+async function sendQuickReaction(){
+  if(!selectedUser&&!selectedGroup)return;
+  const reaction=quickReactionValue();
+  playSendSound();
+  const payload={sender_id:currentUser.id,receiver_id:selectedUser?.id||null,group_id:selectedGroup?.id||null,content:reaction};
+  const {data,error}=await supabase.from('messages').insert(payload).select('*,profiles:sender_id(username,avatar_url)').single();
+  if(error)return toast('Không gửi được cảm xúc: '+error.message);
+  if(data)renderMessage(data,true);
+  scrollMessages();
+}
+function showQuickReactionPicker(){openSharedQuickReactionPicker()}
+let quickHoldTimer=null;
+$('sendButton')?.addEventListener('pointerdown',()=>{
+  clearTimeout(quickHoldTimer);
+  quickHoldTimer=setTimeout(showQuickReactionPicker,500);
+});
+$('sendButton')?.addEventListener('pointerup',()=>clearTimeout(quickHoldTimer));
+$('sendButton')?.addEventListener('pointerleave',()=>clearTimeout(quickHoldTimer));
+$('messageInput')?.addEventListener('input',paintQuickReaction);
+$('sendButton').onclick=()=>{if($('sendButton').dataset.mode==='reaction')sendQuickReaction();else sendMessage()};
+setTimeout(paintQuickReaction,100);
 
 function applyProfileCover(url){const el=$('profileCover');if(!el)return;if(url){el.style.backgroundImage=`url("${String(url).replace(/"/g,'%22')}")`;el.classList.add('has-image')}else{el.style.backgroundImage='';el.classList.remove('has-image')}}
 async function updateCover(file){if(!file||!file.type.startsWith('image/'))return toast('Vui lòng chọn ảnh');if(file.size>8*1024*1024)return toast('Ảnh tối đa 8MB');const path=`covers/${currentUser.id}.jpg`;const {error}=await supabase.storage.from(AVATAR_BUCKET).upload(path,file,{upsert:true,contentType:file.type,cacheControl:'3600'});if(error)return toast('Không tải được ảnh bìa: '+error.message);const url=postImageUrl(path)+'?v='+Date.now();const {error:e2}=await supabase.from('profiles').update({cover_url:url}).eq('id',currentUser.id);if(e2)return toast('Ảnh đã tải nhưng chưa lưu hồ sơ: '+e2.message);currentProfile={...currentProfile,cover_url:url};applyProfileCover(url);toast('Đã cập nhật ảnh bìa')}
@@ -1851,6 +1898,171 @@ $('friendsSearchInput').oninput=()=>{clearTimeout(friendsSearchTimer);friendsSea
 
 function subscribeFriends(){if(friendChannel)supabase.removeChannel(friendChannel);friendChannel=supabase.channel('friends-'+currentUser.id).on('postgres_changes',{event:'*',schema:'public',table:'friend_requests'},async()=>{await loadFriends();await loadRequests();if(!$('friendsPage').classList.contains('hidden'))await loadFriendsPage();}).subscribe()}
 $('closeGroupModal').onclick=()=>$('groupModal').classList.add('hidden');$('groupModal').addEventListener('click',e=>{if(e.target.id==='groupModal')$('groupModal').classList.add('hidden')});$('saveGroupButton').onclick=createGroup;supabase.auth.onAuthStateChange(async(event,session)=>{if(session?.user){currentUser=session.user;$('authScreen').classList.add('hidden');$('app').classList.remove('hidden');loadSettings();await loadProfile();startLastSeen();await loadFriends();await loadRequests();await loadFriendsPage();await renderChatList();subscribeFriends();subscribePresence();subscribeMessages();subscribePostNotifications();switchPage('homePage')}else{$('app').classList.add('hidden');$('authScreen').classList.remove('hidden');showAuth('login')}});showAuth('login');
+
+/* ================= HT Chat 4.1-v2: SHARED CONVERSATION SETTINGS =================
+   Theme + quick reaction are stored per 1:1 conversation in Supabase.
+   Both participants read the same row, so a change is visible on both sides.
+=============================================================================== */
+let sharedChatSettings={theme:'default',quick_reaction:'❤️'};
+let sharedChatSettingsKey='';
+let sharedChatSettingsTimer=null;
+
+function sharedPairKey(otherId){
+  if(!otherId||!currentUser?.id)return '';
+  return [String(currentUser.id),String(otherId)].sort().join(':');
+}
+function sharedPrefsCacheKey(otherId){
+  return 'htchat_shared_chat_prefs_'+sharedPairKey(otherId);
+}
+function readSharedPrefsCache(otherId){
+  try{return JSON.parse(localStorage.getItem(sharedPrefsCacheKey(otherId))||'{}')}catch(_){return {}}
+}
+function writeSharedPrefsCache(otherId,p){
+  try{localStorage.setItem(sharedPrefsCacheKey(otherId),JSON.stringify(p||{}))}catch(_){}
+}
+async function loadSharedChatSettings(otherId,force=false){
+  if(!otherId||!currentUser?.id)return {theme:'default',quick_reaction:'❤️'};
+  const key=sharedPairKey(otherId);
+  if(!force&&key===sharedChatSettingsKey)return sharedChatSettings;
+
+  const cached=readSharedPrefsCache(otherId);
+  sharedChatSettings={theme:cached.theme||'default',quick_reaction:cached.quick_reaction||'❤️'};
+  sharedChatSettingsKey=key;
+
+  try{
+    const a=[String(currentUser.id),String(otherId)].sort();
+    const {data,error}=await supabase.from('chat_preferences')
+      .select('theme,quick_reaction')
+      .eq('user_a',a[0]).eq('user_b',a[1]).maybeSingle();
+    if(!error&&data){
+      sharedChatSettings={
+        theme:data.theme||'default',
+        quick_reaction:data.quick_reaction||'❤️'
+      };
+      writeSharedPrefsCache(otherId,sharedChatSettings);
+    }
+  }catch(e){
+    console.warn('shared chat settings:',e.message);
+  }
+  return sharedChatSettings;
+}
+async function saveSharedChatSettings(otherId,patch){
+  if(!otherId||!currentUser?.id)return;
+  const a=[String(currentUser.id),String(otherId)].sort();
+  const next={
+    ...sharedChatSettings,
+    ...patch,
+    theme:patch.theme||sharedChatSettings.theme||'default',
+    quick_reaction:patch.quick_reaction||sharedChatSettings.quick_reaction||'❤️'
+  };
+  sharedChatSettings=next;
+  sharedChatSettingsKey=sharedPairKey(otherId);
+  writeSharedPrefsCache(otherId,next);
+
+  const {data,error}=await supabase.from('chat_preferences').upsert({
+    user_a:a[0],
+    user_b:a[1],
+    theme:next.theme,
+    quick_reaction:next.quick_reaction,
+    updated_at:new Date().toISOString()
+  },{onConflict:'user_a,user_b'}).select('theme,quick_reaction').single();
+
+  if(error){
+    console.warn('Lưu cài đặt đoạn chat:',error.message);
+    toast('Chưa lưu được cài đặt đoạn chat');
+    return;
+  }
+  if(data){
+    sharedChatSettings={theme:data.theme||'default',quick_reaction:data.quick_reaction||'❤️'};
+    writeSharedPrefsCache(otherId,sharedChatSettings);
+  }
+}
+function applySharedChatTheme(){
+  const box=$('messages');if(!box)return;
+  const names=V41_THEMES.map(x=>x[2]);
+  box.classList.remove(...names);
+  const theme=sharedChatSettings.theme||'default';
+  if(theme!=='default')box.classList.add('theme-'+theme);
+  document.querySelectorAll('.chat-theme').forEach(x=>{
+    x.classList.toggle('active',x.dataset.theme===theme);
+  });
+}
+function paintSharedQuickReaction(){
+  const b=$('sendButton');if(!b)return;
+  const hasText=!!$('messageInput')?.value.trim();
+  if(hasText){
+    b.dataset.mode='send';
+    b.innerHTML=icons.send||'➤';
+    b.title='Gửi tin nhắn';
+    b.classList.remove('quick-reaction-button');
+  }else{
+    b.dataset.mode='reaction';
+    b.innerHTML=`<span class="quick-reaction-face">${escapeHtml(sharedChatSettings.quick_reaction||'❤️')}</span>`;
+    b.title='Cảm xúc nhanh • nhấn giữ để đổi';
+    b.classList.add('quick-reaction-button');
+  }
+}
+function quickReactionValue(){
+  return sharedChatSettings.quick_reaction||'❤️';
+}
+async function syncSharedChatSettings(force=false){
+  if(!selectedUser)return;
+  const before=JSON.stringify(sharedChatSettings);
+  await loadSharedChatSettings(selectedUser.id,force);
+  if(JSON.stringify(sharedChatSettings)!==before){
+    applySharedChatTheme();
+    paintSharedQuickReaction();
+  }
+}
+async function openSharedChatTheme(){
+  if(!selectedUser)return toast('Hãy mở một đoạn chat trước');
+  const panel=$('chatThemePanel'),grid=$('chatThemeGrid');if(!panel||!grid)return;
+  await loadSharedChatSettings(selectedUser.id,true);
+  grid.innerHTML=V41_THEMES.map(([id,name,cls])=>
+    `<button type="button" class="chat-theme ${cls}" data-shared-theme="${id}"><small>${name}</small></button>`
+  ).join('');
+  grid.querySelectorAll('[data-shared-theme]').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.sharedTheme===(sharedChatSettings.theme||'default'));
+    btn.onclick=async()=>{
+      await saveSharedChatSettings(selectedUser.id,{theme:btn.dataset.sharedTheme});
+      applySharedChatTheme();
+      panel.classList.add('hidden');
+      toast('Đã đổi chủ đề — cả hai bên sẽ thấy');
+    };
+  });
+  panel.classList.remove('hidden');
+}
+async function openSharedQuickReactionPicker(){
+  if(!selectedUser)return;
+  await loadSharedChatSettings(selectedUser.id);
+  let p=$('quickReactionPicker');
+  if(!p){
+    p=document.createElement('div');
+    p.id='quickReactionPicker';
+    p.className='quick-reaction-picker';
+    document.body.appendChild(p);
+  }
+  p.innerHTML=V41_REACTIONS.map(x=>`<button type="button" data-shared-qr="${x}">${x}</button>`).join('');
+  p.querySelectorAll('[data-shared-qr]').forEach(btn=>{
+    btn.onclick=async()=>{
+      await saveSharedChatSettings(selectedUser.id,{quick_reaction:btn.dataset.sharedQr});
+      p.remove();
+      paintSharedQuickReaction();
+      toast('Đã đổi cảm xúc nhanh — cả hai bên sẽ thấy');
+    };
+  });
+  const b=$('sendButton'),r=b.getBoundingClientRect();
+  p.style.left=Math.max(8,r.right-300)+'px';
+  p.style.top=Math.max(8,r.top-54)+'px';
+}
+function startSharedChatSettingsSync(){
+  clearInterval(sharedChatSettingsTimer);
+  sharedChatSettingsTimer=setInterval(()=>{
+    if(selectedUser&&!$('messagesPage').classList.contains('hidden'))syncSharedChatSettings(false);
+  },4000);
+}
+startSharedChatSettingsSync();
+
 });});
 </script>
 <script>
