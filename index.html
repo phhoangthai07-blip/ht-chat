@@ -1254,7 +1254,80 @@ function ht41ThemeDataUrl(name,dim=false){
   const body=svg.replace('</svg>',overlay+'</svg>');
   return 'url("data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(body)+'")';
 }
-</script></head>
+</script>
+<style id="ht41-v6-click-fix">
+/* ===== FIX CLICK LAYERS ===== */
+#chatThemeButton,
+#chatThemeButton *,
+.chat-more,
+.chat-more *,
+[data-chat-more],
+[data-chat-more] * {
+  pointer-events:auto!important;
+  position:relative;
+  z-index:10050!important;
+}
+
+#chatThemeButton{
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+}
+
+.chat-more,
+[data-chat-more]{
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+}
+
+/* Menu chủ đề / menu 3 chấm luôn nổi trên mọi lớp kính */
+#chatThemePanel,
+.chat-action-menu,
+.chat-more-menu,
+[data-chat-action-menu]{
+  z-index:20000!important;
+}
+
+/* Không để lớp trang phủ lên nút */
+.chat-window,
+.chat-header,
+.chat-list,
+.chat-list-head,
+.messages,
+.page-scroll{
+  isolation:isolate;
+}
+#chatThemeButton,
+.chat-more,
+[data-chat-more]{
+  isolation:auto!important;
+}
+
+/* Dấu 3 chấm nằm đúng giữa từng dòng */
+#chatListItems .chat-person,
+#groupListItems .chat-person{
+  position:relative!important;
+}
+#chatListItems .chat-person > .chat-more,
+#groupListItems .chat-person > .chat-more,
+#chatListItems .chat-person [data-chat-more],
+#groupListItems .chat-person [data-chat-more]{
+  position:absolute!important;
+  right:6px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  margin:0!important;
+  z-index:10060!important;
+}
+
+/* Khi menu mở, không bị cắt bởi list */
+#chatListItems,
+#groupListItems,
+.chat-list{
+  overflow:visible!important;
+}
+</style>
+
+</head>
 <body>
 <section id="authScreen"><div class="auth-card">
   <div class="logo" id="authLogo"></div><h1 id="authTitle">Chào mừng trở lại</h1><p class="auth-sub" id="authSubtitle">Đăng nhập vào HT Chat</p>
@@ -1338,7 +1411,7 @@ function ht41ThemeDataUrl(name,dim=false){
 
 <div id="postModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Tạo bài viết</h3><button class="close" id="closePostModal"></button></div><textarea id="postText" rows="5" style="width:100%;margin-top:15px;border:1px solid var(--line);border-radius:15px;padding:12px;outline:0;resize:vertical" placeholder="Bạn đang nghĩ gì?"></textarea><div style="margin-top:10px"><label class="file-label" id="postImageLabel"></label><input id="postImageInput" type="file" accept="image/*" class="hidden"></div><div style="display:flex;justify-content:flex-end;margin-top:15px"><button class="primary" id="publishPost" style="width:auto;padding:11px 18px">Đăng bài</button></div></div></div>
 <div id="profileMiniModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Thông tin</h3><button class="close" id="closeProfileMini"></button></div><div id="profileMiniBody" style="padding-top:15px"></div></div></div><div id="noteModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Ghi chú / suy nghĩ</h3><button class="close" id="closeNoteModal"></button></div><p style="color:var(--muted);font-size:13px;margin:10px 0 0">Viết một ghi chú ngắn cho hôm nay. Bạn bè của bạn có thể nhìn thấy ghi chú này trong phần Tin nhắn.</p><textarea id="noteText" class="note-modal-text" maxlength="60" placeholder="Bạn đang nghĩ gì?"></textarea><div class="note-modal-actions"><button id="deleteNote" class="note-delete">Xóa</button><button id="cancelNote" class="note-cancel">Hủy</button><button id="saveNote" class="note-save">Lưu ghi chú</button></div></div></div>
-<div id="profileViewModal" class="modal hidden"><div class="modal-card profile-view-card"><div class="modal-head"><h3>Trang cá nhân</h3><button class="close" id="closeProfileView"></button></div><div id="profileViewBody"></div></div></div><div id="groupModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Tạo nhóm</h3><button class="close" id="closeGroupModal"></button></div><input id="groupNameInput" class="group-name-input" maxlength="60" placeholder="Tên nhóm"><div id="groupMemberPicker" class="group-member-picker"></div><div style="display:flex;justify-content:flex-end;margin-top:12px"><button id="saveGroupButton" class="note-save">Tạo nhóm</button></div></div></div><div id="appInfoModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Thông tin ứng dụng</h3><button class="close" id="closeAppInfo"></button></div><div class="app-info-list" style="padding-top:10px"><div class="app-info-logo" id="appInfoLogo"></div><div class="app-info-row"><b>Ứng dụng</b><span>HT Chat</span></div><div class="app-info-row"><b>Phiên bản</b><span>4.1-v5</span></div><div class="app-info-row"><b>Công ty</b><span>Công ty cổ phần PHT</span></div><div class="app-info-row"><b>Nền tảng</b><span>Web / GitHub Pages</span></div><div class="app-info-row"><b>Dịch vụ</b><span>Supabase</span></div></div></div></div><div id="chatActionMenu" class="chat-action-menu hidden"><button data-chat-action="delete">🗑️ <span>Xóa đoạn chat</span></button><button data-chat-action="mute">🔕 <span>Tắt thông báo</span></button><button data-chat-action="block">🚫 <span>Chặn</span></button></div><div id="chatThemePanel" class="chat-theme-panel hidden"><div class="chat-theme-head"><b>Chủ đề đoạn chat</b><button id="closeChatTheme" type="button">×</button></div><div id="chatThemeGrid" class="chat-theme-grid"></div></div><div id="notificationPanel" class="notification-panel hidden" role="dialog" aria-label="Thông báo"><div class="notification-head"><b>Thông báo</b><button id="clearNotificationBadge" type="button">Đánh dấu đã xem</button></div><div id="notificationList"></div></div>
+<div id="profileViewModal" class="modal hidden"><div class="modal-card profile-view-card"><div class="modal-head"><h3>Trang cá nhân</h3><button class="close" id="closeProfileView"></button></div><div id="profileViewBody"></div></div></div><div id="groupModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Tạo nhóm</h3><button class="close" id="closeGroupModal"></button></div><input id="groupNameInput" class="group-name-input" maxlength="60" placeholder="Tên nhóm"><div id="groupMemberPicker" class="group-member-picker"></div><div style="display:flex;justify-content:flex-end;margin-top:12px"><button id="saveGroupButton" class="note-save">Tạo nhóm</button></div></div></div><div id="appInfoModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Thông tin ứng dụng</h3><button class="close" id="closeAppInfo"></button></div><div class="app-info-list" style="padding-top:10px"><div class="app-info-logo" id="appInfoLogo"></div><div class="app-info-row"><b>Ứng dụng</b><span>HT Chat</span></div><div class="app-info-row"><b>Phiên bản</b><span>4.1-v6</span></div><div class="app-info-row"><b>Công ty</b><span>Công ty cổ phần PHT</span></div><div class="app-info-row"><b>Nền tảng</b><span>Web / GitHub Pages</span></div><div class="app-info-row"><b>Dịch vụ</b><span>Supabase</span></div></div></div></div><div id="chatActionMenu" class="chat-action-menu hidden"><button data-chat-action="delete">🗑️ <span>Xóa đoạn chat</span></button><button data-chat-action="mute">🔕 <span>Tắt thông báo</span></button><button data-chat-action="block">🚫 <span>Chặn</span></button></div><div id="chatThemePanel" class="chat-theme-panel hidden"><div class="chat-theme-head"><b>Chủ đề đoạn chat</b><button id="closeChatTheme" type="button">×</button></div><div id="chatThemeGrid" class="chat-theme-grid"></div></div><div id="notificationPanel" class="notification-panel hidden" role="dialog" aria-label="Thông báo"><div class="notification-head"><b>Thông báo</b><button id="clearNotificationBadge" type="button">Đánh dấu đã xem</button></div><div id="notificationList"></div></div>
 
 <script type="module">
 window.addEventListener('DOMContentLoaded',()=>{import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm').then(async({createClient})=>{
@@ -3180,4 +3253,91 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(wire,300);setTimeout(wire,1000);setTimeout(wire,2500);
   window.addEventListener('resize',wire,{passive:true});
 })();
-</script></body></html>
+</script>
+<script id="ht41-v6-click-runtime">
+(function(){
+  function stop(e){
+    if(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    }
+  }
+
+  /* ----- Chủ đề ----- */
+  function clickTheme(e){
+    const btn = e.target.closest && e.target.closest('#chatThemeButton');
+    if(!btn) return;
+    stop(e);
+    if(typeof window.openSharedChatTheme === 'function'){
+      window.openSharedChatTheme();
+    }else if(typeof window.openChatTheme === 'function'){
+      window.openChatTheme();
+    }else{
+      const panel=document.getElementById('chatThemePanel');
+      if(panel) panel.classList.toggle('hidden');
+    }
+  }
+
+  /* ----- Dấu 3 chấm ----- */
+  function clickMore(e){
+    const btn = e.target.closest && e.target.closest('.chat-more,[data-chat-more]');
+    if(!btn) return;
+
+    stop(e);
+
+    // Nếu app đã có handler gốc thì kích hoạt nó bằng click event riêng.
+    // Nếu không có, tìm các thuộc tính data cần thiết và mở menu fallback.
+    if(typeof window.openChatActionMenu === 'function'){
+      window.openChatActionMenu(btn);
+      return;
+    }
+    if(typeof window.showChatActionMenu === 'function'){
+      window.showChatActionMenu(btn);
+      return;
+    }
+
+    const row=btn.closest('.chat-person');
+    const menu=document.querySelector('.chat-action-menu,[data-chat-action-menu],.chat-more-menu');
+    if(!menu || !row) return;
+
+    menu.classList.remove('hidden');
+    menu.style.display='block';
+
+    const r=btn.getBoundingClientRect();
+    menu.style.position='fixed';
+    menu.style.zIndex='20000';
+    menu.style.left=Math.max(8,Math.min(innerWidth-220,r.left-190))+'px';
+    menu.style.top=Math.max(8,Math.min(innerHeight-180,r.bottom+5))+'px';
+
+    // Lưu đoạn chat hiện tại để các nút menu có thể dùng.
+    window.__htChatActionRow=row;
+    window.__htChatActionUserId=
+      row.dataset.userId || row.dataset.id ||
+      btn.dataset.userId || btn.dataset.id || '';
+  }
+
+  /* capture=true để bắt trước các overlay/handler cũ */
+  document.addEventListener('click', function(e){
+    const t=e.target.closest && e.target.closest('#chatThemeButton');
+    const m=e.target.closest && e.target.closest('.chat-more,[data-chat-more]');
+    if(t) clickTheme(e);
+    else if(m) clickMore(e);
+  }, true);
+
+  document.addEventListener('pointerup', function(e){
+    const t=e.target.closest && e.target.closest('#chatThemeButton');
+    const m=e.target.closest && e.target.closest('.chat-more,[data-chat-more]');
+    if(t || m){
+      /* click handler xử lý chính; pointerup chỉ ngăn ghost interaction */
+      e.stopPropagation();
+    }
+  }, true);
+
+  /* Expose wrapper để code cũ cũng có thể gọi */
+  window.htChatV6ThemeClick = clickTheme;
+  window.htChatV6MoreClick = clickMore;
+})();
+</script>
+
+</body></html>
