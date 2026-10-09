@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f8ff">
-<title>HT Chat 4.0 • Notifications & Activity Fixed</title>
+<title>HT Chat 4.1.4 • Liquid Glass & Themes</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#182033;background:#f7f8fc}body{overflow:hidden}button,input,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}img{max-width:100%}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:#d8dbea;border-radius:99px}
 :root{--p:#625ff2;--p2:#8a54f6;--soft:#f0efff;--bg:#f7f8fc;--card:#fff;--line:#e9ebf2;--muted:#8992a5;--green:#25c27a;--red:#ef5870;--shadow:0 18px 55px rgba(35,40,75,.10)}
@@ -780,6 +780,502 @@ html.dark .chat-theme-panel,html.dark .chat-action-menu,html.dark .quick-reactio
   place-items:center!important;
 }
 </style>
+
+<style id="ht41-v3-liquid-glass">
+:root{
+  --taskbar-color:#625ff2;
+  --taskbar-rgb:98,95,242;
+  --taskbar-active:rgba(98,95,242,.16);
+  --glass-highlight:rgba(255,255,255,.72);
+  --glass-shadow:0 22px 65px rgba(35,40,75,.13);
+}
+/* richer Liquid Glass language, while preserving the existing layout */
+.glass,.card,.profile-section,.composer-card,.post-card,.friends-panel,.friends-tabs,.profile-hero,.chat-theme-panel,.chat-action-menu,.notification-panel{
+  border:1px solid rgba(255,255,255,.68)!important;
+  box-shadow:var(--glass-shadow),inset 0 1px 0 rgba(255,255,255,.82)!important;
+  backdrop-filter:blur(24px) saturate(155%)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(155%)!important;
+}
+.glass::before,.card::before,.profile-section::before,.composer-card::before,.post-card::before,.friends-panel::before,.profile-hero::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(120deg,rgba(255,255,255,.22),transparent 30%,transparent 70%,rgba(255,255,255,.08));
+  opacity:.7;
+}
+.profile-section,.composer-card,.post-card,.friends-panel,.profile-hero{position:relative;overflow:hidden}
+#app::before,#app::after{content:"";position:fixed;pointer-events:none;z-index:0;border-radius:50%;filter:blur(60px);opacity:.18;}
+#app::before{width:260px;height:260px;left:10%;top:12%;background:var(--taskbar-color);}
+#app::after{width:320px;height:320px;right:4%;bottom:18%;background:#9c7cff;}
+#app>*{position:relative;z-index:1}
+
+/* Taskbar keeps the liquid-glass material; only its tint changes. */
+.bottom-nav{
+  background:linear-gradient(135deg,rgba(var(--taskbar-rgb),.15),rgba(255,255,255,.60) 45%,rgba(var(--taskbar-rgb),.10))!important;
+  border-color:rgba(255,255,255,.76)!important;
+  box-shadow:0 18px 55px rgba(25,30,65,.17),inset 0 1px 0 rgba(255,255,255,.86),inset 0 -1px 0 rgba(var(--taskbar-rgb),.10)!important;
+  backdrop-filter:blur(28px) saturate(165%)!important;
+  -webkit-backdrop-filter:blur(28px) saturate(165%)!important;
+}
+.bottom-nav .nav-slider{background:var(--taskbar-active)!important;box-shadow:0 8px 24px rgba(var(--taskbar-rgb),.16),inset 0 1px 0 rgba(255,255,255,.52)!important}
+.bottom-nav button.active{color:var(--taskbar-color)!important}
+.bottom-nav button::after{background:radial-gradient(circle at 50% 100%,rgba(var(--taskbar-rgb),.20),transparent 68%)!important}
+
+/* Taskbar color picker */
+.taskbar-color-panel{margin:8px 0 4px;padding:12px;border-radius:18px;background:rgba(255,255,255,.56);border:1px solid rgba(255,255,255,.74);box-shadow:0 14px 35px rgba(30,35,70,.12),inset 0 1px 0 rgba(255,255,255,.85);backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%)}
+.taskbar-color-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:12px}
+.taskbar-color-head button{border:0;width:28px;height:28px;border-radius:10px;background:rgba(255,255,255,.62);cursor:pointer;font-size:18px;color:#667085}
+.taskbar-swatches{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.taskbar-swatch{width:100%;aspect-ratio:1;border:2px solid rgba(255,255,255,.85);border-radius:12px;cursor:pointer;box-shadow:0 5px 14px rgba(20,25,55,.10);position:relative;overflow:hidden}
+.taskbar-swatch.active::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-weight:900;text-shadow:0 1px 3px rgba(0,0,0,.3)}
+.taskbar-custom-row{display:flex;align-items:center;justify-content:space-between;margin-top:11px;font-size:11px;color:var(--muted)}
+.taskbar-custom-row input{width:42px;height:32px;padding:2px;border:0;border-radius:10px;background:rgba(255,255,255,.6);cursor:pointer}
+
+/* Image-based conversation themes. The artwork is embedded SVG, so there are no external image URLs. */
+.messages.theme-default{background:#f6f8fc!important;background-image:linear-gradient(rgba(255,255,255,.74),rgba(255,255,255,.74)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='700' viewBox='0 0 900 700'%3E%3Cdefs%3E%3CradialGradient id='a'%3E%3Cstop stop-color='%23cdd8ff' stop-opacity='.55'/%3E%3Cstop offset='1' stop-color='%23fff' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='160' cy='120' r='220' fill='url(%23a)'/%3E%3Ccircle cx='760' cy='540' r='280' fill='url(%23a)'/%3E%3C/svg%3E")!important}
+.messages.theme-sunset{background:#ffd9cc!important;background-image:linear-gradient(rgba(255,145,104,.28),rgba(121,74,180,.30)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='700' viewBox='0 0 900 700'%3E%3Cdefs%3E%3CradialGradient id='s'%3E%3Cstop stop-color='%23fff1a8'/%3E%3Cstop offset='1' stop-color='%23ff9b66' stop-opacity='0'/%3E%3C/radialGradient%3E%3ClinearGradient id='g' x2='0' y2='1'%3E%3Cstop stop-color='%23ff8a65'/%3E%3Cstop offset='1' stop-color='%237c4d9e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='900' height='700' fill='url(%23g)'/%3E%3Ccircle cx='690' cy='155' r='105' fill='url(%23s)'/%3E%3Cpath d='M0 510 Q180 430 360 520 T900 500 V700 H0Z' fill='%23563c7b' opacity='.42'/%3E%3C/svg%3E")!important}
+.messages.theme-ocean{background:#c8f1fb!important;background-image:linear-gradient(rgba(29,176,218,.18),rgba(46,104,220,.24)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='700' viewBox='0 0 900 700'%3E%3Cdefs%3E%3ClinearGradient id='o' x2='0' y2='1'%3E%3Cstop stop-color='%2337d5e9'/%3E%3Cstop offset='1' stop-color='%23065aa9'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='900' height='700' fill='url(%23o)'/%3E%3Cpath d='M0 430 Q120 350 240 430 T480 430 T720 430 T960 430 V700 H0Z' fill='%230b4e9a' opacity='.45'/%3E%3Cpath d='M0 505 Q140 425 280 505 T560 505 T840 505 T1120 505' fill='none' stroke='%23fff' stroke-opacity='.24' stroke-width='18'/%3E%3Ccircle cx='160' cy='150' r='70' fill='%23fff' opacity='.16'/%3E%3C/svg%3E")!important}
+.messages.theme-aurora{background:#d9fbea!important;background-image:linear-gradient(rgba(0,255,202,.12),rgba(62,89,215,.18)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='700' viewBox='0 0 900 700'%3E%3Cdefs%3E%3ClinearGradient id='a' x2='1' y2='1'%3E%3Cstop stop-color='%2334e89e'/%3E%3Cstop offset='.5' stop-color='%2345a3ff'/%3E%3Cstop offset='1' stop-color='%237b4dff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='900' height='700' fill='%230c2040'/%3E%3Cpath d='M-80 360 C130 100 260 600 460 270 S760 180 980 390 L980 0 L-80 0Z' fill='url(%23a)' opacity='.78'/%3E%3Cpath d='M-80 470 C120 190 310 650 510 340 S770 270 980 470' fill='none' stroke='%23d8fff3' stroke-opacity='.35' stroke-width='45'/%3E%3Ccircle cx='720' cy='120' r='45' fill='%23fff' opacity='.75'/%3E%3C/svg%3E")!important}
+.messages.theme-candy{background:#ffe8f4!important;background-image:linear-gradient(rgba(255,185,224,.15),rgba(181,166,255,.18)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='700'%3E%3Cdefs%3E%3ClinearGradient id='c' x2='1' y2='1'%3E%3Cstop stop-color='%23ff9acb'/%3E%3Cstop offset='.5' stop-color='%23ffd0e8'/%3E%3Cstop offset='1' stop-color='%239ba7ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='900' height='700' fill='url(%23c)'/%3E%3Ccircle cx='150' cy='170' r='90' fill='%23fff' opacity='.22'/%3E%3Ccircle cx='760' cy='520' r='150' fill='%23fff' opacity='.18'/%3E%3Cpath d='M0 560 C170 430 260 660 420 530 S720 430 900 570 V700 H0Z' fill='%23fff' opacity='.20'/%3E%3C/svg%3E")!important}
+.messages.theme-night{background:#081326!important;background-image:linear-gradient(rgba(8,18,44,.20),rgba(3,8,24,.36)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='700'%3E%3Crect width='900' height='700' fill='%23050b1d'/%3E%3Cg fill='%23fff'%3E%3Ccircle cx='80' cy='100' r='2'/%3E%3Ccircle cx='180' cy='260' r='3'/%3E%3Ccircle cx='310' cy='90' r='2'/%3E%3Ccircle cx='500' cy='180' r='2'/%3E%3Ccircle cx='710' cy='90' r='3'/%3E%3Ccircle cx='820' cy='270' r='2'/%3E%3Ccircle cx='640' cy='410' r='2'/%3E%3Ccircle cx='350' cy='520' r='3'/%3E%3Ccircle cx='100' cy='590' r='2'/%3E%3C/g%3E%3Ccircle cx='700' cy='180' r='80' fill='%23f5f0c8' opacity='.85'/%3E%3Ccircle cx='730' cy='155' r='80' fill='%23050b1d'/%3E%3C/svg%3E")!important}
+.messages.theme-forest{background:#dff5df!important;background-image:linear-gradient(rgba(42,120,78,.10),rgba(20,90,55,.16)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='700'%3E%3Cdefs%3E%3ClinearGradient id='f' x2='0' y2='1'%3E%3Cstop stop-color='%238fe3a1'/%3E%3Cstop offset='1' stop-color='%231b6b54'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='900' height='700' fill='url(%23f)'/%3E%3Cpath d='M0 560 Q80 350 170 560 T340 560 T510 560 T680 560 T850 560 V700 H0Z' fill='%230e5b45' opacity='.65'/%3E%3Cg fill='%230b694d' opacity='.72'%3E%3Cpath d='M100 530 l-55-150 55 40 45-90 20 150Z'/%3E%3Cpath d='M760 540 l-55-180 60 55 55-110 18 190Z'/%3E%3C/g%3E%3Ccircle cx='690' cy='120' r='72' fill='%23fff6b5' opacity='.45'/%3E%3C/svg%3E")!important}
+.messages.theme-neon{background:#100b29!important;background-image:linear-gradient(rgba(45,20,110,.18),rgba(12,5,35,.32)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='700'%3E%3Cdefs%3E%3ClinearGradient id='n' x2='1'%3E%3Cstop stop-color='%2300e5ff'/%3E%3Cstop offset='.5' stop-color='%23a855f7'/%3E%3Cstop offset='1' stop-color='%23ff2bd6'/%3E%3C/linearGradient%3E%3Cfilter id='b'%3E%3CfeGaussianBlur stdDeviation='10'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='900' height='700' fill='%230d0922'/%3E%3Cpath d='M-50 520 C160 100 260 620 450 220 S700 170 950 500' fill='none' stroke='%2300e5ff' stroke-width='26' opacity='.28' filter='url(%23b)'/%3E%3Cpath d='M-50 520 C160 100 260 620 450 220 S700 170 950 500' fill='none' stroke='url(%23n)' stroke-width='8'/%3E%3Ccircle cx='220' cy='160' r='100' fill='%23ff2bd6' opacity='.12'/%3E%3C/svg%3E")!important}
+.messages.theme-fire{background:#fff0db!important;background-image:linear-gradient(rgba(255,160,40,.12),rgba(220,52,25,.18)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='700'%3E%3Cdefs%3E%3ClinearGradient id='r' x2='0' y2='1'%3E%3Cstop stop-color='%23ffdc78'/%3E%3Cstop offset='.45' stop-color='%23ff7a32'/%3E%3Cstop offset='1' stop-color='%23b71922'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='900' height='700' fill='url(%23r)'/%3E%3Cpath d='M0 610 C100 500 120 420 170 500 C220 560 220 350 280 430 C330 500 330 270 400 390 C470 500 500 300 560 420 C630 560 650 350 710 460 C770 570 820 430 900 510 V700 H0Z' fill='%23ffcc44' opacity='.58'/%3E%3C/svg%3E")!important}
+.messages[class*="theme-"]{background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;background-attachment:local!important;position:relative;isolation:isolate}
+.messages[class*="theme-"]::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(circle at 15% 15%,rgba(255,255,255,.20),transparent 32%),radial-gradient(circle at 90% 80%,rgba(255,255,255,.12),transparent 28%);animation:htGlassFloat 12s ease-in-out infinite alternate}
+.messages[class*="theme-"]>*{position:relative;z-index:1}
+@keyframes htGlassFloat{from{transform:translate3d(-8px,-5px,0) scale(1)}to{transform:translate3d(8px,5px,0) scale(1.025)}}
+
+/* Dark mode: retain selected taskbar tint but make the glass darker. */
+html.dark .bottom-nav{background:linear-gradient(135deg,rgba(var(--taskbar-rgb),.20),rgba(18,21,28,.72) 50%,rgba(var(--taskbar-rgb),.12))!important;border-color:rgba(255,255,255,.14)!important}
+html.dark .taskbar-color-panel{background:rgba(23,26,34,.78)!important;border-color:rgba(255,255,255,.12)!important}
+</style>
+
+<style id="ht41-v4-final-layout-and-themes">
+/* =========================================================
+   HT CHAT 4.1-v4 — FINAL RESPONSIVE / LIQUID GLASS PATCH
+   ========================================================= */
+
+/* ---------- 1. TASKBAR: ALWAYS BOTTOM CENTER ---------- */
+#bottomNav.bottom-nav{
+  position:fixed!important;
+  left:50%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:max(10px,env(safe-area-inset-bottom))!important;
+  transform:translateX(-50%)!important;
+  width:min(560px,calc(100vw - 28px))!important;
+  height:66px!important;
+  min-height:66px!important;
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  z-index:9999!important;
+  margin:0!important;
+}
+#bottomNav.bottom-nav > button{
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  min-width:0!important;
+}
+#bottomNav .nav-slider{pointer-events:none!important}
+#bottomNav .nav-dot{z-index:10!important}
+
+/* Never let a parent animation/transform reposition the fixed taskbar. */
+#app > #bottomNav{
+  contain:none!important;
+}
+
+/* ---------- 2. MOBILE: FULL-WIDTH, NO DESKTOP FRAGMENTS ---------- */
+@media(max-width:700px){
+  html,body{
+    width:100%!important;
+    max-width:100vw!important;
+    min-width:0!important;
+    overflow:hidden!important;
+  }
+  #app{
+    width:100vw!important;
+    max-width:100vw!important;
+    min-width:0!important;
+    height:100dvh!important;
+    overflow:hidden!important;
+    display:block!important;
+  }
+  #app > aside#side{
+    width:280px!important;
+    max-width:82vw!important;
+    position:fixed!important;
+    left:-330px!important;
+    top:0!important;
+    bottom:0!important;
+    z-index:10000!important;
+  }
+  #app > aside#side.open{left:0!important}
+  #app > main.main{
+    width:100vw!important;
+    max-width:100vw!important;
+    min-width:0!important;
+    height:100dvh!important;
+    margin:0!important;
+  }
+  .page{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+  }
+  .top{
+    width:100%!important;
+    max-width:100%!important;
+    padding-left:12px!important;
+    padding-right:12px!important;
+  }
+  .page-scroll{
+    width:100%!important;
+    max-width:100%!important;
+    overflow-x:hidden!important;
+  }
+
+  /* Mobile taskbar */
+  #bottomNav.bottom-nav{
+    width:calc(100vw - 16px)!important;
+    max-width:560px!important;
+    height:62px!important;
+    min-height:62px!important;
+    bottom:max(7px,env(safe-area-inset-bottom))!important;
+    padding:6px!important;
+    border-radius:21px!important;
+  }
+  #bottomNav.bottom-nav button{
+    font-size:10px!important;
+    gap:4px!important;
+    border-radius:16px!important;
+  }
+  #bottomNav .nav-icon{
+    width:20px!important;
+    height:20px!important;
+  }
+
+  /* Chat list mode */
+  #messagesPage.chat-list-mode{
+    width:100%!important;
+    max-width:100%!important;
+  }
+  #messagesPage.chat-list-mode .chat-list{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    flex:1 1 auto!important;
+    border-right:0!important;
+    overflow-x:hidden!important;
+  }
+  #messagesPage.chat-list-mode .chat-window{display:none!important}
+
+  /* Chat mode */
+  #messagesPage.chat-chat-mode{
+    width:100%!important;
+    max-width:100%!important;
+  }
+  #messagesPage.chat-chat-mode .chat-list{display:none!important}
+  #messagesPage.chat-chat-mode .chat-window{
+    display:flex!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+  }
+  #messagesPage.chat-chat-mode .messages{
+    width:100%!important;
+    max-width:100%!important;
+    overflow-x:hidden!important;
+  }
+
+  /* Composer stays above the glass taskbar. */
+  #messagesPage.chat-chat-mode .composer-wrap{
+    width:100%!important;
+    max-width:100%!important;
+    margin-bottom:74px!important;
+  }
+
+  /* Notification panel fits the phone. */
+  .notification-panel,
+  .chat-theme-panel,
+  .chat-action-menu{
+    max-width:calc(100vw - 20px)!important;
+  }
+}
+
+/* ---------- 3. REAL IMAGE-STYLE CHAT THEMES ---------- */
+/* The theme picker itself shows the artwork, not plain color chips. */
+.chat-theme{
+  position:relative!important;
+  overflow:hidden!important;
+  min-height:76px!important;
+  border:1px solid rgba(255,255,255,.68)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 7px 18px rgba(30,35,70,.10)!important;
+  background-size:cover!important;
+  background-position:center!important;
+  transition:transform .18s ease,box-shadow .18s ease!important;
+}
+.chat-theme:hover{transform:translateY(-2px)!important}
+.chat-theme.active{
+  outline:3px solid rgba(98,95,242,.32)!important;
+  outline-offset:1px!important;
+}
+.chat-theme small{
+  position:absolute!important;
+  left:7px!important;
+  right:7px!important;
+  bottom:7px!important;
+  padding:5px 7px!important;
+  border-radius:9px!important;
+  background:rgba(255,255,255,.58)!important;
+  color:#273047!important;
+  font-weight:800!important;
+  backdrop-filter:blur(8px)!important;
+  -webkit-backdrop-filter:blur(8px)!important;
+}
+html.dark .chat-theme small{
+  background:rgba(10,13,22,.52)!important;
+  color:#f4f6fb!important;
+}
+
+/* Artwork used in both the picker and the actual conversation background. */
+.chat-theme.theme-default{
+  background-image:
+    radial-gradient(circle at 18% 22%,rgba(255,255,255,.88),transparent 24%),
+    radial-gradient(circle at 82% 72%,rgba(160,185,255,.50),transparent 32%),
+    linear-gradient(135deg,#dfe8ff,#f7f9ff 48%,#cfdcff)!important;
+}
+.chat-theme.theme-sunset{
+  background-image:
+    radial-gradient(circle at 72% 25%,#fff4b8 0 7%,transparent 8%),
+    linear-gradient(160deg,transparent 0 52%,rgba(73,47,111,.72) 53%),
+    linear-gradient(135deg,#ffbd8c,#ee6b8d 52%,#60439b)!important;
+}
+.chat-theme.theme-ocean{
+  background-image:
+    radial-gradient(circle at 18% 24%,rgba(255,255,255,.32) 0 5%,transparent 6%),
+    repeating-radial-gradient(ellipse at 50% 100%,transparent 0 28px,rgba(255,255,255,.20) 29px 34px,transparent 35px 66px),
+    linear-gradient(180deg,#54d6ed 0%,#197ac8 58%,#08457d 100%)!important;
+}
+.chat-theme.theme-aurora{
+  background-image:
+    radial-gradient(ellipse at 25% 15%,rgba(54,255,180,.70),transparent 34%),
+    radial-gradient(ellipse at 72% 30%,rgba(100,120,255,.65),transparent 38%),
+    linear-gradient(150deg,#061d3d,#126e72 48%,#34206f)!important;
+}
+.chat-theme.theme-candy{
+  background-image:
+    radial-gradient(circle at 18% 22%,rgba(255,255,255,.50) 0 12%,transparent 13%),
+    radial-gradient(circle at 78% 70%,rgba(255,255,255,.30) 0 17%,transparent 18%),
+    linear-gradient(135deg,#ff9fd2,#ffd5ec 48%,#9faaff)!important;
+}
+.chat-theme.theme-night{
+  background-image:
+    radial-gradient(circle at 70% 24%,#fff5c7 0 7%,transparent 7.5%),
+    radial-gradient(circle at 18% 18%,#fff 0 1px,transparent 2px),
+    radial-gradient(circle at 42% 36%,#fff 0 1.5px,transparent 2.5px),
+    radial-gradient(circle at 84% 54%,#fff 0 1px,transparent 2px),
+    linear-gradient(145deg,#020817,#0b1735 55%,#160b32)!important;
+}
+.chat-theme.theme-forest{
+  background-image:
+    radial-gradient(circle at 75% 20%,rgba(255,242,165,.55) 0 7%,transparent 8%),
+    linear-gradient(70deg,rgba(4,62,45,.90) 0 12%,transparent 13% 28%,rgba(8,91,57,.75) 29% 40%,transparent 41%),
+    linear-gradient(145deg,#9be7a8,#27755b 52%,#0c4439)!important;
+}
+.chat-theme.theme-neon{
+  background-image:
+    radial-gradient(circle at 20% 28%,rgba(0,229,255,.40),transparent 24%),
+    radial-gradient(circle at 78% 70%,rgba(255,35,215,.35),transparent 28%),
+    linear-gradient(125deg,#09051b,#24105c 48%,#09041e)!important;
+}
+.chat-theme.theme-fire{
+  background-image:
+    radial-gradient(circle at 50% 75%,rgba(255,232,120,.72),transparent 25%),
+    linear-gradient(155deg,#ffd76b,#ff7b30 48%,#941b28)!important;
+}
+
+/* Apply the same visual artwork to the actual chat. */
+#messages.messages.theme-default,
+#messages.messages.theme-sunset,
+#messages.messages.theme-ocean,
+#messages.messages.theme-aurora,
+#messages.messages.theme-candy,
+#messages.messages.theme-night,
+#messages.messages.theme-forest,
+#messages.messages.theme-neon,
+#messages.messages.theme-fire{
+  background-size:cover!important;
+  background-position:center!important;
+  background-repeat:no-repeat!important;
+  background-attachment:local!important;
+}
+#messages.messages.theme-default{
+  background-image:
+    radial-gradient(circle at 18% 20%,rgba(255,255,255,.78),transparent 25%),
+    radial-gradient(circle at 82% 78%,rgba(135,168,255,.38),transparent 30%),
+    linear-gradient(135deg,#dce6ff,#f8faff 48%,#d1ddff)!important;
+}
+#messages.messages.theme-sunset{
+  background-image:
+    radial-gradient(circle at 76% 18%,#fff4b0 0 8%,transparent 8.5%),
+    linear-gradient(155deg,transparent 0 50%,rgba(54,35,86,.68) 51%),
+    linear-gradient(135deg,#ffb37f,#e96588 52%,#5b3d8c)!important;
+}
+#messages.messages.theme-ocean{
+  background-image:
+    radial-gradient(circle at 18% 20%,rgba(255,255,255,.28),transparent 20%),
+    repeating-radial-gradient(ellipse at 50% 100%,transparent 0 35px,rgba(255,255,255,.16) 36px 42px,transparent 43px 78px),
+    linear-gradient(180deg,#55d9ee,#1b7ecb 58%,#073e78)!important;
+}
+#messages.messages.theme-aurora{
+  background-image:
+    radial-gradient(ellipse at 22% 18%,rgba(45,255,177,.60),transparent 34%),
+    radial-gradient(ellipse at 76% 32%,rgba(113,113,255,.58),transparent 40%),
+    linear-gradient(150deg,#061b38,#0b686b 48%,#321f68)!important;
+}
+#messages.messages.theme-candy{
+  background-image:
+    radial-gradient(circle at 18% 20%,rgba(255,255,255,.40),transparent 20%),
+    radial-gradient(circle at 78% 74%,rgba(255,255,255,.24),transparent 25%),
+    linear-gradient(135deg,#ff9fcf,#ffd5e9 48%,#9ca8ff)!important;
+}
+#messages.messages.theme-night{
+  background-image:
+    radial-gradient(circle at 72% 20%,#fff5c9 0 7%,transparent 7.7%),
+    radial-gradient(circle at 16% 17%,#fff 0 1px,transparent 2px),
+    radial-gradient(circle at 40% 35%,#fff 0 1.4px,transparent 2.5px),
+    radial-gradient(circle at 86% 54%,#fff 0 1px,transparent 2px),
+    linear-gradient(145deg,#020817,#0b1735 55%,#160b32)!important;
+}
+#messages.messages.theme-forest{
+  background-image:
+    radial-gradient(circle at 74% 18%,rgba(255,242,165,.48) 0 7%,transparent 8%),
+    linear-gradient(70deg,rgba(4,62,45,.82) 0 12%,transparent 13% 28%,rgba(8,91,57,.68) 29% 40%,transparent 41%),
+    linear-gradient(145deg,#9be7a8,#27755b 52%,#0c4439)!important;
+}
+#messages.messages.theme-neon{
+  background-image:
+    radial-gradient(circle at 20% 28%,rgba(0,229,255,.34),transparent 24%),
+    radial-gradient(circle at 78% 70%,rgba(255,35,215,.30),transparent 28%),
+    linear-gradient(125deg,#09051b,#24105c 48%,#09041e)!important;
+}
+#messages.messages.theme-fire{
+  background-image:
+    radial-gradient(circle at 50% 75%,rgba(255,232,120,.62),transparent 25%),
+    linear-gradient(155deg,#ffd76b,#ff7b30 48%,#941b28)!important;
+}
+
+/* ---------- 4. EXTRA LIQUID GLASS DETAILS ---------- */
+.glass,.card,.post-card,.composer-card,.profile-section,.chat-panel,.chat-list-head,
+.chat-theme-panel,.chat-action-menu,.notification-panel,.auth-card,.info-modal,
+.setting-row,.home-quick-tool{
+  position:relative;
+  overflow:hidden;
+}
+.glass::before,.card::before,.post-card::before,.composer-card::before,
+.profile-section::before,.chat-panel::before,.chat-list-head::before,
+.chat-theme-panel::before,.notification-panel::before,.auth-card::before{
+  content:"";
+  position:absolute;
+  left:10%;
+  right:10%;
+  top:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.90),transparent);
+  pointer-events:none;
+  opacity:.82;
+}
+.bottom-nav::before{
+  content:"";
+  position:absolute;
+  left:10%;
+  right:10%;
+  top:2px;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);
+  opacity:.9;
+  pointer-events:none;
+}
+.bottom-nav::after{
+  content:"";
+  position:absolute;
+  width:90px;height:90px;
+  left:10%;
+  top:-55px;
+  border-radius:50%;
+  background:rgba(var(--taskbar-rgb),.12);
+  filter:blur(20px);
+  pointer-events:none;
+}
+.home-quick-tool,.setting-row{
+  backdrop-filter:blur(18px) saturate(145%);
+  -webkit-backdrop-filter:blur(18px) saturate(145%);
+}
+@media(max-width:700px){
+  .bottom-nav::after{width:70px;height:70px;left:5%;top:-42px}
+}
+</style>
+<style id="ht41-v5-interaction-css">
+#chatThemeButton{position:relative!important;z-index:5000!important;pointer-events:auto!important;touch-action:manipulation!important;display:inline-grid!important;place-items:center!important}
+.chat-top,.chat-top-actions{position:relative!important;z-index:4000!important}
+.chat-theme-panel{z-index:50000!important;pointer-events:auto!important;touch-action:manipulation!important}
+.chat-theme-grid,.chat-theme{pointer-events:auto!important;touch-action:manipulation!important}
+.chat-action-menu{z-index:50001!important;pointer-events:auto!important;touch-action:manipulation!important}
+#chatListItems .chat-person>.chat-more,#groupListItems .chat-person>.chat-more{
+  pointer-events:auto!important;touch-action:manipulation!important;cursor:pointer!important;z-index:5000!important;
+}
+#chatListItems .chat-person>.person-row,#groupListItems .chat-person>.person-row{position:relative!important;z-index:1!important}
+#chatListItems .chat-person>.chat-more:hover,#chatListItems .chat-person>.chat-more:active,
+#groupListItems .chat-person>.chat-more:hover,#groupListItems .chat-person>.chat-more:active{transform:translateY(-50%) scale(1.06)!important;background:var(--soft)!important;opacity:1!important}
+.chat-more{font-weight:900!important;line-height:1!important}
+@media(max-width:700px){
+  .chat-top-actions{margin-left:auto!important}
+  #chatThemeButton{width:42px!important;height:42px!important;border-radius:14px!important;font-size:20px!important}
+  .chat-theme-panel{left:8px!important;right:8px!important;top:64px!important;width:auto!important;max-height:calc(100dvh - 140px)!important;overflow:auto!important}
+  .chat-action-menu{min-width:205px!important}
+}
+</style>
+<script id="ht41-v5-theme-art">
+const HT41_THEME_ART={
+ default:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#dce8ff"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="#c9d8ff"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="28"/></filter></defs><rect width="1200" height="900" fill="url(#g)"/><circle cx="190" cy="150" r="180" fill="#fff" opacity=".5" filter="url(#b)"/><circle cx="990" cy="720" r="230" fill="#9eb9ff" opacity=".3" filter="url(#b)"/><path d="M0 680 Q220 590 440 680 T880 670 T1200 680V900H0Z" fill="#b6c8ee" opacity=".45"/></svg>`,
+ sunset:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900"><defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#ff6b63"/><stop offset=".48" stop-color="#ffb36b"/><stop offset="1" stop-color="#5a3c86"/></linearGradient><radialGradient id="sun"><stop stop-color="#fff8c7"/><stop offset="1" stop-color="#ffd166" stop-opacity="0"/></radialGradient><filter id="blur"><feGaussianBlur stdDeviation="20"/></filter></defs><rect width="1200" height="900" fill="url(#sky)"/><circle cx="830" cy="280" r="170" fill="url(#sun)" filter="url(#blur)"/><circle cx="830" cy="280" r="62" fill="#fff2a3"/><path d="M0 610L170 480 290 570 470 390 650 565 790 450 1010 600 1200 430V900H0Z" fill="#4a356e" opacity=".82"/><path d="M0 690 Q200 630 400 700 T800 690 T1200 700V900H0Z" fill="#1e315b" opacity=".9"/><path d="M0 720 Q220 680 430 730 T850 720 T1200 735" fill="none" stroke="#ffdca0" stroke-opacity=".35" stroke-width="18"/></svg>`,
+ ocean:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900"><defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#57d9ee"/><stop offset="1" stop-color="#b6f4ff"/></linearGradient><linearGradient id="sea" x2="0" y2="1"><stop stop-color="#147fc8"/><stop offset="1" stop-color="#063e79"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="18"/></filter></defs><rect width="1200" height="470" fill="url(#sky)"/><circle cx="900" cy="150" r="90" fill="#fff5b5" opacity=".9"/><circle cx="900" cy="150" r="150" fill="#fff5b5" opacity=".22" filter="url(#glow)"/><rect y="410" width="1200" height="490" fill="url(#sea)"/><path d="M0 500 Q120 420 240 500 T480 500 T720 500 T960 500 T1200 500" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="34"/><path d="M0 610 Q130 540 260 610 T520 610 T780 610 T1040 610 T1300 610" fill="none" stroke="#8feaff" stroke-opacity=".45" stroke-width="22"/><path d="M0 735 Q150 650 300 735 T600 735 T900 735 T1200 735" fill="none" stroke="#d7f9ff" stroke-opacity=".28" stroke-width="15"/></svg>`,
+ aurora:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900"><defs><linearGradient id="night" x2="0" y2="1"><stop stop-color="#03152f"/><stop offset="1" stop-color="#0a2140"/></linearGradient><linearGradient id="a" x2="1"><stop stop-color="#34e89e"/><stop offset=".45" stop-color="#4bb3ff"/><stop offset="1" stop-color="#9b59ff"/></linearGradient><filter id="blur"><feGaussianBlur stdDeviation="24"/></filter></defs><rect width="1200" height="900" fill="url(#night)"/><path d="M-80 390 C160 60 300 610 510 260 S840 170 1280 430 L1280 0 -80 0Z" fill="url(#a)" opacity=".55" filter="url(#blur)"/><path d="M-80 410 C150 120 310 610 510 290 S850 210 1280 450" fill="none" stroke="url(#a)" stroke-width="70" opacity=".5"/><path d="M-80 450 C170 180 330 640 540 330 S900 260 1280 470" fill="none" stroke="#d9fff4" stroke-width="16" opacity=".42"/><circle cx="930" cy="155" r="52" fill="#fffbd0"/><g fill="#fff"><circle cx="130" cy="120" r="3"/><circle cx="250" cy="230" r="2"/><circle cx="420" cy="110" r="3"/><circle cx="740" cy="90" r="2"/><circle cx="1050" cy="300" r="3"/></g><path d="M0 770 Q240 650 480 770 T960 770 T1200 770V900H0Z" fill="#020a19"/></svg>`,
+ candy:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#ff8fca"/><stop offset=".48" stop-color="#ffd7ed"/><stop offset="1" stop-color="#a9b4ff"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="18"/></filter></defs><rect width="1200" height="900" fill="url(#g)"/><circle cx="190" cy="190" r="130" fill="#fff" opacity=".22" filter="url(#b)"/><circle cx="920" cy="650" r="180" fill="#fff" opacity=".2" filter="url(#b)"/><g fill="#fff" opacity=".55"><circle cx="330" cy="640" r="32"/><circle cx="450" cy="530" r="20"/><circle cx="770" cy="260" r="28"/><circle cx="620" cy="180" r="15"/></g><path d="M0 610 C170 470 290 700 450 560 S760 450 930 590 S1090 650 1200 560V900H0Z" fill="#fff" opacity=".18"/></svg>`,
+ night:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900"><defs><linearGradient id="n" x2="0" y2="1"><stop stop-color="#020817"/><stop offset="1" stop-color="#15104a"/></linearGradient></defs><rect width="1200" height="900" fill="url(#n)"/><circle cx="900" cy="200" r="95" fill="#fff4c5"/><circle cx="935" cy="170" r="95" fill="#070b21"/><g fill="#fff"><circle cx="120" cy="120" r="3"/><circle cx="220" cy="300" r="2"/><circle cx="350" cy="150" r="2"/><circle cx="470" cy="350" r="3"/><circle cx="600" cy="90" r="2"/><circle cx="730" cy="270" r="3"/><circle cx="1030" cy="370" r="2"/><circle cx="1100" cy="110" r="3"/><circle cx="150" cy="650" r="2"/><circle cx="420" cy="600" r="2"/><circle cx="760" cy="620" r="3"/></g><path d="M0 730 Q160 600 330 720 T670 710 T1000 720 T1200 690V900H0Z" fill="#030713"/><path d="M0 760 Q170 670 330 750 T680 740 T1200 750" fill="none" stroke="#4d5da8" stroke-opacity=".35" stroke-width="8"/></svg>`,
+ forest:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900"><defs><linearGradient id="f" x2="0" y2="1"><stop stop-color="#9ce6a9"/><stop offset=".5" stop-color="#28745b"/><stop offset="1" stop-color="#073e35"/></linearGradient><radialGradient id="sun"><stop stop-color="#fff6b0"/><stop offset="1" stop-color="#fff6b0" stop-opacity="0"/></radialGradient></defs><rect width="1200" height="900" fill="url(#f)"/><circle cx="830" cy="170" r="150" fill="url(#sun)"/><path d="M120 900L190 430 245 500 305 350 355 520 430 410 500 900Z" fill="#075440"/><path d="M720 900L770 400 820 500 880 300 940 510 1010 390 1090 900Z" fill="#064537"/><path d="M0 740 Q260 620 520 760 T1200 730V900H0Z" fill="#0b5141" opacity=".82"/><path d="M150 0 Q220 260 150 530" fill="none" stroke="#b8efbd" stroke-opacity=".22" stroke-width="35"/><path d="M1010 0 Q920 260 990 520" fill="none" stroke="#b8efbd" stroke-opacity=".18" stroke-width="45"/></svg>`,
+ neon:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900"><defs><linearGradient id="bg" x2="1"><stop stop-color="#07051b"/><stop offset=".5" stop-color="#24105e"/><stop offset="1" stop-color="#09031c"/></linearGradient><linearGradient id="n" x2="1"><stop stop-color="#00e5ff"/><stop offset=".5" stop-color="#a855f7"/><stop offset="1" stop-color="#ff2bd6"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="16"/></filter></defs><rect width="1200" height="900" fill="url(#bg)"/><path d="M-80 650 C150 120 320 720 520 280 S880 170 1280 560" fill="none" stroke="#00e5ff" stroke-width="45" opacity=".25" filter="url(#b)"/><path d="M-80 650 C150 120 320 720 520 280 S880 170 1280 560" fill="none" stroke="url(#n)" stroke-width="9"/><g fill="#fff" opacity=".8"><circle cx="180" cy="150" r="2"/><circle cx="500" cy="120" r="3"/><circle cx="1040" cy="210" r="2"/></g><rect x="0" y="720" width="1200" height="180" fill="#04030e"/><path d="M0 720L120 600 220 720 360 560 490 720 650 590 790 720 940 570 1080 720 1200 610V900H0Z" fill="#0a0820"/></svg>`,
+ fire:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900"><defs><linearGradient id="f" x2="0" y2="1"><stop stop-color="#ffe68a"/><stop offset=".4" stop-color="#ff7b2e"/><stop offset="1" stop-color="#9d1824"/></linearGradient><radialGradient id="g"><stop stop-color="#fff7a8"/><stop offset="1" stop-color="#ff7b20" stop-opacity="0"/></radialGradient></defs><rect width="1200" height="900" fill="url(#f)"/><ellipse cx="600" cy="650" rx="430" ry="240" fill="url(#g)" opacity=".8"/><path d="M0 820 C90 650 130 560 210 700 C250 770 270 480 350 610 C410 710 430 370 520 540 C590 680 600 390 690 560 C760 700 780 470 850 610 C930 760 950 560 1020 650 C1100 750 1140 680 1200 590V900H0Z" fill="#ffcf3f"/><path d="M180 900 C270 720 320 680 390 760 C450 830 500 610 560 700 C640 820 690 650 760 760 C820 850 890 730 1010 900Z" fill="#fff1a1" opacity=".8"/></svg>`
+};
+function ht41ThemeDataUrl(name,dim=false){
+  const svg=HT41_THEME_ART[name]||HT41_THEME_ART.default;
+  const overlay=dim?'<rect width="1200" height="900" fill="#071020" opacity=".20"/>':'';
+  const body=svg.replace('</svg>',overlay+'</svg>');
+  return 'url("data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(body)+'")';
+}
+</script>
+
+
+\n<style id="ht41-v7-final-fix">\n/* ===== FINAL TASKBAR FIX ===== */\n#bottomNav.bottom-nav{\n  position:fixed!important;\n  left:50%!important;\n  top:auto!important;\n  right:auto!important;\n  bottom:max(10px,env(safe-area-inset-bottom))!important;\n  transform:translate3d(-50%,0,0)!important;\n  width:min(560px,calc(100vw - 28px))!important;\n  max-width:calc(100vw - 16px)!important;\n  z-index:99999!important;\n  contain:none!important;\n  isolation:isolate!important;\n}\n#bottomNav.bottom-nav > button{\n  position:relative!important;\n  z-index:2!important;\n  pointer-events:auto!important;\n  touch-action:manipulation!important;\n}\n#bottomNav .nav-slider{z-index:0!important;pointer-events:none!important}\n\n/* ===== FINAL THEME BUTTON FIX ===== */\n#chatThemeButton{\n  position:relative!important;\n  z-index:100000!important;\n  display:grid!important;\n  place-items:center!important;\n  pointer-events:auto!important;\n  touch-action:manipulation!important;\n  cursor:pointer!important;\n}\n#chatThemePanel{\n  position:fixed!important;\n  z-index:100001!important;\n  pointer-events:auto!important;\n}\n#chatThemePanel.hidden{pointer-events:none!important}\n.chat-theme-grid,.chat-theme-grid button,.chat-theme{\n  pointer-events:auto!important;\n  touch-action:manipulation!important;\n}\n\n/* ===== FINAL 3-DOTS FIX ===== */\n.chat-more,[data-more-chat],[data-more-group]{\n  position:absolute!important;\n  right:6px!important;\n  top:50%!important;\n  transform:translateY(-50%)!important;\n  z-index:100000!important;\n  pointer-events:auto!important;\n  touch-action:manipulation!important;\n  cursor:pointer!important;\n}\n.chat-person{position:relative!important}\n\n@media(max-width:700px){\n  #bottomNav.bottom-nav{\n    width:calc(100vw - 16px)!important;\n    max-width:560px!important;\n    height:62px!important;\n    bottom:max(7px,env(safe-area-inset-bottom))!important;\n    transform:translate3d(-50%,0,0)!important;\n  }\n  #chatThemeButton{width:42px!important;height:42px!important}\n}\n</style>\n
+<style id="ht41-v8-taskbar-fix">
+#bottomNav.bottom-nav{
+  position:fixed!important;left:50%!important;right:auto!important;top:auto!important;
+  bottom:max(8px,env(safe-area-inset-bottom))!important;transform:translateX(-50%)!important;
+  z-index:9999!important;
+}
+body.ht-chat-detail #bottomNav,
+body.chat-detail-mode #bottomNav,
+#app.chat-detail-mode #bottomNav{display:none!important}
+body.ht-chat-detail #messagesPage,body.chat-detail-mode #messagesPage{padding-bottom:0!important}
+@media(max-width:700px){
+ #bottomNav.bottom-nav{width:calc(100vw - 16px)!important;max-width:560px!important}
+ body.ht-chat-detail #app,body.chat-detail-mode #app,
+ body.ht-chat-detail #messagesPage,body.chat-detail-mode #messagesPage{
+  height:100dvh!important;min-height:100dvh!important
+ }
+}
+</style>
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -854,7 +1350,7 @@ html.dark .chat-theme-panel,html.dark .chat-action-menu,html.dark .quick-reactio
         </div>
       </div>
     </section>
-    <section class="page hidden" id="profilePage"><header class="top"><button class="mobile-menu" id="profileMobileMenu"></button><div><h2>Trang cá nhân</h2><small>Hồ sơ của bạn</small></div></header><div class="page-scroll"><div class="profile-wrap"><div class="profile-hero glass"><div class="profile-cover" id="profileCover"><div class="profile-hero-avatar" id="profileHeroAvatar"><button class="avatar-edit" id="avatarEditBtn" type="button" title="Đổi ảnh đại diện"></button></div><button class="cover-edit-btn" id="coverEditBtn" type="button" title="Đổi ảnh bìa">📷 Đổi ảnh bìa</button><input id="coverInput" type="file" accept="image/*" class="hidden"></div><h2 id="profileName">...</h2><p id="profileEmail">...</p><div class="profile-buttons"><button class="profile-btn primary2" id="changeAvatarBtn" type="button"></button><input id="avatarInput" type="file" accept="image/*" class="hidden"></div><div class="profile-bio-box"><div class="profile-bio-head"><b>Tiểu sử</b><button id="editBioButton" type="button">Chỉnh sửa</button></div><p id="profileBioText">Chưa có tiểu sử.</p><textarea id="profileBioInput" maxlength="160" class="hidden" placeholder="Viết vài dòng về bạn..."></textarea><div id="profileBioActions" class="hidden" style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px"><button id="cancelBioButton" type="button" class="bio-cancel">Hủy</button><button id="saveBioButton" type="button" class="bio-save">Lưu</button></div></div></div><div class="profile-section glass"><h3>Cài đặt</h3><div class="setting-row"><span>🔔 Thông báo tin nhắn</span><button id="notificationButton">Bật</button></div><div class="setting-row"><span>✓✓ Đã xem tin nhắn</span><button id="readReceiptButton">Bật</button></div><div class="setting-row"><span>🌗 Giao diện</span><button id="themeButton">Tối</button></div><div class="setting-row"><span>☑️ XMDT</span><button id="xmdtButton" type="button">Xác thực</button></div><button id="logoutSettingsButton" class="logout-settings-button" type="button">🚪 Đăng xuất</button><div class="setting-row"><span>👤 Tài khoản</span><span id="profileUid" style="color:var(--muted);font-size:11px"></span></div><button class="info-btn" id="appInfoButton">ⓘ Thông tin ứng dụng</button></div></div></div></section>
+    <section class="page hidden" id="profilePage"><header class="top"><button class="mobile-menu" id="profileMobileMenu"></button><div><h2>Trang cá nhân</h2><small>Hồ sơ của bạn</small></div></header><div class="page-scroll"><div class="profile-wrap"><div class="profile-hero glass"><div class="profile-cover" id="profileCover"><div class="profile-hero-avatar" id="profileHeroAvatar"><button class="avatar-edit" id="avatarEditBtn" type="button" title="Đổi ảnh đại diện"></button></div><button class="cover-edit-btn" id="coverEditBtn" type="button" title="Đổi ảnh bìa">📷 Đổi ảnh bìa</button><input id="coverInput" type="file" accept="image/*" class="hidden"></div><h2 id="profileName">...</h2><p id="profileEmail">...</p><div class="profile-buttons"><button class="profile-btn primary2" id="changeAvatarBtn" type="button"></button><input id="avatarInput" type="file" accept="image/*" class="hidden"></div><div class="profile-bio-box"><div class="profile-bio-head"><b>Tiểu sử</b><button id="editBioButton" type="button">Chỉnh sửa</button></div><p id="profileBioText">Chưa có tiểu sử.</p><textarea id="profileBioInput" maxlength="160" class="hidden" placeholder="Viết vài dòng về bạn..."></textarea><div id="profileBioActions" class="hidden" style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px"><button id="cancelBioButton" type="button" class="bio-cancel">Hủy</button><button id="saveBioButton" type="button" class="bio-save">Lưu</button></div></div></div><div class="profile-section glass"><h3>Cài đặt</h3><div class="setting-row"><span>🔔 Thông báo tin nhắn</span><button id="notificationButton">Bật</button></div><div class="setting-row"><span>✓✓ Đã xem tin nhắn</span><button id="readReceiptButton">Bật</button></div><div class="setting-row"><span>🌗 Giao diện</span><button id="themeButton">Tối</button></div><div class="setting-row taskbar-color-setting"><span>🎨 Màu thanh taskbar</span><button id="taskbarColorButton" type="button">Xanh</button></div><div id="taskbarColorPanel" class="taskbar-color-panel hidden" aria-label="Chọn màu thanh taskbar"><div class="taskbar-color-head"><b>Màu thanh taskbar</b><button id="closeTaskbarColor" type="button">×</button></div><div class="taskbar-swatches" id="taskbarSwatches"></div><div class="taskbar-custom-row"><label for="taskbarColorInput">Màu tùy chỉnh</label><input id="taskbarColorInput" type="color" value="#625ff2"></div></div><div class="setting-row"><span>☑️ XMDT</span><button id="xmdtButton" type="button">Xác thực</button></div><button id="logoutSettingsButton" class="logout-settings-button" type="button">🚪 Đăng xuất</button><div class="setting-row"><span>👤 Tài khoản</span><span id="profileUid" style="color:var(--muted);font-size:11px"></span></div><button class="info-btn" id="appInfoButton">ⓘ Thông tin ứng dụng</button></div></div></div></section>
   </main>
 
   <nav class="bottom-nav" id="bottomNav"><span class="nav-slider" aria-hidden="true"></span><button data-page="homePage" class="active" id="navHome"><span class="nav-icon" id="iconHome"></span><span>Trang chủ</span></button><button data-page="messagesPage" id="navMessages"><span class="nav-icon" id="iconMessages"></span><span>Tin nhắn</span><span class="nav-dot hidden" id="messageBadge">0</span></button><button data-page="friendsPage" id="navFriends"><span class="nav-icon" id="iconFriends"></span><span>Bạn bè</span><span class="nav-dot hidden" id="friendsBadge">0</span></button><button data-page="profilePage" id="navProfile"><span class="nav-icon" id="iconProfile"></span><span>Cá nhân</span></button></nav>
@@ -864,7 +1360,7 @@ html.dark .chat-theme-panel,html.dark .chat-action-menu,html.dark .quick-reactio
 
 <div id="postModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Tạo bài viết</h3><button class="close" id="closePostModal"></button></div><textarea id="postText" rows="5" style="width:100%;margin-top:15px;border:1px solid var(--line);border-radius:15px;padding:12px;outline:0;resize:vertical" placeholder="Bạn đang nghĩ gì?"></textarea><div style="margin-top:10px"><label class="file-label" id="postImageLabel"></label><input id="postImageInput" type="file" accept="image/*" class="hidden"></div><div style="display:flex;justify-content:flex-end;margin-top:15px"><button class="primary" id="publishPost" style="width:auto;padding:11px 18px">Đăng bài</button></div></div></div>
 <div id="profileMiniModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Thông tin</h3><button class="close" id="closeProfileMini"></button></div><div id="profileMiniBody" style="padding-top:15px"></div></div></div><div id="noteModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Ghi chú / suy nghĩ</h3><button class="close" id="closeNoteModal"></button></div><p style="color:var(--muted);font-size:13px;margin:10px 0 0">Viết một ghi chú ngắn cho hôm nay. Bạn bè của bạn có thể nhìn thấy ghi chú này trong phần Tin nhắn.</p><textarea id="noteText" class="note-modal-text" maxlength="60" placeholder="Bạn đang nghĩ gì?"></textarea><div class="note-modal-actions"><button id="deleteNote" class="note-delete">Xóa</button><button id="cancelNote" class="note-cancel">Hủy</button><button id="saveNote" class="note-save">Lưu ghi chú</button></div></div></div>
-<div id="profileViewModal" class="modal hidden"><div class="modal-card profile-view-card"><div class="modal-head"><h3>Trang cá nhân</h3><button class="close" id="closeProfileView"></button></div><div id="profileViewBody"></div></div></div><div id="groupModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Tạo nhóm</h3><button class="close" id="closeGroupModal"></button></div><input id="groupNameInput" class="group-name-input" maxlength="60" placeholder="Tên nhóm"><div id="groupMemberPicker" class="group-member-picker"></div><div style="display:flex;justify-content:flex-end;margin-top:12px"><button id="saveGroupButton" class="note-save">Tạo nhóm</button></div></div></div><div id="appInfoModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Thông tin ứng dụng</h3><button class="close" id="closeAppInfo"></button></div><div class="app-info-list" style="padding-top:10px"><div class="app-info-logo" id="appInfoLogo"></div><div class="app-info-row"><b>Ứng dụng</b><span>HT Chat</span></div><div class="app-info-row"><b>Phiên bản</b><span>4.1.0</span></div><div class="app-info-row"><b>Công ty</b><span>Công ty cổ phần PHT</span></div><div class="app-info-row"><b>Nền tảng</b><span>Web / GitHub Pages</span></div><div class="app-info-row"><b>Dịch vụ</b><span>Supabase</span></div></div></div></div><div id="chatActionMenu" class="chat-action-menu hidden"><button data-chat-action="delete">🗑️ <span>Xóa đoạn chat</span></button><button data-chat-action="mute">🔕 <span>Tắt thông báo</span></button><button data-chat-action="block">🚫 <span>Chặn</span></button></div><div id="chatThemePanel" class="chat-theme-panel hidden"><div class="chat-theme-head"><b>Chủ đề đoạn chat</b><button id="closeChatTheme" type="button">×</button></div><div id="chatThemeGrid" class="chat-theme-grid"></div></div><div id="notificationPanel" class="notification-panel hidden" role="dialog" aria-label="Thông báo"><div class="notification-head"><b>Thông báo</b><button id="clearNotificationBadge" type="button">Đánh dấu đã xem</button></div><div id="notificationList"></div></div>
+<div id="profileViewModal" class="modal hidden"><div class="modal-card profile-view-card"><div class="modal-head"><h3>Trang cá nhân</h3><button class="close" id="closeProfileView"></button></div><div id="profileViewBody"></div></div></div><div id="groupModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Tạo nhóm</h3><button class="close" id="closeGroupModal"></button></div><input id="groupNameInput" class="group-name-input" maxlength="60" placeholder="Tên nhóm"><div id="groupMemberPicker" class="group-member-picker"></div><div style="display:flex;justify-content:flex-end;margin-top:12px"><button id="saveGroupButton" class="note-save">Tạo nhóm</button></div></div></div><div id="appInfoModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Thông tin ứng dụng</h3><button class="close" id="closeAppInfo"></button></div><div class="app-info-list" style="padding-top:10px"><div class="app-info-logo" id="appInfoLogo"></div><div class="app-info-row"><b>Ứng dụng</b><span>HT Chat</span></div><div class="app-info-row"><b>Phiên bản</b><span>4.1-v6</span></div><div class="app-info-row"><b>Công ty</b><span>Công ty cổ phần PHT</span></div><div class="app-info-row"><b>Nền tảng</b><span>Web / GitHub Pages</span></div><div class="app-info-row"><b>Dịch vụ</b><span>Supabase</span></div></div></div></div><div id="chatActionMenu" class="chat-action-menu hidden"><button data-chat-action="delete">🗑️ <span>Xóa đoạn chat</span></button><button data-chat-action="mute">🔕 <span>Tắt thông báo</span></button><button data-chat-action="block">🚫 <span>Chặn</span></button></div><div id="chatThemePanel" class="chat-theme-panel hidden"><div class="chat-theme-head"><b>Chủ đề đoạn chat</b><button id="closeChatTheme" type="button">×</button></div><div id="chatThemeGrid" class="chat-theme-grid"></div></div><div id="notificationPanel" class="notification-panel hidden" role="dialog" aria-label="Thông báo"><div class="notification-head"><b>Thông báo</b><button id="clearNotificationBadge" type="button">Đánh dấu đã xem</button></div><div id="notificationList"></div></div>
 
 <script type="module">
 window.addEventListener('DOMContentLoaded',()=>{import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm').then(async({createClient})=>{
@@ -982,6 +1478,7 @@ async function chatMetaFor(uid){
   return {latest:latestQ.data?.[0]||null,unread:unreadQ.count||0};
 }
 async function openChatById(id){
+ document.body.classList.add("ht-chat-detail","chat-detail-mode"); document.getElementById("app")?.classList.add("chat-detail-mode");
   switchPage('messagesPage',true);
   const {data}=await supabase.from('profiles').select('*').eq('id',id).single();
   if(!data)return;
@@ -1092,7 +1589,7 @@ async function renderChatList(){
     const groupMetas=await Promise.all(groups.map(async g=>{const key=seenKey('group_'+g.id),lastSeen=Number(localStorage.getItem(key)||0);const latestQ=await supabase.from('messages').select('id,sender_id,content,created_at').eq('group_id',g.id).order('created_at',{ascending:false}).limit(1);const unreadQ=lastSeen?await supabase.from('messages').select('id',{count:'exact',head:true}).eq('group_id',g.id).neq('sender_id',currentUser.id).gt('created_at',new Date(lastSeen).toISOString()):await supabase.from('messages').select('id',{count:'exact',head:true}).eq('group_id',g.id).neq('sender_id',currentUser.id);return [g.id,{latest:latestQ.data?.[0]||null,unread:unreadQ.count||0}] }));
     groupMetas.forEach(([id,m])=>chatUnread['g:'+id]=m.unread||0);groups=groups.filter(g=>!getChatPrefs('group_'+g.id).deleted);
     groupItems.innerHTML=groups.map(g=>{const m=groupMetas.find(x=>x[0]===g.id)?.[1]||{};const latest=m.latest;const preview=latest?(latest.sender_id===currentUser.id?'Bạn: ':'')+messagePreview(latest.content):'Chưa có tin nhắn';const unread=m.unread||0;return `<div class="chat-person group-row"><button class="person-row ${selectedGroup?.id===g.id?'active':''}" data-group="${g.id}"><span class="group-avatar">👥</span><span class="chat-preview"><span class="chat-preview-top"><b>${escapeHtml(g.name)}</b><span class="chat-time">${chatTime(latest?.created_at)}</span></span><span class="chat-preview-text"><span>${escapeHtml(preview)}</span>${unread?`<span class="chat-unread">${unread>99?'99+':unread}</span>`:''}</span></span></button><button class="chat-more" type="button" data-more-group="${g.id}" title="Tùy chọn">⋮</button></div>`}).join('');
-    groupItems.querySelectorAll('[data-group]').forEach(b=>b.onclick=()=>{localStorage.setItem(seenKey('group_'+b.dataset.group),String(Date.now()));openGroupById(b.dataset.group)});
+    groupItems.querySelectorAll('[data-group]').forEach(b=>b.onclick=()=>{localStorage.setItem(seenKey('group_'+b.dataset.group),String(Date.now()));openGroupById(b.dataset.group)}); bindChatMoreButtons();
   }else groupItems.innerHTML='';
   if(!ids.length){items.innerHTML='<div class="chat-list-empty"><strong>Chưa có cuộc trò chuyện</strong><div style="margin-top:5px">Hãy kết bạn để bắt đầu nhắn tin.</div></div>';renderChatNote([])}
   else{
@@ -1106,7 +1603,7 @@ users.sort((a,b)=>{
 metas.forEach(([id,m])=>chatUnread[id]=m.unread||0);
 renderChatNote(users);
     items.innerHTML=users.map(u=>{const m=metaMap.get(u.id)||{};const latest=m.latest;const mine=latest?.sender_id===currentUser.id;const preview=latest?messagePreview(latest.content):'Chưa có tin nhắn';const unread=m.unread||0;return `<div class="chat-person"><button class="person-row ${selectedUser?.id===u.id?'active':''}" data-chat="${u.id}">${avatarHtml(u.username,u.avatar_url||avatarUrlFor(u.id),'small',onlineUsers.has(u.id))}<span class="chat-preview"><span class="chat-preview-top">${nameHtml(u.username,u.is_verified)}<span class="chat-time">${chatTime(latest?.created_at)}</span><span class="activity-time">${relativeActivityTime(activityMap.get(String(u.id)),onlineUsers.has(u.id))}</span></span><span class="chat-preview-text"><span>${mine?'Bạn: ':''}${escapeHtml(preview)}</span>${unread?`<span class="chat-unread">${unread>99?'99+':unread}</span>`:''}</span></span></button><button class="chat-more" type="button" data-more-chat="${u.id}" title="Tùy chọn">⋮</button></div>`}).join('');
-    items.querySelectorAll('[data-chat]').forEach(b=>b.onclick=()=>openChatById(b.dataset.chat));
+    items.querySelectorAll('[data-chat]').forEach(b=>b.onclick=()=>openChatById(b.dataset.chat)); bindChatMoreButtons();
   }
   updateMessageBadge();filterChatList($('chatListSearch')?.value||'');bindChatMoreButtons();
 }
@@ -1491,7 +1988,7 @@ function saveChatPrefs(other,p){localStorage.setItem(chatPrefsKey(other),JSON.st
 function currentChatKey(){return selectedGroup?'group_'+selectedGroup.id:selectedUser?.id||''}
 function applyChatTheme(){applySharedChatTheme()}
 async function openChatTheme(){await openSharedChatTheme()}
-$('chatThemeButton')?.addEventListener('click',e=>{e.preventDefault();openSharedChatTheme()});$('closeChatTheme')?.addEventListener('click',()=>$('chatThemePanel')?.classList.add('hidden'));
+if($('chatThemeButton')){const b=$('chatThemeButton');b.onclick=e=>{e.preventDefault();e.stopPropagation();openSharedChatTheme()};b.onpointerup=e=>{e.preventDefault();e.stopPropagation();openSharedChatTheme()}} if($('closeChatTheme'))$('closeChatTheme').onclick=e=>{e.preventDefault();$('chatThemePanel')?.classList.add('hidden')};
 
 function quickReactionValue(){return sharedChatSettings.quick_reaction||'❤️'}
 function paintQuickReaction(){paintSharedQuickReaction()}
@@ -1521,13 +2018,13 @@ function applyProfileCover(url){const el=$('profileCover');if(!el)return;if(url)
 async function updateCover(file){if(!file||!file.type.startsWith('image/'))return toast('Vui lòng chọn ảnh');if(file.size>8*1024*1024)return toast('Ảnh tối đa 8MB');const path=`covers/${currentUser.id}.jpg`;const {error}=await supabase.storage.from(AVATAR_BUCKET).upload(path,file,{upsert:true,contentType:file.type,cacheControl:'3600'});if(error)return toast('Không tải được ảnh bìa: '+error.message);const url=postImageUrl(path)+'?v='+Date.now();const {error:e2}=await supabase.from('profiles').update({cover_url:url}).eq('id',currentUser.id);if(e2)return toast('Ảnh đã tải nhưng chưa lưu hồ sơ: '+e2.message);currentProfile={...currentProfile,cover_url:url};applyProfileCover(url);toast('Đã cập nhật ảnh bìa')}
 $('coverEditBtn')?.addEventListener('click',()=>$('coverInput')?.click());$('coverInput')?.addEventListener('change',e=>{updateCover(e.target.files?.[0]);e.target.value='' });
 
-function positionChatMenu(btn){const m=$('chatActionMenu');if(!m)return;const r=btn.getBoundingClientRect();m.classList.remove('hidden');m.style.left=Math.min(window.innerWidth-205,Math.max(8,r.right-195))+'px';m.style.top=Math.min(window.innerHeight-180,Math.max(8,r.bottom+5))+'px'}
+function positionChatMenu(btn){const m=$('chatActionMenu');if(!m)return;const r=btn.getBoundingClientRect();m.classList.remove('hidden');m.style.display='block';m.style.left=Math.min(window.innerWidth-215,Math.max(8,r.right-205))+'px';m.style.top=Math.min(window.innerHeight-185,Math.max(8,r.bottom+6))+'px';m.style.zIndex='50001'}
 function openChatActionMenu(btn){chatActionTarget={id:btn.dataset.moreChat||null,groupId:btn.dataset.moreGroup||null};positionChatMenu(btn);const key=chatActionTarget.groupId?'group_'+chatActionTarget.groupId:chatActionTarget.id;const p=getChatPrefs(key);const muteBtn=$('chatActionMenu').querySelector('[data-chat-action="mute"]');const blockBtn=$('chatActionMenu').querySelector('[data-chat-action="block"]');if(muteBtn)muteBtn.innerHTML=p.muted?'🔔 <span>Bật thông báo</span>':'🔕 <span>Tắt thông báo</span>';if(blockBtn)blockBtn.innerHTML=p.blocked?'✅ <span>Bỏ chặn</span>':'🚫 <span>Chặn</span>'}
 async function deleteChatTarget(){if(!chatActionTarget)return;const key=chatActionTarget.groupId?'group_'+chatActionTarget.groupId:chatActionTarget.id;const p=getChatPrefs(key);p.deleted=true;saveChatPrefs(key,p);if(chatActionTarget.id){const id=chatActionTarget.id;await supabase.from('messages').delete().or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${id}),and(sender_id.eq.${id},receiver_id.eq.${currentUser.id})`)}else if(chatActionTarget.groupId){await supabase.from('messages').delete().eq('group_id',chatActionTarget.groupId)}$('chatActionMenu').classList.add('hidden');await renderChatList();toast('Đã xóa đoạn chat')}
 $('chatActionMenu')?.querySelectorAll('[data-chat-action]').forEach(b=>b.onclick=async()=>{const action=b.dataset.chatAction;if(!chatActionTarget)return;const key=chatActionTarget.groupId?'group_'+chatActionTarget.groupId:chatActionTarget.id;const p=getChatPrefs(key);if(action==='delete'){if(confirm('Xóa đoạn chat này?'))await deleteChatTarget();return}if(action==='mute'){p.muted=!p.muted;saveChatPrefs(key,p);$('chatActionMenu').classList.add('hidden');toast(p.muted?'Đã tắt thông báo cho đoạn chat':'Đã bật thông báo cho đoạn chat');return}if(action==='block'){p.blocked=!p.blocked;saveChatPrefs(key,p);$('chatActionMenu').classList.add('hidden');toast(p.blocked?'Đã chặn tài khoản':'Đã bỏ chặn');await renderChatList();return}});
 document.addEventListener('click',e=>{const more=e.target.closest('[data-more-chat],[data-more-group]');if(more){e.preventDefault();e.stopPropagation();openChatActionMenu(more);return}if(!$('chatActionMenu')?.contains(e.target))$('chatActionMenu')?.classList.add('hidden');if(!$('chatThemePanel')?.contains(e.target)&&!e.target.closest('#chatThemeButton'))$('chatThemePanel')?.classList.add('hidden')});
 
-function bindChatMoreButtons(){document.querySelectorAll('[data-more-chat],[data-more-group]').forEach(b=>{if(b.dataset.boundMore)return;b.dataset.boundMore='1';b.onclick=e=>{e.preventDefault();e.stopPropagation();openChatActionMenu(b)}})}
+function bindChatMoreButtons(){document.querySelectorAll('[data-more-chat],[data-more-group]').forEach(b=>{if(b.dataset.boundMore)return;b.dataset.boundMore='1';const open=e=>{e.preventDefault();e.stopPropagation();openChatActionMenu(b)};b.onclick=open;b.onpointerup=open;b.ontouchend=open})}
 async function saveBio(){const bio=$('profileBioInput').value.trim().slice(0,160);const {data,error}=await supabase.from('profiles').update({bio}).eq('id',currentUser.id).select('*').single();if(error)return toast('Không lưu được tiểu sử: '+error.message);currentProfile={...currentProfile,...(data||{bio})};$('profileBioText').textContent=bio||'Chưa có tiểu sử.';$('profileBioInput').classList.add('hidden');$('profileBioActions').classList.add('hidden');toast('Đã cập nhật tiểu sử')}
 $('editBioButton').onclick=()=>{$('profileBioInput').value=currentProfile?.bio||'';$('profileBioInput').classList.remove('hidden');$('profileBioActions').classList.remove('hidden');$('profileBioInput').focus()};$('cancelBioButton').onclick=()=>{$('profileBioInput').classList.add('hidden');$('profileBioActions').classList.add('hidden')};$('saveBioButton').onclick=saveBio;
 async function openProfileView(id){if(!id)return;const {data,error}=await supabase.from('profiles').select('*').eq('id',id).single();if(error||!data)return toast('Không tải được trang cá nhân');data={...data,is_verified:data.is_verified===true||(id===currentUser.id&&localStorage.getItem('htchat_xmdt_verified_'+currentUser.id)==='1')};const url=data.avatar_url||avatarUrlFor(id);$('profileViewBody').innerHTML=`<div class="profile-view-hero"><div class="profile-view-avatar">${url?`<img src="${escapeHtml(url)}" alt="">`:escapeHtml(initials(data.username))}</div><h3>${nameHtml(data.username||'Người dùng',data.is_verified,true)}</h3><div class="profile-view-bio">${escapeHtml(data.bio?.trim()||'Chưa có tiểu sử.')}</div><div class="profile-view-actions">${id!==currentUser.id?`<button class="profile-action-primary" id="profileViewChat">Nhắn tin</button>`:''}<button class="profile-action-soft" id="profileViewClose2">Đóng</button></div></div>`;$('profileViewModal').classList.remove('hidden');$('profileViewChat')?.addEventListener('click',()=>{$('profileViewModal').classList.add('hidden');openChatById(id)});$('profileViewClose2').onclick=()=>$('profileViewModal').classList.add('hidden')}
@@ -1982,56 +2479,40 @@ function applySharedChatTheme(){
   const names=V41_THEMES.map(x=>x[2]);
   box.classList.remove(...names);
   const theme=sharedChatSettings.theme||'default';
-  if(theme!=='default')box.classList.add('theme-'+theme);
-  document.querySelectorAll('.chat-theme').forEach(x=>{
-    x.classList.toggle('active',x.dataset.theme===theme);
-  });
-}
-function paintSharedQuickReaction(){
-  const b=$('sendButton');if(!b)return;
-  const hasText=!!$('messageInput')?.value.trim();
-  if(hasText){
-    b.dataset.mode='send';
-    b.innerHTML=icons.send||'➤';
-    b.title='Gửi tin nhắn';
-    b.classList.remove('quick-reaction-button');
-  }else{
-    b.dataset.mode='reaction';
-    b.innerHTML=`<span class="quick-reaction-face">${escapeHtml(sharedChatSettings.quick_reaction||'❤️')}</span>`;
-    b.title='Cảm xúc nhanh • nhấn giữ để đổi';
-    b.classList.add('quick-reaction-button');
-  }
-}
-function quickReactionValue(){
-  return sharedChatSettings.quick_reaction||'❤️';
-}
-async function syncSharedChatSettings(force=false){
-  if(!selectedUser)return;
-  const before=JSON.stringify(sharedChatSettings);
-  await loadSharedChatSettings(selectedUser.id,force);
-  if(JSON.stringify(sharedChatSettings)!==before){
-    applySharedChatTheme();
-    paintSharedQuickReaction();
-  }
+  box.classList.add('theme-'+theme);
+  box.style.setProperty('background-image',ht41ThemeDataUrl(theme,true),'important');
+  box.style.setProperty('background-size','cover','important');
+  box.style.setProperty('background-position','center','important');
+  box.style.setProperty('background-repeat','no-repeat','important');
+  document.querySelectorAll('.chat-theme').forEach(x=>x.classList.toggle('active',x.dataset.sharedTheme===theme));
 }
 async function openSharedChatTheme(){
-  if(!selectedUser)return toast('Hãy mở một đoạn chat trước');
+  if(!selectedUser&&!selectedGroup){toast('Hãy mở một đoạn chat trước');return}
+  const targetId=selectedUser?.id||selectedGroup?.id;
   const panel=$('chatThemePanel'),grid=$('chatThemeGrid');if(!panel||!grid)return;
-  await loadSharedChatSettings(selectedUser.id,true);
-  grid.innerHTML=V41_THEMES.map(([id,name,cls])=>
-    `<button type="button" class="chat-theme ${cls}" data-shared-theme="${id}"><small>${name}</small></button>`
+  if(selectedUser)await loadSharedChatSettings(selectedUser.id,true);
+  grid.innerHTML=V41_THEMES.map(([id,name])=>
+    `<button type="button" class="chat-theme" data-shared-theme="${id}" aria-label="${escapeHtml(name)}"><small>${escapeHtml(name)}</small></button>`
   ).join('');
   grid.querySelectorAll('[data-shared-theme]').forEach(btn=>{
-    btn.classList.toggle('active',btn.dataset.sharedTheme===(sharedChatSettings.theme||'default'));
-    btn.onclick=async()=>{
-      await saveSharedChatSettings(selectedUser.id,{theme:btn.dataset.sharedTheme});
+    const id=btn.dataset.sharedTheme;
+    btn.style.backgroundImage=ht41ThemeDataUrl(id,false);
+    btn.style.backgroundSize='cover';btn.style.backgroundPosition='center';btn.style.backgroundRepeat='no-repeat';
+    btn.classList.toggle('active',id===(sharedChatSettings.theme||'default'));
+    btn.addEventListener('pointerup',async e=>{
+      e.preventDefault();e.stopPropagation();
+      if(selectedUser)await saveSharedChatSettings(selectedUser.id,{theme:id});
+      else { sharedChatSettings={...sharedChatSettings,theme:id}; localStorage.setItem('htchat_group_theme_'+targetId,id); }
       applySharedChatTheme();
       panel.classList.add('hidden');
-      toast('Đã đổi chủ đề — cả hai bên sẽ thấy');
-    };
+      toast('Đã đổi chủ đề cho đoạn chat');
+    },{passive:false});
   });
   panel.classList.remove('hidden');
+  panel.style.display='block';
+  panel.scrollTop=0;
 }
+
 async function openSharedQuickReactionPicker(){
   if(!selectedUser)return;
   await loadSharedChatSettings(selectedUser.id);
@@ -2624,6 +3105,129 @@ document.addEventListener('DOMContentLoaded',()=>{
   }else{
     install();
   }
+})();
+</script>
+
+<script id="ht41-v3-settings-js">
+(function(){
+  const palettes=[
+    ['#625ff2','Tím'],['#3b82f6','Xanh'],['#06b6d4','Xanh ngọc'],['#10b981','Lục'],
+    ['#f59e0b','Vàng'],['#f97316','Cam'],['#ef476f','Hồng đỏ'],['#8b5cf6','Tím đậm']
+  ];
+  const $=id=>document.getElementById(id);
+  function hexRgb(hex){
+    const h=String(hex).replace('#','');
+    const n=parseInt(h,16);
+    return [(n>>16)&255,(n>>8)&255,n&255];
+  }
+  function setTaskbarColor(color,name){
+    if(!/^#[0-9a-fA-F]{6}$/.test(color))return;
+    const [r,g,b]=hexRgb(color);
+    document.documentElement.style.setProperty('--taskbar-color',color);
+    document.documentElement.style.setProperty('--taskbar-rgb',`${r},${g},${b}`);
+    document.documentElement.style.setProperty('--taskbar-active',`rgba(${r},${g},${b},.16)`);
+    localStorage.setItem('ht-taskbar-color',color);
+    localStorage.setItem('ht-taskbar-color-name',name||'Tùy chỉnh');
+    const btn=$('taskbarColorButton');if(btn)btn.textContent=name||'Tùy chỉnh';
+    document.querySelectorAll('.taskbar-swatch').forEach(x=>x.classList.toggle('active',x.dataset.color.toLowerCase()===color.toLowerCase()));
+    const input=$('taskbarColorInput');if(input)input.value=color;
+  }
+  function initTaskbarSettings(){
+    const panel=$('taskbarColorPanel'),sw=$('taskbarSwatches'),open=$('taskbarColorButton'),close=$('closeTaskbarColor'),input=$('taskbarColorInput');
+    if(!panel||!sw||!open)return;
+    sw.innerHTML=palettes.map(([c,n])=>`<button type="button" class="taskbar-swatch" title="${n}" aria-label="${n}" data-color="${c}" style="background:${c}"></button>`).join('');
+    sw.querySelectorAll('.taskbar-swatch').forEach(b=>b.addEventListener('click',()=>{setTaskbarColor(b.dataset.color,b.title);panel.classList.add('hidden')}));
+    open.onclick=()=>panel.classList.toggle('hidden');
+    close?.addEventListener('click',()=>panel.classList.add('hidden'));
+    input?.addEventListener('input',()=>setTaskbarColor(input.value,'Tùy chỉnh'));
+    document.addEventListener('click',e=>{if(!panel.contains(e.target)&&e.target!==open)panel.classList.add('hidden')});
+    const saved=localStorage.getItem('ht-taskbar-color')||'#625ff2';
+    const name=localStorage.getItem('ht-taskbar-color-name')||'Tím';
+    setTaskbarColor(saved,name);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initTaskbarSettings);else initTaskbarSettings();
+})();
+</script>
+
+<script id="ht41-v4-runtime-safety">
+(function(){
+  function fixTaskbar(){
+    const n=document.getElementById('bottomNav');
+    if(!n)return;
+    n.style.setProperty('position','fixed','important');
+    n.style.setProperty('left','50%','important');
+    n.style.setProperty('right','auto','important');
+    n.style.setProperty('top','auto','important');
+    n.style.setProperty('bottom','max(10px, env(safe-area-inset-bottom))','important');
+    n.style.setProperty('transform','translateX(-50%)','important');
+    n.style.setProperty('z-index','9999','important');
+    n.style.setProperty('display','grid','important');
+    n.style.setProperty('grid-template-columns','repeat(4,minmax(0,1fr))','important');
+    n.querySelectorAll(':scope > button').forEach(b=>{
+      b.style.setProperty('display','flex','important');
+    });
+  }
+  function fixMobile(){
+    if(innerWidth<=700){
+      document.documentElement.style.width='100%';
+      document.body.style.width='100%';
+      document.body.style.maxWidth='100vw';
+      const app=document.getElementById('app');
+      if(app){
+        app.style.width='100vw';
+        app.style.maxWidth='100vw';
+      }
+    }
+  }
+  fixTaskbar();fixMobile();
+  window.addEventListener('resize',()=>{fixTaskbar();fixMobile()},{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(()=>{fixTaskbar();fixMobile()},120),{passive:true});
+
+  /* Re-apply the selected theme whenever a conversation is opened. */
+  window.addEventListener('htchat:chat-opened',()=>{
+    setTimeout(()=>{
+      if(typeof applySharedChatTheme==='function')applySharedChatTheme();
+      if(typeof paintSharedQuickReaction==='function')paintSharedQuickReaction();
+    },30);
+  });
+})();
+</script>
+<script id="ht41-v5-audit">
+(function(){
+  function wire(){
+    const theme=document.getElementById('chatThemeButton');
+    if(theme){theme.style.pointerEvents='auto';theme.style.zIndex='5000'}
+    if(typeof bindChatMoreButtons==='function')bindChatMoreButtons();
+  }
+  wire();
+  setTimeout(wire,300);setTimeout(wire,1000);setTimeout(wire,2500);
+  window.addEventListener('resize',wire,{passive:true});
+})();
+</script>
+
+
+\n<script id="ht41-v7-theme-safety">\n(function(){\n  document.addEventListener('click',function(e){\n    const b=e.target.closest && e.target.closest('#chatThemeButton');\n    if(!b) return;\n    /* Let the existing button.onclick handle it. This listener only prevents\n       accidental parent handlers from changing page/taskbar state. */\n    e.stopPropagation();\n  },true);\n})();\n</script>\n
+<script id="ht41-v8-runtime">
+(function(){
+ function setDetail(on){
+  document.body.classList.toggle('ht-chat-detail',!!on);
+  document.body.classList.toggle('chat-detail-mode',!!on);
+  document.getElementById('app')?.classList.toggle('chat-detail-mode',!!on);
+ }
+ window.htChatSetDetailMode=setDetail;
+ document.addEventListener('click',function(e){
+  const back=e.target.closest&&e.target.closest('#chatBack,.chat-back,[data-chat-back],.back-to-chat-list,[data-back-to-list]');
+  if(back)setTimeout(()=>setDetail(false),80);
+  const tab=e.target.closest&&e.target.closest('#bottomNav button');
+  if(tab)setTimeout(()=>{
+   const page=document.getElementById('messagesPage');
+   if(!page||!page.classList.contains('chat-chat-mode'))setDetail(false);
+  },100);
+ },true);
+ const page=document.getElementById('messagesPage');
+ if(page)new MutationObserver(()=>{
+  setDetail(page.classList.contains('chat-chat-mode')||page.classList.contains('chat-detail-mode'));
+ }).observe(page,{attributes:true,attributeFilter:['class']});
 })();
 </script>
 </body></html>
