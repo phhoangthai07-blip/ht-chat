@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f8ff">
-<title>HT Chat 4.1.4 • Liquid Glass & Themes</title>
+<title>HT Chat 4.5.0 • Liquid Glass & Themes</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#182033;background:#f7f8fc}body{overflow:hidden}button,input,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}img{max-width:100%}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:#d8dbea;border-radius:99px}
 :root{--p:#625ff2;--p2:#8a54f6;--soft:#f0efff;--bg:#f7f8fc;--card:#fff;--line:#e9ebf2;--muted:#8992a5;--green:#25c27a;--red:#ef5870;--shadow:0 18px 55px rgba(35,40,75,.10)}
@@ -851,7 +851,7 @@ html.dark .taskbar-color-panel{background:rgba(23,26,34,.78)!important;border-co
 
 <style id="ht41-v4-final-layout-and-themes">
 /* =========================================================
-   HT CHAT 4.1-v4 — FINAL RESPONSIVE / LIQUID GLASS PATCH
+   HT CHAT 4.5.0-v4 — FINAL RESPONSIVE / LIQUID GLASS PATCH
    ========================================================= */
 
 /* ---------- 1. TASKBAR: ALWAYS BOTTOM CENTER ---------- */
@@ -1369,6 +1369,32 @@ body:not(.chat-focus) #bottomNav{display:grid!important;visibility:visible!impor
   body.chat-focus #messagesPage.chat-chat-mode .composer-wrap{margin-bottom:0!important;padding-bottom:max(8px,env(safe-area-inset-bottom))!important}
   #bottomNav.bottom-nav{width:calc(100vw - 16px)!important;max-width:560px!important;bottom:max(7px,env(safe-area-inset-bottom))!important}
   #chatThemePanel{top:max(66px,env(safe-area-inset-top))!important;right:8px!important;max-height:calc(100dvh - 82px)!important}
+}
+</style>
+
+
+<style id="ht450-taskbar-chat-state">
+/* 4.5.0: taskbar hidden while a chat conversation is open */
+body.ht-chat-open #bottomNav,
+html.ht-chat-open #bottomNav,
+body.chat-focus #bottomNav,
+html.chat-focus #bottomNav{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+#bottomNav.bottom-nav{
+  position:fixed!important;
+  left:50%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:max(8px,env(safe-area-inset-bottom))!important;
+  transform:translateX(-50%)!important;
+  z-index:9000!important;
+}
+@media(max-width:700px){
+  #bottomNav.bottom-nav{width:calc(100vw - 16px)!important;max-width:560px!important}
 }
 </style>
 
@@ -2069,7 +2095,7 @@ $('imageButton').onclick=()=>{if(selectedUser||selectedGroup)$('imageInput').cli
 async function updateAvatar(file){if(!file)return;if(!file.type.startsWith('image/'))return toast('Vui lòng chọn ảnh');if(file.size>8*1024*1024)return toast('Ảnh tối đa 8MB');const path=`avatars/${currentUser.id}.jpg`;const {error}=await supabase.storage.from(AVATAR_BUCKET).upload(path,file,{upsert:true,contentType:file.type,cacheControl:'3600'});if(error){console.error(error);return toast('Không cập nhật được avatar: '+error.message)}const url=postImageUrl(path)+'?v='+Date.now();const {error:e2}=await supabase.from('profiles').update({avatar_url:url}).eq('id',currentUser.id);if(e2){console.error(e2);return toast('Ảnh đã tải nhưng hồ sơ chưa lưu: '+e2.message)}await loadProfile();startLastSeen();await loadFriends();await renderChatList();if(selectedUser)await openChatById(selectedUser.id);toast('Đã cập nhật ảnh đại diện')}
 $('changeAvatarBtn').onclick=()=>$('avatarInput').click();$('avatarEditBtn').onclick=()=>$('avatarInput').click();$('avatarInput').onchange=e=>{updateAvatar(e.target.files?.[0]);e.target.value=''};
 
-// ==================== HT Chat 4.1 ====================
+// ==================== HT Chat 4.5.0 ====================
 const V41_REACTIONS=['❤️','😂','😮','😢','😡','👍','👎','🔥'];
 const V41_THEMES=[
   ['default','Mặc định','theme-default'],['sunset','Hoàng hôn','theme-sunset'],['ocean','Đại dương','theme-ocean'],
@@ -2491,7 +2517,7 @@ $('friendsSearchInput').oninput=()=>{clearTimeout(friendsSearchTimer);friendsSea
 function subscribeFriends(){if(friendChannel)supabase.removeChannel(friendChannel);friendChannel=supabase.channel('friends-'+currentUser.id).on('postgres_changes',{event:'*',schema:'public',table:'friend_requests'},async()=>{await loadFriends();await loadRequests();if(!$('friendsPage').classList.contains('hidden'))await loadFriendsPage();}).subscribe()}
 $('closeGroupModal').onclick=()=>$('groupModal').classList.add('hidden');$('groupModal').addEventListener('click',e=>{if(e.target.id==='groupModal')$('groupModal').classList.add('hidden')});$('saveGroupButton').onclick=createGroup;supabase.auth.onAuthStateChange(async(event,session)=>{if(session?.user){currentUser=session.user;$('authScreen').classList.add('hidden');$('app').classList.remove('hidden');loadSettings();await loadProfile();startLastSeen();await loadFriends();await loadRequests();await loadFriendsPage();await renderChatList();subscribeFriends();subscribePresence();subscribeMessages();subscribePostNotifications();switchPage('homePage')}else{$('app').classList.add('hidden');$('authScreen').classList.remove('hidden');showAuth('login')}});showAuth('login');
 
-/* ================= HT Chat 4.1-v2: SHARED CONVERSATION SETTINGS =================
+/* ================= HT Chat 4.5.0-v2: SHARED CONVERSATION SETTINGS =================
    Theme + quick reaction are stored per 1:1 conversation in Supabase.
    Both participants read the same row, so a change is visible on both sides.
 =============================================================================== */
@@ -3301,4 +3327,67 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 
 
-\n<script id="ht41-v7-theme-safety">\n(function(){\n  document.addEventListener('click',function(e){\n    const b=e.target.closest && e.target.closest('#chatThemeButton');\n    if(!b) return;\n    /* Let the existing button.onclick handle it. This listener only prevents\n       accidental parent handlers from changing page/taskbar state. */\n    e.stopPropagation();\n  },true);\n})();\n</script>\n</body></html>
+\n<script id="ht41-v7-theme-safety">\n(function(){\n  document.addEventListener('click',function(e){\n    const b=e.target.closest && e.target.closest('#chatThemeButton');\n    if(!b) return;\n    /* Let the existing button.onclick handle it. This listener only prevents\n       accidental parent handlers from changing page/taskbar state. */\n    e.stopPropagation();\n  },true);\n})();\n</script>\n
+<script id="ht450-taskbar-state-runtime">
+(function(){
+  const body=document.body, html=document.documentElement;
+  const taskbar=()=>document.getElementById('bottomNav');
+  const chatPage=()=>document.getElementById('messagesPage');
+  const isVisible=el=>!!el && !el.classList.contains('hidden') && getComputedStyle(el).display!=='none';
+  function isConversationOpen(){
+    const p=chatPage();
+    if(!isVisible(p))return false;
+    // Chat window should be visible and selected user/group should exist.
+    const w=p.querySelector('.chat-window');
+    const chatMode=p.classList.contains('chat-chat-mode') ||
+      p.classList.contains('chat-open') ||
+      p.classList.contains('conversation-open');
+    const selected=!!(window.selectedUser || window.selectedGroup ||
+      window.currentChatUserId || window.activeChatUserId);
+    const windowVisible=isVisible(w);
+    return (chatMode && (windowVisible || selected)) || (windowVisible && selected);
+  }
+  function sync(){
+    const open=isConversationOpen();
+    body.classList.toggle('ht-chat-open',open);
+    html.classList.toggle('ht-chat-open',open);
+    body.classList.toggle('chat-focus',open);
+    html.classList.toggle('chat-focus',open);
+    const nav=taskbar();
+    if(nav){
+      if(open){
+        nav.style.setProperty('display','none','important');
+        nav.style.setProperty('visibility','hidden','important');
+        nav.style.setProperty('pointer-events','none','important');
+      }else{
+        nav.style.removeProperty('display');
+        nav.style.removeProperty('visibility');
+        nav.style.removeProperty('pointer-events');
+      }
+    }
+  }
+  // Watch DOM/class changes because this app switches chats dynamically.
+  const observer=new MutationObserver(sync);
+  function start(){
+    sync();
+    observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','aria-hidden']});
+    window.addEventListener('resize',sync,{passive:true});
+    window.addEventListener('pageshow',sync);
+    window.addEventListener('hashchange',sync);
+    ['htchat:chat-opened','htchat:chat-closed','chatOpened','chatClosed'].forEach(evt=>window.addEventListener(evt,sync));
+    document.addEventListener('click',e=>{
+      const target=e.target.closest?.('[data-user-id],.chat-person,.conversation-item,.chat-list-item,[data-chat-id]');
+      if(target) setTimeout(sync,30);
+    },true);
+    // A small delayed sync covers code that updates selectedUser after rendering.
+    setTimeout(sync,150);
+    setTimeout(sync,600);
+    setTimeout(sync,1200);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
+})();
+</script>
+
+<script>document.addEventListener("DOMContentLoaded",()=>{const e=document.querySelector("#appVersion,.app-version,[data-app-version]");if(e)e.textContent="Phiên bản 4.5.0";});</script>
+</body></html>
