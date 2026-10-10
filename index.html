@@ -1255,27 +1255,123 @@ function ht41ThemeDataUrl(name,dim=false){
   return 'url("data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(body)+'")';
 }
 </script>
-
-
-\n<style id="ht41-v7-final-fix">\n/* ===== FINAL TASKBAR FIX ===== */\n#bottomNav.bottom-nav{\n  position:fixed!important;\n  left:50%!important;\n  top:auto!important;\n  right:auto!important;\n  bottom:max(10px,env(safe-area-inset-bottom))!important;\n  transform:translate3d(-50%,0,0)!important;\n  width:min(560px,calc(100vw - 28px))!important;\n  max-width:calc(100vw - 16px)!important;\n  z-index:99999!important;\n  contain:none!important;\n  isolation:isolate!important;\n}\n#bottomNav.bottom-nav > button{\n  position:relative!important;\n  z-index:2!important;\n  pointer-events:auto!important;\n  touch-action:manipulation!important;\n}\n#bottomNav .nav-slider{z-index:0!important;pointer-events:none!important}\n\n/* ===== FINAL THEME BUTTON FIX ===== */\n#chatThemeButton{\n  position:relative!important;\n  z-index:100000!important;\n  display:grid!important;\n  place-items:center!important;\n  pointer-events:auto!important;\n  touch-action:manipulation!important;\n  cursor:pointer!important;\n}\n#chatThemePanel{\n  position:fixed!important;\n  z-index:100001!important;\n  pointer-events:auto!important;\n}\n#chatThemePanel.hidden{pointer-events:none!important}\n.chat-theme-grid,.chat-theme-grid button,.chat-theme{\n  pointer-events:auto!important;\n  touch-action:manipulation!important;\n}\n\n/* ===== FINAL 3-DOTS FIX ===== */\n.chat-more,[data-more-chat],[data-more-group]{\n  position:absolute!important;\n  right:6px!important;\n  top:50%!important;\n  transform:translateY(-50%)!important;\n  z-index:100000!important;\n  pointer-events:auto!important;\n  touch-action:manipulation!important;\n  cursor:pointer!important;\n}\n.chat-person{position:relative!important}\n\n@media(max-width:700px){\n  #bottomNav.bottom-nav{\n    width:calc(100vw - 16px)!important;\n    max-width:560px!important;\n    height:62px!important;\n    bottom:max(7px,env(safe-area-inset-bottom))!important;\n    transform:translate3d(-50%,0,0)!important;\n  }\n  #chatThemeButton{width:42px!important;height:42px!important}\n}\n</style>\n
-<style id="ht41-v8-taskbar-fix">
-#bottomNav.bottom-nav{
-  position:fixed!important;left:50%!important;right:auto!important;top:auto!important;
-  bottom:max(8px,env(safe-area-inset-bottom))!important;transform:translateX(-50%)!important;
-  z-index:9999!important;
+<style id="ht41-v6-click-fix">
+/* ===== FIX CLICK LAYERS ===== */
+#chatThemeButton,
+#chatThemeButton *,
+.chat-more,
+.chat-more *,
+[data-chat-more],
+[data-chat-more] * {
+  pointer-events:auto!important;
+  position:relative;
+  z-index:10050!important;
 }
-body.ht-chat-detail #bottomNav,
-body.chat-detail-mode #bottomNav,
-#app.chat-detail-mode #bottomNav{display:none!important}
-body.ht-chat-detail #messagesPage,body.chat-detail-mode #messagesPage{padding-bottom:0!important}
-@media(max-width:700px){
- #bottomNav.bottom-nav{width:calc(100vw - 16px)!important;max-width:560px!important}
- body.ht-chat-detail #app,body.chat-detail-mode #app,
- body.ht-chat-detail #messagesPage,body.chat-detail-mode #messagesPage{
-  height:100dvh!important;min-height:100dvh!important
- }
+
+#chatThemeButton{
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+}
+
+.chat-more,
+[data-chat-more]{
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+}
+
+/* Menu chủ đề / menu 3 chấm luôn nổi trên mọi lớp kính */
+#chatThemePanel,
+.chat-action-menu,
+.chat-more-menu,
+[data-chat-action-menu]{
+  z-index:20000!important;
+}
+
+/* Không để lớp trang phủ lên nút */
+.chat-window,
+.chat-header,
+.chat-list,
+.chat-list-head,
+.messages,
+.page-scroll{
+  isolation:isolate;
+}
+#chatThemeButton,
+.chat-more,
+[data-chat-more]{
+  isolation:auto!important;
+}
+
+/* Dấu 3 chấm nằm đúng giữa từng dòng */
+#chatListItems .chat-person,
+#groupListItems .chat-person{
+  position:relative!important;
+}
+#chatListItems .chat-person > .chat-more,
+#groupListItems .chat-person > .chat-more,
+#chatListItems .chat-person [data-chat-more],
+#groupListItems .chat-person [data-chat-more]{
+  position:absolute!important;
+  right:6px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  margin:0!important;
+  z-index:10060!important;
+}
+
+/* Khi menu mở, không bị cắt bởi list */
+#chatListItems,
+#groupListItems,
+.chat-list{
+  overflow:visible!important;
 }
 </style>
+
+
+<style id="ht41-v8-layout-fix">
+/* Hide the taskbar only when a conversation is actually open. */
+body.chat-focus #bottomNav{display:none!important;visibility:hidden!important;pointer-events:none!important}
+body:not(.chat-focus) #bottomNav{display:grid!important;visibility:visible!important;pointer-events:auto!important}
+
+/* Taskbar remains fixed at the bottom outside a chat. */
+#bottomNav.bottom-nav{
+  position:fixed!important;left:50%!important;right:auto!important;top:auto!important;
+  bottom:max(10px,env(safe-area-inset-bottom))!important;
+  transform:translateX(-50%)!important;width:min(560px,calc(100vw - 24px))!important;
+  z-index:9000!important;contain:none!important;
+}
+#bottomNav .nav-slider{pointer-events:none!important;z-index:0!important}
+#bottomNav>button{position:relative!important;z-index:1!important;pointer-events:auto!important;touch-action:manipulation!important}
+
+/* Theme button and panel sit above chat layers and are clickable. */
+#chatThemeButton{position:relative!important;z-index:12002!important;pointer-events:auto!important;touch-action:manipulation!important;cursor:pointer!important}
+#chatThemePanel{
+  position:fixed!important;top:max(72px,env(safe-area-inset-top))!important;
+  right:12px!important;left:auto!important;bottom:auto!important;
+  width:min(360px,calc(100vw - 24px))!important;max-height:calc(100dvh - 100px)!important;
+  overflow:auto!important;z-index:12010!important;pointer-events:auto!important;
+}
+#chatThemePanel.hidden{display:none!important;pointer-events:none!important}
+#chatThemePanel:not(.hidden){display:block!important}
+#chatThemePanel button{pointer-events:auto!important;touch-action:manipulation!important;cursor:pointer!important}
+.chat-theme-grid{position:relative!important;z-index:1!important}
+.chat-theme-grid button{min-height:76px!important}
+
+/* On mobile, keep the chat full screen and reserve no taskbar space while chatting. */
+@media(max-width:700px){
+  body.chat-focus #messagesPage.chat-chat-mode{
+    position:fixed!important;inset:env(safe-area-inset-top,0px) 0 0 0!important;
+    width:100vw!important;height:calc(100dvh - env(safe-area-inset-top,0px))!important;
+    z-index:11000!important;overflow:hidden!important;
+  }
+  body.chat-focus #messagesPage.chat-chat-mode .chat-page{height:100%!important;min-height:0!important}
+  body.chat-focus #messagesPage.chat-chat-mode .chat-window{height:100%!important;min-height:0!important}
+  body.chat-focus #messagesPage.chat-chat-mode .composer-wrap{margin-bottom:0!important;padding-bottom:max(8px,env(safe-area-inset-bottom))!important}
+  #bottomNav.bottom-nav{width:calc(100vw - 16px)!important;max-width:560px!important;bottom:max(7px,env(safe-area-inset-bottom))!important}
+  #chatThemePanel{top:max(66px,env(safe-area-inset-top))!important;right:8px!important;max-height:calc(100dvh - 82px)!important}
+}
+</style>
+
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -1360,7 +1456,7 @@ body.ht-chat-detail #messagesPage,body.chat-detail-mode #messagesPage{padding-bo
 
 <div id="postModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Tạo bài viết</h3><button class="close" id="closePostModal"></button></div><textarea id="postText" rows="5" style="width:100%;margin-top:15px;border:1px solid var(--line);border-radius:15px;padding:12px;outline:0;resize:vertical" placeholder="Bạn đang nghĩ gì?"></textarea><div style="margin-top:10px"><label class="file-label" id="postImageLabel"></label><input id="postImageInput" type="file" accept="image/*" class="hidden"></div><div style="display:flex;justify-content:flex-end;margin-top:15px"><button class="primary" id="publishPost" style="width:auto;padding:11px 18px">Đăng bài</button></div></div></div>
 <div id="profileMiniModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Thông tin</h3><button class="close" id="closeProfileMini"></button></div><div id="profileMiniBody" style="padding-top:15px"></div></div></div><div id="noteModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Ghi chú / suy nghĩ</h3><button class="close" id="closeNoteModal"></button></div><p style="color:var(--muted);font-size:13px;margin:10px 0 0">Viết một ghi chú ngắn cho hôm nay. Bạn bè của bạn có thể nhìn thấy ghi chú này trong phần Tin nhắn.</p><textarea id="noteText" class="note-modal-text" maxlength="60" placeholder="Bạn đang nghĩ gì?"></textarea><div class="note-modal-actions"><button id="deleteNote" class="note-delete">Xóa</button><button id="cancelNote" class="note-cancel">Hủy</button><button id="saveNote" class="note-save">Lưu ghi chú</button></div></div></div>
-<div id="profileViewModal" class="modal hidden"><div class="modal-card profile-view-card"><div class="modal-head"><h3>Trang cá nhân</h3><button class="close" id="closeProfileView"></button></div><div id="profileViewBody"></div></div></div><div id="groupModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Tạo nhóm</h3><button class="close" id="closeGroupModal"></button></div><input id="groupNameInput" class="group-name-input" maxlength="60" placeholder="Tên nhóm"><div id="groupMemberPicker" class="group-member-picker"></div><div style="display:flex;justify-content:flex-end;margin-top:12px"><button id="saveGroupButton" class="note-save">Tạo nhóm</button></div></div></div><div id="appInfoModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Thông tin ứng dụng</h3><button class="close" id="closeAppInfo"></button></div><div class="app-info-list" style="padding-top:10px"><div class="app-info-logo" id="appInfoLogo"></div><div class="app-info-row"><b>Ứng dụng</b><span>HT Chat</span></div><div class="app-info-row"><b>Phiên bản</b><span>4.1-v6</span></div><div class="app-info-row"><b>Công ty</b><span>Công ty cổ phần PHT</span></div><div class="app-info-row"><b>Nền tảng</b><span>Web / GitHub Pages</span></div><div class="app-info-row"><b>Dịch vụ</b><span>Supabase</span></div></div></div></div><div id="chatActionMenu" class="chat-action-menu hidden"><button data-chat-action="delete">🗑️ <span>Xóa đoạn chat</span></button><button data-chat-action="mute">🔕 <span>Tắt thông báo</span></button><button data-chat-action="block">🚫 <span>Chặn</span></button></div><div id="chatThemePanel" class="chat-theme-panel hidden"><div class="chat-theme-head"><b>Chủ đề đoạn chat</b><button id="closeChatTheme" type="button">×</button></div><div id="chatThemeGrid" class="chat-theme-grid"></div></div><div id="notificationPanel" class="notification-panel hidden" role="dialog" aria-label="Thông báo"><div class="notification-head"><b>Thông báo</b><button id="clearNotificationBadge" type="button">Đánh dấu đã xem</button></div><div id="notificationList"></div></div>
+<div id="profileViewModal" class="modal hidden"><div class="modal-card profile-view-card"><div class="modal-head"><h3>Trang cá nhân</h3><button class="close" id="closeProfileView"></button></div><div id="profileViewBody"></div></div></div><div id="groupModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Tạo nhóm</h3><button class="close" id="closeGroupModal"></button></div><input id="groupNameInput" class="group-name-input" maxlength="60" placeholder="Tên nhóm"><div id="groupMemberPicker" class="group-member-picker"></div><div style="display:flex;justify-content:flex-end;margin-top:12px"><button id="saveGroupButton" class="note-save">Tạo nhóm</button></div></div></div><div id="appInfoModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Thông tin ứng dụng</h3><button class="close" id="closeAppInfo"></button></div><div class="app-info-list" style="padding-top:10px"><div class="app-info-logo" id="appInfoLogo"></div><div class="app-info-row"><b>Ứng dụng</b><span>HT Chat</span></div><div class="app-info-row"><b>Phiên bản</b><span>4.1-v8</span></div><div class="app-info-row"><b>Công ty</b><span>Công ty cổ phần PHT</span></div><div class="app-info-row"><b>Nền tảng</b><span>Web / GitHub Pages</span></div><div class="app-info-row"><b>Dịch vụ</b><span>Supabase</span></div></div></div></div><div id="chatActionMenu" class="chat-action-menu hidden"><button data-chat-action="delete">🗑️ <span>Xóa đoạn chat</span></button><button data-chat-action="mute">🔕 <span>Tắt thông báo</span></button><button data-chat-action="block">🚫 <span>Chặn</span></button></div><div id="chatThemePanel" class="chat-theme-panel hidden"><div class="chat-theme-head"><b>Chủ đề đoạn chat</b><button id="closeChatTheme" type="button">×</button></div><div id="chatThemeGrid" class="chat-theme-grid"></div></div><div id="notificationPanel" class="notification-panel hidden" role="dialog" aria-label="Thông báo"><div class="notification-head"><b>Thông báo</b><button id="clearNotificationBadge" type="button">Đánh dấu đã xem</button></div><div id="notificationList"></div></div>
 
 <script type="module">
 window.addEventListener('DOMContentLoaded',()=>{import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm').then(async({createClient})=>{
@@ -1478,7 +1574,6 @@ async function chatMetaFor(uid){
   return {latest:latestQ.data?.[0]||null,unread:unreadQ.count||0};
 }
 async function openChatById(id){
- document.body.classList.add("ht-chat-detail","chat-detail-mode"); document.getElementById("app")?.classList.add("chat-detail-mode");
   switchPage('messagesPage',true);
   const {data}=await supabase.from('profiles').select('*').eq('id',id).single();
   if(!data)return;
@@ -1988,7 +2083,7 @@ function saveChatPrefs(other,p){localStorage.setItem(chatPrefsKey(other),JSON.st
 function currentChatKey(){return selectedGroup?'group_'+selectedGroup.id:selectedUser?.id||''}
 function applyChatTheme(){applySharedChatTheme()}
 async function openChatTheme(){await openSharedChatTheme()}
-if($('chatThemeButton')){const b=$('chatThemeButton');b.onclick=e=>{e.preventDefault();e.stopPropagation();openSharedChatTheme()};b.onpointerup=e=>{e.preventDefault();e.stopPropagation();openSharedChatTheme()}} if($('closeChatTheme'))$('closeChatTheme').onclick=e=>{e.preventDefault();$('chatThemePanel')?.classList.add('hidden')};
+if($('chatThemeButton')){const b=$('chatThemeButton');b.onclick=e=>{e.preventDefault();e.stopPropagation();openSharedChatTheme()}} if($('closeChatTheme'))$('closeChatTheme').onclick=e=>{e.preventDefault();e.stopPropagation();$('chatThemePanel')?.classList.add('hidden')};
 
 function quickReactionValue(){return sharedChatSettings.quick_reaction||'❤️'}
 function paintQuickReaction(){paintSharedQuickReaction()}
@@ -3206,28 +3301,4 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 
 
-\n<script id="ht41-v7-theme-safety">\n(function(){\n  document.addEventListener('click',function(e){\n    const b=e.target.closest && e.target.closest('#chatThemeButton');\n    if(!b) return;\n    /* Let the existing button.onclick handle it. This listener only prevents\n       accidental parent handlers from changing page/taskbar state. */\n    e.stopPropagation();\n  },true);\n})();\n</script>\n
-<script id="ht41-v8-runtime">
-(function(){
- function setDetail(on){
-  document.body.classList.toggle('ht-chat-detail',!!on);
-  document.body.classList.toggle('chat-detail-mode',!!on);
-  document.getElementById('app')?.classList.toggle('chat-detail-mode',!!on);
- }
- window.htChatSetDetailMode=setDetail;
- document.addEventListener('click',function(e){
-  const back=e.target.closest&&e.target.closest('#chatBack,.chat-back,[data-chat-back],.back-to-chat-list,[data-back-to-list]');
-  if(back)setTimeout(()=>setDetail(false),80);
-  const tab=e.target.closest&&e.target.closest('#bottomNav button');
-  if(tab)setTimeout(()=>{
-   const page=document.getElementById('messagesPage');
-   if(!page||!page.classList.contains('chat-chat-mode'))setDetail(false);
-  },100);
- },true);
- const page=document.getElementById('messagesPage');
- if(page)new MutationObserver(()=>{
-  setDetail(page.classList.contains('chat-chat-mode')||page.classList.contains('chat-detail-mode'));
- }).observe(page,{attributes:true,attributeFilter:['class']});
-})();
-</script>
-</body></html>
+\n<script id="ht41-v7-theme-safety">\n(function(){\n  document.addEventListener('click',function(e){\n    const b=e.target.closest && e.target.closest('#chatThemeButton');\n    if(!b) return;\n    /* Let the existing button.onclick handle it. This listener only prevents\n       accidental parent handlers from changing page/taskbar state. */\n    e.stopPropagation();\n  },true);\n})();\n</script>\n</body></html>
