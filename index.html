@@ -3428,4 +3428,57 @@ document.addEventListener('DOMContentLoaded',function(){
   setTimeout(function(){if(typeof paintQuickReaction==='function')paintQuickReaction()},250);
 });
 </script>
+
+<style id="htchat-450-interaction-repair">
+/* Repair click targets for conversation menu and theme picker */
+#chatActionMenu,#chatThemePanel,#chatThemeGrid,.chat-theme-grid,.chat-theme,.chat-more,
+#chatThemeButton,[data-more-chat],[data-more-group]{pointer-events:auto!important}
+#chatActionMenu{z-index:2147483000!important}
+#chatThemePanel{z-index:2147482999!important}
+#chatActionMenu.hidden,#chatThemePanel.hidden{display:none!important}
+#chatActionMenu:not(.hidden),#chatThemePanel:not(.hidden){visibility:visible!important}
+.chat-more{touch-action:manipulation;cursor:pointer!important}
+.chat-theme{touch-action:manipulation;cursor:pointer!important;position:relative;z-index:1}
+</style>
+<script id="htchat-450-interaction-repair-js">
+(function(){
+  // Prevent overlapping click handlers from immediately closing the menu.
+  document.addEventListener('pointerup',function(e){
+    const theme=e.target && e.target.closest && e.target.closest('[data-shared-theme]');
+    if(theme) theme.dataset.htLastPointerUp=String(Date.now());
+  },true);
+  document.addEventListener('click',function(e){
+    const more=e.target && e.target.closest && e.target.closest('[data-more-chat],[data-more-group]');
+    if(more){
+      e.preventDefault(); e.stopImmediatePropagation();
+      if(typeof more.onclick==='function') more.onclick.call(more,e);
+      else more.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
+      return;
+    }
+    const themeButton=e.target && e.target.closest && e.target.closest('#chatThemeButton');
+    if(themeButton){
+      e.preventDefault(); e.stopImmediatePropagation();
+      if(typeof themeButton.onclick==='function') themeButton.onclick.call(themeButton,e);
+      return;
+    }
+    const theme=e.target && e.target.closest && e.target.closest('[data-shared-theme]');
+    if(theme){
+      e.preventDefault(); e.stopImmediatePropagation();
+      // Pointer devices already trigger the app's pointerup handler; only synthesize for keyboard/legacy click.
+      if(Date.now()-Number(theme.dataset.htLastPointerUp||0)>800) theme.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,cancelable:true,pointerType:'mouse'}));
+      return;
+    }
+  },true);
+  // Keep the floating panels above app layers and in a clickable state while open.
+  const refresh=()=>{
+    const menu=document.getElementById('chatActionMenu');
+    const panel=document.getElementById('chatThemePanel');
+    if(menu){if(menu.style.zIndex!=='2147483000')menu.style.zIndex='2147483000';if(!menu.classList.contains('hidden')&&menu.style.pointerEvents!=='auto')menu.style.pointerEvents='auto'}
+    if(panel){if(panel.style.zIndex!=='2147482999')panel.style.zIndex='2147482999';if(!panel.classList.contains('hidden')&&panel.style.pointerEvents!=='auto')panel.style.pointerEvents='auto'}
+  };
+  refresh();
+  new MutationObserver(refresh).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
+})();
+</script>
+
 </body></html>
