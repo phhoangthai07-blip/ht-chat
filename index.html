@@ -1398,6 +1398,25 @@ html.chat-focus #bottomNav{
 }
 </style>
 
+
+<style id="htchat-v451-interaction-fixes">
+/* Login/register screen must never expose the app or its navigation bar. */
+#app.hidden{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#authScreen.hidden{display:none!important}
+body:has(#authScreen:not(.hidden)) #bottomNav{display:none!important;visibility:hidden!important;pointer-events:none!important}
+/* Keep interactive controls above translucent/isolated chat layers. */
+#chatListItems,#groupListItems,.chat-list,.chat-body,.chat-page{isolation:auto!important;overflow:visible!important}
+#chatListItems .chat-person,#groupListItems .chat-person{position:relative!important;overflow:visible!important}
+#chatListItems [data-more-chat],#groupListItems [data-more-group],#chatListItems [data-more-group],#groupListItems [data-more-chat]{position:absolute!important;right:6px!important;top:50%!important;transform:translateY(-50%)!important;z-index:30001!important;pointer-events:auto!important;touch-action:manipulation!important}
+#chatActionMenu{position:fixed!important;z-index:50000!important;pointer-events:auto!important;isolation:auto!important}
+#chatActionMenu.hidden{display:none!important}
+#chatActionMenu:not(.hidden){display:block!important}
+#chatActionMenu button{position:relative!important;z-index:50001!important;display:flex!important;width:100%!important;pointer-events:auto!important;touch-action:manipulation!important}
+#chatThemeButton{position:relative!important;z-index:30002!important;pointer-events:auto!important;touch-action:manipulation!important}
+#chatThemePanel{z-index:50000!important;pointer-events:auto!important;isolation:auto!important}
+#chatThemePanel button{position:relative!important;z-index:50001!important;pointer-events:auto!important;touch-action:manipulation!important}
+</style>
+
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -2159,7 +2178,16 @@ async function deleteChatTarget(){if(!chatActionTarget)return;const key=chatActi
 $('chatActionMenu')?.querySelectorAll('[data-chat-action]').forEach(b=>b.onclick=async()=>{const action=b.dataset.chatAction;if(!chatActionTarget)return;const key=chatActionTarget.groupId?'group_'+chatActionTarget.groupId:chatActionTarget.id;const p=getChatPrefs(key);if(action==='delete'){if(confirm('Xóa đoạn chat này?'))await deleteChatTarget();return}if(action==='mute'){p.muted=!p.muted;saveChatPrefs(key,p);$('chatActionMenu').classList.add('hidden');toast(p.muted?'Đã tắt thông báo cho đoạn chat':'Đã bật thông báo cho đoạn chat');return}if(action==='block'){p.blocked=!p.blocked;saveChatPrefs(key,p);$('chatActionMenu').classList.add('hidden');toast(p.blocked?'Đã chặn tài khoản':'Đã bỏ chặn');await renderChatList();return}});
 document.addEventListener('click',e=>{const more=e.target.closest('[data-more-chat],[data-more-group]');if(more){e.preventDefault();e.stopPropagation();openChatActionMenu(more);return}if(!$('chatActionMenu')?.contains(e.target))$('chatActionMenu')?.classList.add('hidden');if(!$('chatThemePanel')?.contains(e.target)&&!e.target.closest('#chatThemeButton'))$('chatThemePanel')?.classList.add('hidden')});
 
-function bindChatMoreButtons(){document.querySelectorAll('[data-more-chat],[data-more-group]').forEach(b=>{if(b.dataset.boundMore)return;b.dataset.boundMore='1';const open=e=>{e.preventDefault();e.stopPropagation();openChatActionMenu(b)};b.onclick=open;b.onpointerup=open;b.ontouchend=open})}
+function bindChatMoreButtons(){document.querySelectorAll('[data-more-chat],[data-more-group]').forEach(b=>{if(b.dataset.boundMore)return;b.dataset.boundMore='1';b.type='button';b.setAttribute('aria-label','Tùy chọn đoạn chat');b.style.pointerEvents='auto';b.style.touchAction='manipulation'})}
+
+// Capture controls before transparent/animated layers can swallow their clicks.
+document.addEventListener('click',e=>{
+  const more=e.target.closest('[data-more-chat],[data-more-group]');
+  if(more){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();openChatActionMenu(more);return}
+  const themeButton=e.target.closest('#chatThemeButton');
+  if(themeButton){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();openSharedChatTheme();return}
+},true);
+
 async function saveBio(){const bio=$('profileBioInput').value.trim().slice(0,160);const {data,error}=await supabase.from('profiles').update({bio}).eq('id',currentUser.id).select('*').single();if(error)return toast('Không lưu được tiểu sử: '+error.message);currentProfile={...currentProfile,...(data||{bio})};$('profileBioText').textContent=bio||'Chưa có tiểu sử.';$('profileBioInput').classList.add('hidden');$('profileBioActions').classList.add('hidden');toast('Đã cập nhật tiểu sử')}
 $('editBioButton').onclick=()=>{$('profileBioInput').value=currentProfile?.bio||'';$('profileBioInput').classList.remove('hidden');$('profileBioActions').classList.remove('hidden');$('profileBioInput').focus()};$('cancelBioButton').onclick=()=>{$('profileBioInput').classList.add('hidden');$('profileBioActions').classList.add('hidden')};$('saveBioButton').onclick=saveBio;
 async function openProfileView(id){if(!id)return;const {data,error}=await supabase.from('profiles').select('*').eq('id',id).single();if(error||!data)return toast('Không tải được trang cá nhân');data={...data,is_verified:data.is_verified===true||(id===currentUser.id&&localStorage.getItem('htchat_xmdt_verified_'+currentUser.id)==='1')};const url=data.avatar_url||avatarUrlFor(id);$('profileViewBody').innerHTML=`<div class="profile-view-hero"><div class="profile-view-avatar">${url?`<img src="${escapeHtml(url)}" alt="">`:escapeHtml(initials(data.username))}</div><h3>${nameHtml(data.username||'Người dùng',data.is_verified,true)}</h3><div class="profile-view-bio">${escapeHtml(data.bio?.trim()||'Chưa có tiểu sử.')}</div><div class="profile-view-actions">${id!==currentUser.id?`<button class="profile-action-primary" id="profileViewChat">Nhắn tin</button>`:''}<button class="profile-action-soft" id="profileViewClose2">Đóng</button></div></div>`;$('profileViewModal').classList.remove('hidden');$('profileViewChat')?.addEventListener('click',()=>{$('profileViewModal').classList.add('hidden');openChatById(id)});$('profileViewClose2').onclick=()=>$('profileViewModal').classList.add('hidden')}
@@ -2634,14 +2662,15 @@ async function openSharedChatTheme(){
     btn.style.backgroundImage=ht41ThemeDataUrl(id,false);
     btn.style.backgroundSize='cover';btn.style.backgroundPosition='center';btn.style.backgroundRepeat='no-repeat';
     btn.classList.toggle('active',id===(sharedChatSettings.theme||'default'));
-    btn.addEventListener('pointerup',async e=>{
+    btn.addEventListener('click',async e=>{
       e.preventDefault();e.stopPropagation();
       if(selectedUser)await saveSharedChatSettings(selectedUser.id,{theme:id});
       else { sharedChatSettings={...sharedChatSettings,theme:id}; localStorage.setItem('htchat_group_theme_'+targetId,id); }
+      sharedChatSettings={...sharedChatSettings,theme:id};
       applySharedChatTheme();
       panel.classList.add('hidden');
       toast('Đã đổi chủ đề cho đoạn chat');
-    },{passive:false});
+    });
   });
   panel.classList.remove('hidden');
   panel.style.display='block';
@@ -3428,57 +3457,4 @@ document.addEventListener('DOMContentLoaded',function(){
   setTimeout(function(){if(typeof paintQuickReaction==='function')paintQuickReaction()},250);
 });
 </script>
-
-<style id="htchat-450-interaction-repair">
-/* Repair click targets for conversation menu and theme picker */
-#chatActionMenu,#chatThemePanel,#chatThemeGrid,.chat-theme-grid,.chat-theme,.chat-more,
-#chatThemeButton,[data-more-chat],[data-more-group]{pointer-events:auto!important}
-#chatActionMenu{z-index:2147483000!important}
-#chatThemePanel{z-index:2147482999!important}
-#chatActionMenu.hidden,#chatThemePanel.hidden{display:none!important}
-#chatActionMenu:not(.hidden),#chatThemePanel:not(.hidden){visibility:visible!important}
-.chat-more{touch-action:manipulation;cursor:pointer!important}
-.chat-theme{touch-action:manipulation;cursor:pointer!important;position:relative;z-index:1}
-</style>
-<script id="htchat-450-interaction-repair-js">
-(function(){
-  // Prevent overlapping click handlers from immediately closing the menu.
-  document.addEventListener('pointerup',function(e){
-    const theme=e.target && e.target.closest && e.target.closest('[data-shared-theme]');
-    if(theme) theme.dataset.htLastPointerUp=String(Date.now());
-  },true);
-  document.addEventListener('click',function(e){
-    const more=e.target && e.target.closest && e.target.closest('[data-more-chat],[data-more-group]');
-    if(more){
-      e.preventDefault(); e.stopImmediatePropagation();
-      if(typeof more.onclick==='function') more.onclick.call(more,e);
-      else more.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
-      return;
-    }
-    const themeButton=e.target && e.target.closest && e.target.closest('#chatThemeButton');
-    if(themeButton){
-      e.preventDefault(); e.stopImmediatePropagation();
-      if(typeof themeButton.onclick==='function') themeButton.onclick.call(themeButton,e);
-      return;
-    }
-    const theme=e.target && e.target.closest && e.target.closest('[data-shared-theme]');
-    if(theme){
-      e.preventDefault(); e.stopImmediatePropagation();
-      // Pointer devices already trigger the app's pointerup handler; only synthesize for keyboard/legacy click.
-      if(Date.now()-Number(theme.dataset.htLastPointerUp||0)>800) theme.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,cancelable:true,pointerType:'mouse'}));
-      return;
-    }
-  },true);
-  // Keep the floating panels above app layers and in a clickable state while open.
-  const refresh=()=>{
-    const menu=document.getElementById('chatActionMenu');
-    const panel=document.getElementById('chatThemePanel');
-    if(menu){if(menu.style.zIndex!=='2147483000')menu.style.zIndex='2147483000';if(!menu.classList.contains('hidden')&&menu.style.pointerEvents!=='auto')menu.style.pointerEvents='auto'}
-    if(panel){if(panel.style.zIndex!=='2147482999')panel.style.zIndex='2147482999';if(!panel.classList.contains('hidden')&&panel.style.pointerEvents!=='auto')panel.style.pointerEvents='auto'}
-  };
-  refresh();
-  new MutationObserver(refresh).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
-})();
-</script>
-
 </body></html>
