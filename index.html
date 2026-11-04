@@ -1417,6 +1417,52 @@ body:has(#authScreen:not(.hidden)) #bottomNav{display:none!important;visibility:
 #chatThemePanel button{position:relative!important;z-index:50001!important;pointer-events:auto!important;touch-action:manipulation!important}
 </style>
 
+
+<style id="htchat-liquid-glass-460">
+/* HT Chat 4.6.0 — DeHT-inspired Liquid Glass navigation and feedback */
+:root{--ht-glass-tint:rgba(255,255,255,.22);--ht-glass-edge:rgba(255,255,255,.72);--ht-glass-shadow:0 18px 48px rgba(31,42,92,.20);--ht-spring:cubic-bezier(.18,.88,.22,1.28)}
+.bottom-nav#bottomNav{
+  isolation:isolate!important;overflow:visible!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.68),rgba(244,248,255,.30) 48%,rgba(255,255,255,.42))!important;
+  border:1px solid var(--ht-glass-edge)!important;border-radius:28px!important;
+  box-shadow:var(--ht-glass-shadow),inset 0 1.5px 0 rgba(255,255,255,.92),inset 0 -1px 0 rgba(255,255,255,.26)!important;
+  -webkit-backdrop-filter:blur(34px) saturate(190%) brightness(1.08)!important;backdrop-filter:blur(34px) saturate(190%) brightness(1.08)!important;
+  padding:7px!important;gap:5px!important;
+  transition:box-shadow .35s ease,border-color .35s ease,background .35s ease!important;
+}
+.bottom-nav#bottomNav:before{content:"";position:absolute;inset:1px;border-radius:inherit;pointer-events:none;z-index:-1;background:linear-gradient(115deg,rgba(255,255,255,.48),transparent 34%,rgba(255,255,255,.10) 70%,rgba(255,255,255,.34));opacity:.9}
+.bottom-nav#bottomNav .nav-slider{top:6px!important;bottom:6px!important;border-radius:22px!important;background:linear-gradient(145deg,rgba(var(--taskbar-rgb,98,95,242),.24),rgba(255,255,255,.55) 62%,rgba(var(--taskbar-rgb,98,95,242),.12))!important;border:1px solid rgba(255,255,255,.58)!important;box-shadow:0 7px 22px rgba(55,68,130,.12),inset 0 1px 0 rgba(255,255,255,.88),inset 0 -1px 0 rgba(255,255,255,.22)!important;transition:left .52s var(--ht-spring),width .42s var(--ht-spring),transform .32s var(--ht-spring)!important}
+.bottom-nav#bottomNav>button{position:relative!important;z-index:2!important;border-radius:21px!important;min-width:0!important;color:rgba(72,82,111,.78)!important;font-weight:750!important;letter-spacing:-.15px!important;gap:4px!important;transition:transform .22s var(--ht-spring),color .22s ease,filter .22s ease!important;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.bottom-nav#bottomNav>button.active{color:var(--p,#625ff2)!important;background:transparent!important;filter:drop-shadow(0 2px 5px rgba(70,75,150,.10))}
+.bottom-nav#bottomNav>button:active{transform:scale(.88)!important;filter:brightness(1.12)}
+.bottom-nav#bottomNav .nav-icon{display:grid;place-items:center;transition:transform .35s var(--ht-spring),filter .25s ease}
+.bottom-nav#bottomNav>button.active .nav-icon{transform:translateY(-2px) scale(1.09);filter:drop-shadow(0 3px 5px rgba(98,95,242,.20))}
+.bottom-nav#bottomNav .nav-icon svg{width:22px;height:22px;filter:drop-shadow(0 1px 1px rgba(255,255,255,.55))}
+.bottom-nav#bottomNav .nav-dot{border:1.5px solid rgba(255,255,255,.85);box-shadow:0 3px 10px rgba(235,65,92,.28);animation:htBadgePulse 2.2s ease-in-out infinite}
+@keyframes htBadgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+/* Gentle press feedback for touchable controls */
+button,.file-label,.person,.chat-item,.post-action,.setting-row button{ -webkit-tap-highlight-color:transparent }
+button.ht-physical-press,.chat-item.ht-physical-press,.person.ht-physical-press,.post.ht-physical-press{transform:scale(.965)!important;filter:brightness(1.06);transition:transform .16s var(--ht-spring),filter .16s ease!important}
+/* Floating notification bubbles */
+.toast{right:14px!important;bottom:calc(88px + env(safe-area-inset-bottom))!important;max-width:min(390px,calc(100vw - 28px))!important;min-height:48px;padding:12px 17px 12px 15px!important;border:1px solid rgba(255,255,255,.72)!important;border-radius:23px!important;background:linear-gradient(135deg,rgba(255,255,255,.78),rgba(239,245,255,.48))!important;color:#20283d!important;box-shadow:0 15px 42px rgba(34,47,92,.18),inset 0 1px 0 rgba(255,255,255,.92)!important;-webkit-backdrop-filter:blur(28px) saturate(185%)!important;backdrop-filter:blur(28px) saturate(185%)!important;font-weight:650!important;animation:htBubbleIn .48s var(--ht-spring) both!important;}
+.toast:before{content:"";display:inline-block;width:7px;height:7px;margin:0 9px 1px 0;border-radius:50%;background:linear-gradient(135deg,#8a9cff,#625ff2);box-shadow:0 0 12px rgba(98,95,242,.45)}
+.toast.ht-bubble-out{animation:htBubbleOut .28s ease both!important}
+@keyframes htBubbleIn{0%{opacity:0;transform:translate3d(0,18px,0) scale(.88);filter:blur(8px)}65%{opacity:1;transform:translate3d(0,-3px,0) scale(1.025);filter:blur(0)}100%{opacity:1;transform:translate3d(0,0,0) scale(1)}}
+@keyframes htBubbleOut{to{opacity:0;transform:translate3d(0,10px,0) scale(.94);filter:blur(5px)}}
+.notification-panel{border:1px solid rgba(255,255,255,.68)!important;border-radius:26px!important;background:linear-gradient(145deg,rgba(255,255,255,.76),rgba(238,244,255,.48))!important;box-shadow:0 22px 60px rgba(34,47,92,.20),inset 0 1px 0 rgba(255,255,255,.9)!important;-webkit-backdrop-filter:blur(32px) saturate(185%)!important;backdrop-filter:blur(32px) saturate(185%)!important;overflow:hidden}
+.notification-head{background:rgba(255,255,255,.20)!important}
+#notificationList>*{border-radius:17px!important;margin:7px!important;background:rgba(255,255,255,.38)!important;border:1px solid rgba(255,255,255,.46)!important;transition:transform .22s var(--ht-spring),background .22s ease}
+#notificationList>*:active{transform:scale(.98)}
+html.dark .bottom-nav#bottomNav{background:linear-gradient(145deg,rgba(35,42,62,.80),rgba(20,26,43,.62) 55%,rgba(44,50,75,.68))!important;border-color:rgba(255,255,255,.20)!important;box-shadow:0 20px 55px rgba(0,0,0,.40),inset 0 1px 0 rgba(255,255,255,.20)!important}
+html.dark .bottom-nav#bottomNav>button{color:rgba(220,226,245,.68)!important}
+html.dark .bottom-nav#bottomNav>button.active{color:#c5c2ff!important}
+html.dark .bottom-nav#bottomNav .nav-slider{background:linear-gradient(145deg,rgba(128,126,255,.34),rgba(255,255,255,.12))!important;border-color:rgba(255,255,255,.20)!important}
+html.dark .toast{background:linear-gradient(135deg,rgba(39,47,68,.92),rgba(24,31,49,.88))!important;color:#f4f6ff!important;border-color:rgba(255,255,255,.18)!important;box-shadow:0 18px 48px rgba(0,0,0,.38)!important}
+html.dark .notification-panel{background:linear-gradient(145deg,rgba(34,42,62,.94),rgba(20,27,44,.92))!important;color:#f3f5ff!important;border-color:rgba(255,255,255,.16)!important}
+@media(max-width:700px){.bottom-nav#bottomNav{height:68px!important;min-height:68px!important;bottom:max(9px,env(safe-area-inset-bottom))!important;width:calc(100vw - 22px)!important;border-radius:26px!important;padding:7px!important}.bottom-nav#bottomNav>button{font-size:10px!important;gap:4px!important}.toast{left:14px!important;right:14px!important;bottom:calc(88px + env(safe-area-inset-bottom))!important;margin:auto!important;width:max-content!important}}
+@media(prefers-reduced-motion:reduce){.bottom-nav#bottomNav *, .toast{animation:none!important;transition:none!important}}
+</style>
+
 </head>
 <body>
 <section id="authScreen"><div class="auth-card">
@@ -3457,4 +3503,27 @@ document.addEventListener('DOMContentLoaded',function(){
   setTimeout(function(){if(typeof paintQuickReaction==='function')paintQuickReaction()},250);
 });
 </script>
+
+<script id="htchat-liquid-glass-runtime-460">
+(()=>{
+ const init=()=>{
+  const nav=document.getElementById('bottomNav'); if(!nav)return;
+  const buttons=[...nav.querySelectorAll(':scope > button[data-page]')];
+  const slider=nav.querySelector('.nav-slider');
+  const moveSlider=()=>{const active=nav.querySelector(':scope > button.active')||buttons[0];if(!active||!slider)return;const nr=nav.getBoundingClientRect(),r=active.getBoundingClientRect();slider.style.left=(r.left-nr.left)+'px';slider.style.width=r.width+'px'};
+  buttons.forEach(b=>{b.addEventListener('pointerdown',()=>{b.style.setProperty('--ht-press','1');b.classList.add('ht-physical-press')},{passive:true});['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,()=>{b.classList.remove('ht-physical-press');b.style.removeProperty('--ht-press')},{passive:true}));b.addEventListener('click',()=>requestAnimationFrame(moveSlider));});
+  new MutationObserver(()=>requestAnimationFrame(moveSlider)).observe(nav,{subtree:true,attributes:true,attributeFilter:['class','style']});
+  window.addEventListener('resize',moveSlider,{passive:true});window.addEventListener('orientationchange',()=>setTimeout(moveSlider,180),{passive:true});
+  requestAnimationFrame(()=>requestAnimationFrame(moveSlider));
+  // Add a short spring response to common interactive surfaces without intercepting clicks.
+  document.addEventListener('pointerdown',e=>{const el=e.target.closest('button,.chat-item,.person,.post-action,.file-label');if(!el||nav.contains(el)||el.disabled)return;el.classList.add('ht-physical-press')},{passive:true});
+  ['pointerup','pointercancel'].forEach(ev=>document.addEventListener(ev,()=>document.querySelectorAll('.ht-physical-press').forEach(el=>el.classList.remove('ht-physical-press')),{passive:true}));
+  // Existing toast() messages inherit the bubble appearance; animate removal when possible.
+  const observer=new MutationObserver(records=>{for(const rec of records){for(const node of rec.addedNodes){if(node.nodeType!==1)continue;if(node.classList?.contains('toast')){node.setAttribute('role','status');node.setAttribute('aria-live','polite');}}}});
+  observer.observe(document.body,{childList:true,subtree:true});
+ };
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
+
 </body></html>
