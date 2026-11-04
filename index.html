@@ -3092,23 +3092,32 @@ document.addEventListener('DOMContentLoaded',()=>{
 #notificationList{display:block!important;visibility:visible!important;min-height:58px!important;color:#273248!important}
 #notificationList .notification-empty{display:block!important;visibility:visible!important}
 
-/* v4.6.1 — Messenger-style top incoming-message banner */
+/* HT Chat 4.6.2 — true top-edge Messenger drop-down */
 .toast.ht-top-toast,.toast.ht-message-toast{
-  position:fixed!important;top:calc(12px + env(safe-area-inset-top))!important;bottom:auto!important;
-  left:50%!important;right:auto!important;transform:translate3d(-50%,-28px,0) scale(.96)!important;
-  width:min(680px,calc(100vw - 28px))!important;max-width:680px!important;min-height:66px!important;
-  margin:0!important;padding:13px 17px!important;border:1px solid rgba(255,255,255,.72)!important;
-  border-radius:30px!important;background:linear-gradient(135deg,rgba(255,255,255,.84),rgba(242,244,250,.70))!important;
-  color:#24242a!important;box-shadow:0 14px 42px rgba(0,0,0,.17),inset 0 1px 0 rgba(255,255,255,.92)!important;
-  -webkit-backdrop-filter:blur(30px) saturate(185%)!important;backdrop-filter:blur(30px) saturate(185%)!important;
-  z-index:1000000!important;display:flex!important;align-items:center!important;gap:14px!important;
-  font-size:15px!important;font-weight:500!important;animation:htMessengerDrop .42s cubic-bezier(.18,.9,.24,1.18) both!important;
-  cursor:pointer!important;box-sizing:border-box!important;
+  position:fixed!important;
+  top:calc(env(safe-area-inset-top, 0px) + 12px)!important;
+  bottom:auto!important;left:50%!important;right:auto!important;
+  width:min(680px,calc(100vw - 24px))!important;max-width:680px!important;
+  min-height:66px!important;margin:0!important;padding:13px 17px!important;
+  border:1px solid rgba(255,255,255,.76)!important;border-radius:27px!important;
+  background:linear-gradient(135deg,rgba(255,255,255,.91),rgba(239,243,251,.82))!important;
+  color:#24242a!important;
+  box-shadow:0 16px 48px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.96)!important;
+  -webkit-backdrop-filter:blur(32px) saturate(190%)!important;
+  backdrop-filter:blur(32px) saturate(190%)!important;
+  z-index:2147483647!important;display:flex!important;align-items:center!important;
+  gap:14px!important;font-size:15px!important;font-weight:500!important;
+  /* Keep horizontal centering separate from the animated vertical movement. */
+  transform:translateX(-50%)!important;
+  translate:0 -155%;
+  animation:htMessengerDrop462 .58s cubic-bezier(.2,.82,.22,1) both!important;
+  cursor:pointer!important;box-sizing:border-box!important;overflow:visible!important;
+  will-change:translate,opacity,filter;
 }
 .toast.ht-top-toast:before,.toast.ht-message-toast:before{display:none!important}
 .toast.ht-message-toast{min-height:88px!important;padding:13px 18px!important;gap:14px!important}
-.ht-message-toast-avatar{width:58px;height:58px;flex:0 0 58px;border-radius:2px;background:linear-gradient(145deg,#dfe4ec,#b9c1cd);display:grid;place-items:center;overflow:visible;position:relative;color:#fff;font-size:23px;font-weight:700}
-.ht-message-toast-avatar img{width:100%;height:100%;object-fit:cover;border-radius:2px}
+.ht-message-toast-avatar{width:58px;height:58px;flex:0 0 58px;border-radius:3px;background:linear-gradient(145deg,#dfe4ec,#b9c1cd);display:grid;place-items:center;overflow:visible;position:relative;color:#fff;font-size:23px;font-weight:700}
+.ht-message-toast-avatar img{width:100%;height:100%;object-fit:cover;border-radius:3px}
 .ht-message-toast-avatar:after{content:"";position:absolute;width:25px;height:25px;right:-9px;bottom:-7px;border:3px solid rgba(255,255,255,.96);border-radius:50%;background:#087bea;box-shadow:0 2px 6px #0002}
 .ht-message-toast-avatar:before{content:"➤";position:absolute;z-index:1;right:-3px;bottom:-3px;color:white;font-size:12px;line-height:18px}
 .ht-message-toast-body{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}
@@ -3118,13 +3127,32 @@ document.addEventListener('DOMContentLoaded',()=>{
 .ht-message-toast-time{font-size:14px;color:#666}
 .ht-message-toast-preview{font-size:16px;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ht-message-toast-mark{flex:0 0 auto;width:43px;height:43px;border-radius:50%;display:grid;place-items:center;background:rgba(201,151,229,.42);color:#39234b;font-size:20px}
-.toast.ht-toast-out{animation:htMessengerLift .32s ease both!important}
-@keyframes htMessengerDrop{0%{opacity:0;transform:translate3d(-50%,-32px,0) scale(.94);filter:blur(8px)}75%{opacity:1;transform:translate3d(-50%,3px,0) scale(1.012);filter:blur(0)}100%{opacity:1;transform:translate3d(-50%,0,0) scale(1)}}
-@keyframes htMessengerLift{to{opacity:0;transform:translate3d(-50%,-24px,0) scale(.96);filter:blur(5px)}}
-html.dark .toast.ht-top-toast,html.dark .toast.ht-message-toast{background:linear-gradient(135deg,rgba(38,43,59,.96),rgba(25,30,46,.92))!important;color:#f4f5fb!important;border-color:rgba(255,255,255,.18)!important}
+.toast.ht-toast-out{
+  animation:htMessengerLift462 .42s cubic-bezier(.4,0,.8,.3) both!important;
+  pointer-events:none!important;
+}
+@keyframes htMessengerDrop462{
+  0%{opacity:0;translate:0 -155%;filter:blur(7px)}
+  72%{opacity:1;translate:0 5px;filter:blur(0)}
+  88%{opacity:1;translate:0 -2px}
+  100%{opacity:1;translate:0 0;filter:blur(0)}
+}
+@keyframes htMessengerLift462{
+  0%{opacity:1;translate:0 0;filter:blur(0)}
+  100%{opacity:0;translate:0 -145%;filter:blur(5px)}
+}
+html.dark .toast.ht-top-toast,html.dark .toast.ht-message-toast{background:linear-gradient(135deg,rgba(38,43,59,.97),rgba(25,30,46,.96))!important;color:#f4f5fb!important;border-color:rgba(255,255,255,.2)!important}
 html.dark .ht-message-toast-preview,html.dark .ht-message-toast-time{color:#c3c7d2}
-@media(max-width:600px){.toast.ht-top-toast,.toast.ht-message-toast{top:calc(8px + env(safe-area-inset-top))!important;width:calc(100vw - 20px)!important;border-radius:24px!important}.toast.ht-message-toast{min-height:78px!important;padding:11px 13px!important;gap:12px!important}.ht-message-toast-avatar{width:51px;height:51px;flex-basis:51px}.ht-message-toast-head strong{font-size:15px}.ht-message-toast-time{font-size:12px}.ht-message-toast-preview{font-size:14px}.ht-message-toast-mark{width:36px;height:36px;font-size:17px}}
-@media(prefers-reduced-motion:reduce){.toast.ht-top-toast,.toast.ht-message-toast,.toast.ht-toast-out{animation:none!important}}
+@media(max-width:600px){
+ .toast.ht-top-toast,.toast.ht-message-toast{top:calc(env(safe-area-inset-top, 0px) + 10px)!important;width:calc(100vw - 20px)!important;border-radius:23px!important}
+ .toast.ht-message-toast{min-height:78px!important;padding:11px 13px!important;gap:12px!important}
+ .ht-message-toast-avatar{width:51px;height:51px;flex-basis:51px}
+ .ht-message-toast-head strong{font-size:15px}.ht-message-toast-time{font-size:12px}
+ .ht-message-toast-preview{font-size:14px}.ht-message-toast-mark{width:36px;height:36px;font-size:17px}
+}
+@media(prefers-reduced-motion:reduce){
+ .toast.ht-top-toast,.toast.ht-message-toast,.toast.ht-toast-out{animation:none!important;translate:0 0}
+}
 </style>
 
 <script id="htchat-notification-authority-v9">
@@ -3546,7 +3574,7 @@ html.dark .ht-message-toast-preview,html.dark .ht-message-toast-time{color:#c3c7
 })();
 </script>
 
-<script>document.addEventListener("DOMContentLoaded",()=>{const e=document.querySelector("#appVersion,.app-version,[data-app-version]");if(e)e.textContent="Phiên bản 4.5.0";const v=document.getElementById("appInfoVersion");if(v)v.textContent="4.5.0";});</script>
+<script>document.addEventListener("DOMContentLoaded",()=>{const e=document.querySelector("#appVersion,.app-version,[data-app-version]");if(e)e.textContent="Phiên bản 4.6.2";const v=document.getElementById("appInfoVersion");if(v)v.textContent="4.5.0";});</script>
 
 <script id="htchat-v450-quick-reaction-fix">
 document.addEventListener('DOMContentLoaded',function(){
